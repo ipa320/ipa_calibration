@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>squirrel_robotino</name>
+  <version>0.0.0</version>
+  <description>This repository holds packages for calibrate the robot components</description>
+
+  <license>BSD</license>
+
+  <maintainer email="nhg@ipa.fhg.de">Nadia Hammoudeh Garcia</maintainer>
+  <author email="nhg@ipa.fhg.de">Nadia Hammoudeh Garcia</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>robotino_calibration</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>
