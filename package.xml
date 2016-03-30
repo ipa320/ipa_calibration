@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package format="2">
+	<name>robotino_calibration</name>
+	<version>0.0.0</version>
+	<description>The robotino_calibration package. Contains camera base calibration and laser scanner localization of a calibration checkerboard by detecting specialized markers.</description>
+
+	<license>LGPL</license>
+	<url type="website">http://wiki.ros.org/robotino_calibration</url>
+
+	<maintainer email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</maintainer>
+	<author email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</author>
+
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<depend>boost</depend>
+	<depend>cmake_modules</depend>
+	<depend>cv_bridge</depend>
+	<depend>dynamic_reconfigure</depend>
+	<depend>geometry_msgs</depend>
+	<depend>image_transport</depend>
+	<depend>libopencv-dev</depend>
+	<depend>libpcl-all-dev</depend>
+	<depend>roscpp</depend>
+	<depend>roslib</depend>
+	<depend>sensor_msgs</depend>
+	<depend>tf</depend>
+	<depend>visualization_msgs</depend>
+
+	<!-- The export tag contains other, unspecified, tags -->
+	<export>
+	</export>
+</package>
