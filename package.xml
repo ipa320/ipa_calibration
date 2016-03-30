@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>squirrel_robotino</name>
+  <name>squirrel_calibration</name>
   <version>0.0.0</version>
   <description>This repository holds packages for calibrate the robot components</description>
 
