@@ -8,6 +8,7 @@
 
   <maintainer email="nhg@ipa.fhg.de">Nadia Hammoudeh Garcia</maintainer>
   <author email="nhg@ipa.fhg.de">Nadia Hammoudeh Garcia</author>
+  <author email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</author>
 
 
   <buildtool_depend>catkin</buildtool_depend>
