@@ -2,7 +2,7 @@
 
 <launch>
 
-	<include file="$(find robotino_calibration)/ros/launch/checkerboard_localisation.launch"/>
+	<include file="$(find relative_localization)/ros/launch/checkerboard_localisation.launch"/>
 	
 	<node name="camera_base_calibration" pkg="robotino_calibration" type="camera_base_calibration" output="screen">
 		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/camera_base_calibration_params.yaml"/>
