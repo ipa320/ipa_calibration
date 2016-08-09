@@ -58,30 +58,30 @@
 #include <sstream>
 
 
-cv::Mat rotationMatrixFromRPY(double roll, double pitch, double yaw)
+cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
 {
-	double sr = sin(roll);
-	double cr = cos(roll);
-	double sp = sin(pitch);
-	double cp = cos(pitch);
 	double sy = sin(yaw);
 	double cy = cos(yaw);
+	double sp = sin(pitch);
+	double cp = cos(pitch);
+	double sr = sin(roll);
+	double cr = cos(roll);
 	cv::Mat rotation = (cv::Mat_<double>(3,3) <<
-			cr*cp,		cr*sp*sy - sr*cy,		cr*sp*cy + sr*sy,
-			sr*cp,		sr*sp*sy + cr*cy,		sr*sp*cy - cr*sy,
-			-sp,		cp*sy,					cp*cy);
+			cy*cp,		cy*sp*sr - sy*cr,		cy*sp*cr + sy*sr,
+			sy*cp,		sy*sp*sr + cy*cr,		sy*sp*cr - cy*sr,
+			-sp,		cp*sr,					cp*cr);
 
 	return rotation;
 }
 
-cv::Vec3d RPYFromRotationMatrix(const cv::Mat& rot)
+cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot)
 {
 	Eigen::Matrix3f rot_eigen;
 	for (int i=0; i<3; ++i)
 		for (int j=0; j<3; ++j)
 			rot_eigen(i,j) = rot.at<double>(i,j);
 	Eigen::Vector3f euler_angles = rot_eigen.eulerAngles(2,1,0);
-	return cv::Vec3d(euler_angles(2), euler_angles(1), euler_angles(0));
+	return cv::Vec3d(euler_angles(0), euler_angles(1), euler_angles(2));
 }
 
 cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
@@ -122,17 +122,17 @@ CameraBaseCalibration::CameraBaseCalibration(ros::NodeHandle nh) :
 	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "checkerboard");
 	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
 	// initial parameters
-	T_base_to_torso_lower_ = makeTransform(rotationMatrixFromRPY(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
-	T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromRPY(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
+	T_base_to_torso_lower_ = makeTransform(rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
+	T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromYPR(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
 	temp.clear();
 	node_handle_.getParam("T_base_to_torso_lower_initial", temp);
 	if (temp.size()==6)
-		T_base_to_torso_lower_ = makeTransform(rotationMatrixFromRPY(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+		T_base_to_torso_lower_ = makeTransform(rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_base_to_torso_lower_initial:\n" << T_base_to_torso_lower_ << std::endl;
 	temp.clear();
 	node_handle_.getParam("T_torso_upper_to_camera_initial", temp);
 	if (temp.size()==6)
-		T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromRPY(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+		T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_torso_upper_to_camera_initial:\n" << T_torso_upper_to_camera_ << std::endl;
 	// optimization parameters
 	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
@@ -250,33 +250,33 @@ bool CameraBaseCalibration::calibrateCameraToBase(const bool load_images)
 	{
 //		std::cout << "\nExtrinsic optimization run " << i << ":" << std::endl;
 		extrinsicCalibrationBaseToTorsoLower(pattern_points_3d, T_base_to_checkerboard_vector, T_torso_lower_to_torso_upper_vector, T_camera_to_checkerboard_vector);
-//		cv::Vec3d rpy = RPYFromRotationMatrix(T_base_to_torso_lower_);
+//		cv::Vec3d ypr = YPRFromRotationMatrix(T_base_to_torso_lower_);
 //		std::cout << "T_base_to_torso_lower:\n" << T_base_to_torso_lower_ << std::endl;
-//		std::cout << "yaw=" << rpy.val[2] << "   pitch=" << rpy.val[1] << "   roll=" << rpy.val[0] << std::endl;
+//		std::cout << "yaw=" << ypr.val[0] << "   pitch=" << ypr.val[1] << "   roll=" << ypr.val[2] << std::endl;
 		extrinsicCalibrationTorsoUpperToCamera(pattern_points_3d, T_base_to_checkerboard_vector, T_torso_lower_to_torso_upper_vector, T_camera_to_checkerboard_vector);
-//		rpy = RPYFromRotationMatrix(T_torso_upper_to_camera_);
+//		ypr = YPRFromRotationMatrix(T_torso_upper_to_camera_);
 //		std::cout << "T_torso_upper_to_camera:\n" << T_torso_upper_to_camera_ << std::endl;
-//		std::cout << "yaw=" << rpy.val[2] << "   pitch=" << rpy.val[1] << "   roll=" << rpy.val[0] << std::endl;
+//		std::cout << "yaw=" << ypr.val[0] << "   pitch=" << ypr.val[1] << "   roll=" << ypr.val[2] << std::endl;
 	}
 
 	// display calibration parameters
 	std::cout << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
-	cv::Vec3d rpy = RPYFromRotationMatrix(T_base_to_torso_lower_);
+	cv::Vec3d ypr = YPRFromRotationMatrix(T_base_to_torso_lower_);
 	std::cout << "  <!-- pan_tilt mount positions | handeye calibration | relative to base_link -->\n"
 			  << "  <property name=\"pan_tilt_x\" value=\"" << T_base_to_torso_lower_.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"pan_tilt_y\" value=\"" << T_base_to_torso_lower_.at<double>(1,3) << "\"/>\n"
 			  << "  <property name=\"pan_tilt_z\" value=\"" << T_base_to_torso_lower_.at<double>(2,3) << "\"/>\n"
-			  << "  <property name=\"pan_tilt_roll\" value=\"" << rpy.val[0] << "\"/>\n"
-			  << "  <property name=\"pan_tilt_pitch\" value=\"" << rpy.val[1] << "\"/>\n"
-			  << "  <property name=\"pan_tilt_yaw\" value=\"" << rpy.val[2] << "\"/>\n\n";
-	rpy = RPYFromRotationMatrix(T_torso_upper_to_camera_);
+			  << "  <property name=\"pan_tilt_roll\" value=\"" << ypr.val[2] << "\"/>\n"
+			  << "  <property name=\"pan_tilt_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
+			  << "  <property name=\"pan_tilt_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
+	ypr = YPRFromRotationMatrix(T_torso_upper_to_camera_);
 	std::cout << "  <!-- kinect mount positions | handeye calibration | relative to pan_tilt_link -->\n"
 			  << "  <property name=\"kinect_x\" value=\"" << T_torso_upper_to_camera_.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"kinect_y\" value=\"" << T_torso_upper_to_camera_.at<double>(1,3) << "\"/>\n"
 			  << "  <property name=\"kinect_z\" value=\"" << T_torso_upper_to_camera_.at<double>(2,3) << "\"/>\n"
-			  << "  <property name=\"kinect_roll\" value=\"" << rpy.val[0] << "\"/>\n"
-			  << "  <property name=\"kinect_pitch\" value=\"" << rpy.val[1] << "\"/>\n"
-			  << "  <property name=\"kinect_yaw\" value=\"" << rpy.val[2] << "\"/>\n" << std::endl;
+			  << "  <property name=\"kinect_roll\" value=\"" << ypr.val[2] << "\"/>\n"
+			  << "  <property name=\"kinect_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
+			  << "  <property name=\"kinect_yaw\" value=\"" << ypr.val[0] << "\"/>\n" << std::endl;
 
 	// save calibration
 	saveCalibration();
@@ -442,8 +442,8 @@ bool CameraBaseCalibration::moveRobot(const RobotConfiguration& robot_configurat
 	cv::Mat T;
 	if (!getTransform("checkerboard_reference_nav", "base_link", T))
 		return false;
-	cv::Vec3d rpy = RPYFromRotationMatrix(T);
-	double robot_yaw = rpy.val[2];
+	cv::Vec3d ypr = YPRFromRotationMatrix(T);
+	double robot_yaw = ypr.val[0];
 	geometry_msgs::Twist tw;
 	error_phi = robot_configuration.pose_phi_ - robot_yaw;
 	while (error_phi < -CV_PI*0.5)
@@ -461,8 +461,8 @@ bool CameraBaseCalibration::moveRobot(const RobotConfiguration& robot_configurat
 		{
 			if (!getTransform("checkerboard_reference_nav", "base_link", T))
 				return false;
-			cv::Vec3d rpy = RPYFromRotationMatrix(T);
-				double robot_yaw = rpy.val[2];
+			cv::Vec3d ypr = YPRFromRotationMatrix(T);
+				double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
 			error_phi = robot_configuration.pose_phi_ - robot_yaw;
 			while (error_phi < -CV_PI*0.5)
@@ -499,8 +499,8 @@ bool CameraBaseCalibration::moveRobot(const RobotConfiguration& robot_configurat
 		{
 			if (!getTransform("checkerboard_reference_nav", "base_link", T))
 				return false;
-			cv::Vec3d rpy = RPYFromRotationMatrix(T);
-				double robot_yaw = rpy.val[2];
+			cv::Vec3d ypr = YPRFromRotationMatrix(T);
+				double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
 			error_phi = robot_configuration.pose_phi_ - robot_yaw;
 			while (error_phi < -CV_PI*0.5)
