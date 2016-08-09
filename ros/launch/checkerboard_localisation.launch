@@ -10,6 +10,7 @@
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_checkerboard_reflector_nav" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 -1.57079632679  checkerboard_reference_nav checkerboard_reference 100"/>
 
 	<node name="checkerboard_localisation" pkg="robotino_calibration" type="checkerboard_localisation_node" output="screen">
+		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/checkerboard_localisation_params.yaml"/>
 		<remap from="laser_scan_in" to="/scan"/>
 	</node>
 </launch>

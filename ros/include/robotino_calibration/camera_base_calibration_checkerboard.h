@@ -81,13 +81,13 @@
 #include <robotino_calibration/CalibrationUtilities.h>
 
 
-class CameraBaseCalibration
+class CameraBaseCalibrationCheckerboard
 {
 public:
 
-	CameraBaseCalibration(ros::NodeHandle nh);
+	CameraBaseCalibrationCheckerboard(ros::NodeHandle nh);
 
-	~CameraBaseCalibration();
+	~CameraBaseCalibrationCheckerboard();
 
 	// starts the calibration between camera and base including data acquisition
 	bool calibrateCameraToBase(const bool load_images);

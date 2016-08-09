@@ -48,7 +48,7 @@
  *
  ****************************************************************/
 
-#include <robotino_calibration/camera_base_calibration.h>
+#include <robotino_calibration/camera_base_calibration_checkerboard.h>
 #include <robotino_calibration/TransformationUtilities.h>
 
 #include <std_msgs/Float64.h>
@@ -59,12 +59,12 @@
 #include <sstream>
 
 
-CameraBaseCalibration::CameraBaseCalibration(ros::NodeHandle nh) :
+CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHandle nh) :
 			node_handle_(nh), transform_listener_(nh), camera_calibration_path_("robotino_calibration/camera_calibration/"),
 			tilt_controller_command_("/tilt_controller/command"), pan_controller_command_("/pan_controller/command"), capture_image_(true)
 {
 	// load parameters
-	std::cout << "\n========== CameraBaseCalibration Parameters ==========\n";
+	std::cout << "\n========== CameraBaseCalibrationCheckerboard Parameters ==========\n";
 	node_handle_.param("chessboard_cell_size", chessboard_cell_size_, 0.05);
 	std::cout << "chessboard_cell_size: " << chessboard_cell_size_ << std::endl;
 	chessboard_pattern_size_ = cv::Size(6,4);
@@ -121,7 +121,7 @@ CameraBaseCalibration::CameraBaseCalibration(ros::NodeHandle nh) :
 	// set up messages
 	it_ = new image_transport::ImageTransport(node_handle_);
 	color_image_sub_.subscribe(*it_, "colorimage_in", 1);
-	color_image_sub_.registerCallback(boost::bind(&CameraBaseCalibration::imageCallback, this, _1));
+	color_image_sub_.registerCallback(boost::bind(&CameraBaseCalibrationCheckerboard::imageCallback, this, _1));
 
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
 	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
@@ -130,13 +130,13 @@ CameraBaseCalibration::CameraBaseCalibration(ros::NodeHandle nh) :
 	ROS_INFO("CameraBaseCalibration initialized.");
 }
 
-CameraBaseCalibration::~CameraBaseCalibration()
+CameraBaseCalibrationCheckerboard::~CameraBaseCalibrationCheckerboard()
 {
 	if (it_ != 0)
 		delete it_;
 }
 
-bool CameraBaseCalibration::convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
+bool CameraBaseCalibrationCheckerboard::convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
 {
 	try
 	{
@@ -152,7 +152,7 @@ bool CameraBaseCalibration::convertImageMessageToMat(const sensor_msgs::Image::C
 	return true;
 }
 
-void CameraBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
+void CameraBaseCalibrationCheckerboard::imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
 {
 	// secure this access with a mutex
 	boost::mutex::scoped_lock lock(camera_data_mutex_);
@@ -170,7 +170,7 @@ void CameraBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& colo
 	}
 }
 
-bool CameraBaseCalibration::calibrateCameraToBase(const bool load_images)
+bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_images)
 {
 	// setup storage folder
 	int return_value = system("mkdir -p robotino_calibration/camera_calibration");
@@ -250,7 +250,7 @@ bool CameraBaseCalibration::calibrateCameraToBase(const bool load_images)
 	return true;
 }
 
-bool CameraBaseCalibration::acquireCalibrationImages(const std::vector<RobotConfiguration>& robot_configurations,
+bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vector<RobotConfiguration>& robot_configurations,
 		const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
 		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_base_to_checkerboard_vector,
 		std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector, std::vector<cv::Mat>& T_camera_to_camera_optical_vector)
@@ -324,7 +324,7 @@ bool CameraBaseCalibration::acquireCalibrationImages(const std::vector<RobotConf
 	return true;
 }
 
-int CameraBaseCalibration::acquireCalibrationImage(int& image_width, int& image_height,
+int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width, int& image_height,
 		std::vector<cv::Point2f>& checkerboard_points_2d, const cv::Size pattern_size, const bool load_images, int& image_counter)
 {
 	int return_value = 0;
@@ -398,7 +398,7 @@ int CameraBaseCalibration::acquireCalibrationImage(int& image_width, int& image_
 	return return_value;
 }
 
-bool CameraBaseCalibration::moveRobot(const RobotConfiguration& robot_configuration)
+bool CameraBaseCalibrationCheckerboard::moveRobot(const RobotConfiguration& robot_configuration)
 {
 	// do not move if close to goal
 	double error_phi = 10;
@@ -495,7 +495,7 @@ bool CameraBaseCalibration::moveRobot(const RobotConfiguration& robot_configurat
 	return true;
 }
 
-void CameraBaseCalibration::computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images)
+void CameraBaseCalibrationCheckerboard::computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images)
 {
 	// prepare chessboard 3d points
 	pattern_points.clear();
@@ -507,7 +507,7 @@ void CameraBaseCalibration::computeCheckerboard3dPoints(std::vector< std::vector
 	pattern_points.resize(number_images, pattern_points[0]);
 }
 
-void CameraBaseCalibration::intrinsicCalibration(const std::vector< std::vector<cv::Point3f> >& pattern_points, const std::vector< std::vector<cv::Point2f> >& camera_points_2d_per_image, const cv::Size& image_size, std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs)
+void CameraBaseCalibrationCheckerboard::intrinsicCalibration(const std::vector< std::vector<cv::Point3f> >& pattern_points, const std::vector< std::vector<cv::Point2f> >& camera_points_2d_per_image, const cv::Size& image_size, std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs)
 {
 	std::cout << "Intrinsic calibration started ..." << std::endl;
 	K_ = cv::Mat::eye(3, 3, CV_64F);
@@ -516,7 +516,7 @@ void CameraBaseCalibration::intrinsicCalibration(const std::vector< std::vector<
 	std::cout << "Intrinsic calibration:\nK:\n" << K_ << "\ndistortion:\n" << distortion_ << std::endl;
 }
 
-void CameraBaseCalibration::extrinsicCalibrationTorsoUpperToCamera(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
+void CameraBaseCalibrationCheckerboard::extrinsicCalibrationTorsoUpperToCamera(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 		std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 		std::vector<cv::Mat>& T_camera_to_checkerboard_vector)
 {
@@ -546,7 +546,7 @@ void CameraBaseCalibration::extrinsicCalibrationTorsoUpperToCamera(std::vector< 
 	T_torso_upper_to_camera_ = computeExtrinsicTransform(points_3d_torso_upper, points_3d_camera);
 }
 
-void CameraBaseCalibration::extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
+void CameraBaseCalibrationCheckerboard::extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 		std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 		std::vector<cv::Mat>& T_camera_to_checkerboard_vector)
 {
@@ -579,7 +579,7 @@ void CameraBaseCalibration::extrinsicCalibrationBaseToTorsoLower(std::vector< st
 	T_base_to_torso_lower_ = computeExtrinsicTransform(points_3d_base, points_3d_torso_lower);
 }
 
-cv::Mat CameraBaseCalibration::computeExtrinsicTransform(const std::vector<cv::Point3d>& points_3d_source, const std::vector<cv::Point3d>& points_3d_target)
+cv::Mat CameraBaseCalibrationCheckerboard::computeExtrinsicTransform(const std::vector<cv::Point3d>& points_3d_source, const std::vector<cv::Point3d>& points_3d_target)
 {
 	// from: http://nghiaho.com/?page_id=671 : ‘A Method for Registration of 3-D Shapes’, by Besl and McKay, 1992.
 	cv::Point3d centroid_source, centroid_target;
@@ -612,7 +612,7 @@ cv::Mat CameraBaseCalibration::computeExtrinsicTransform(const std::vector<cv::P
 	return makeTransform(R, t);
 }
 
-bool CameraBaseCalibration::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
+bool CameraBaseCalibrationCheckerboard::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
 {
 	try
 	{
@@ -640,7 +640,7 @@ bool CameraBaseCalibration::getTransform(const std::string& target_frame, const 
 	return true;
 }
 
-bool CameraBaseCalibration::saveCalibration()
+bool CameraBaseCalibrationCheckerboard::saveCalibration()
 {
 	bool success = true;
 
@@ -664,7 +664,7 @@ bool CameraBaseCalibration::saveCalibration()
 	return success;
 }
 
-bool CameraBaseCalibration::loadCalibration()
+bool CameraBaseCalibrationCheckerboard::loadCalibration()
 {
 	bool success = true;
 
@@ -690,7 +690,7 @@ bool CameraBaseCalibration::loadCalibration()
 	return success;
 }
 
-void CameraBaseCalibration::getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera)
+void CameraBaseCalibrationCheckerboard::getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera)
 {
 	if (calibrated_ == false && loadCalibration() == false)
 	{
@@ -704,7 +704,7 @@ void CameraBaseCalibration::getCalibration(cv::Mat& K, cv::Mat& distortion, cv::
 	T_torso_upper_to_camera = T_torso_upper_to_camera_.clone();
 }
 
-void CameraBaseCalibration::undistort(const cv::Mat& image, cv::Mat& image_undistorted)
+void CameraBaseCalibrationCheckerboard::undistort(const cv::Mat& image, cv::Mat& image_undistorted)
 {
 	if (calibrated_ == false && loadCalibration() == false)
 	{

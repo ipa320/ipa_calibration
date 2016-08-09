@@ -9,4 +9,3 @@ wall_length_right: 0.8
 # the maximum +/-y coordinate in laser scan to search for the localization box, in[m]
 # double
 box_search_width: 0.6
-

@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv,"checkerboard_localisation");
 
-	ros::NodeHandle nh;
+	ros::NodeHandle nh("~");
 
 	CheckerboardLocalization cl(nh);
 

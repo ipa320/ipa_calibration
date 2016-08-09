@@ -315,7 +315,14 @@ void CheckerboardLocalization::dynamicReconfigureCallback(robotino_calibration::
 {
 	update_rate_ = config.update_rate;
 	child_frame_name_ = config.child_frame_name;
-	std::cout << "Reconfigure request with\n update_rate=" << update_rate_ << "\n child_frame_name=" << child_frame_name_ << "\n";
+	wall_length_left_ = config.wall_length_left;
+	wall_length_right_ = config.wall_length_right;
+	box_search_width_ = config.box_search_width;
+	std::cout << "Reconfigure request with\n update_rate=" << update_rate_
+			<< "\n child_frame_name=" << child_frame_name_
+			<< "\n wall_length_left=" << wall_length_left_
+			<< "\n wall_length_right=" << wall_length_right_
+			<< "\n box_search_width=" << box_search_width_ << "\n";
 }
 
 void CheckerboardLocalization::fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set)

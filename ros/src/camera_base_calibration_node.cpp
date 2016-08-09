@@ -49,7 +49,7 @@
  ****************************************************************/
 
 #include <ros/ros.h>
-#include <robotino_calibration/camera_base_calibration.h>
+#include <robotino_calibration/camera_base_calibration_checkerboard.h>
 
 //#######################
 //#### main programm ####
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 	bool load_images = false;
 	nh.param("load_images", load_images, false);
 
-	CameraBaseCalibration cb(nh);
+	CameraBaseCalibrationCheckerboard cb(nh);
 	cb.calibrateCameraToBase(load_images);
 
 	return 0;

@@ -49,7 +49,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 INCLUDE_DIRS
-#	common/include
+	common/include
 	ros/include
 LIBRARIES
 CATKIN_DEPENDS
@@ -67,7 +67,7 @@ DEPENDS
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-#	common/include
+	common/include
 	ros/include
 	${catkin_INCLUDE_DIRS} 		# same name as find_package
 	${Boost_INCLUDE_DIRS}
@@ -89,7 +89,7 @@ target_link_libraries(checkerboard_localisation_node
 
 # calibration software
 add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
-										ros/src/camera_base_calibration.cpp)
+										ros/src/camera_base_calibration_checkerboard.cpp)
 target_link_libraries(camera_base_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${OpenCV_LIBRARIES}
