@@ -1,0 +1,12 @@
+# the length of the wall segment left of the checkerboard's origin, in[m]
+# double
+wall_length_left: 0.8
+
+# the length of the wall segment right of the checkerboard's origin, in[m]
+# double
+wall_length_right: 0.8
+
+# the maximum +/-y coordinate in laser scan to search for the localization box, in[m]
+# double
+box_search_width: 0.6
+

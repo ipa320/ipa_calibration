@@ -61,6 +61,15 @@
 CheckerboardLocalization::CheckerboardLocalization(ros::NodeHandle& nh)
 		: node_handle_(nh)
 {
+	// load parameters
+	std::cout << "\n========== Checkerboard Localization Parameters ==========\n";
+	node_handle_.param("wall_length_left", wall_length_left_, 0.75);
+	std::cout << "wall_length_left: " << wall_length_left_ << std::endl;
+	node_handle_.param("wall_length_right", wall_length_right_, 0.75);
+	std::cout << "wall_length_right: " << wall_length_right_ << std::endl;
+	node_handle_.param("box_search_width", box_search_width_, 0.75);
+	std::cout << "box_search_width: " << box_search_width_ << std::endl;
+
 	// publishers
 	marker_pub_ = node_handle_.advertise<visualization_msgs::Marker>("wall_marker", 1);
 
@@ -87,7 +96,7 @@ void CheckerboardLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& 
 		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; //[rad]
 		double dist = laser_scan_msg->ranges[i];
 		cv::Point2d point(dist*cos(angle), dist*sin(angle));
-		if (point.y > -0.75 && point.y < 0.75)
+		if (point.y > -wall_length_right_ && point.y < wall_length_left_)
 			scan.push_back(point);
 	}
 
@@ -112,7 +121,7 @@ void CheckerboardLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& 
 	for (unsigned int i = 0; i < scan.size(); ++i)
 	{
 		//double distance_to_robot = scan[i].x*scan[i].x + scan[i].y*scan[i].y;
-		if (scan[i].y < 0.5 && scan[i].y > -0.5)	// only search for block in front of the robot
+		if (scan[i].y < box_search_width_ && scan[i].y > -box_search_width_)	// only search for block in front of the robot
 		{
 			double d = fabs(n0x*(scan[i].x-px) + n0y*(scan[i].y-py));		// distance to wall
 			if (d<0.1 && in_reflector_segment==true)

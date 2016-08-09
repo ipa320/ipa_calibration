@@ -147,6 +147,11 @@ private:
 	tf::Quaternion avg_orientation_;
 	double update_rate_;
 	std::string child_frame_name_;
+
+	// parameters
+	double wall_length_left_;		// the length of the wall segment left of the checkerboard's origin, in[m]
+	double wall_length_right_;		// the length of the wall segment right of the checkerboard's origin, in[m]
+	double box_search_width_;		// the maximum +/-y coordinate in laser scan to search for the localization box, in[m]
 };
 
 #endif // CHECKERBOARD_LOCALISATION_H
