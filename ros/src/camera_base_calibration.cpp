@@ -8,7 +8,7 @@
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
  * Project name: squirrel
- * ROS stack name: squirrel_robotino
+ * ROS stack name: squirrel_calibration
  * ROS package name: robotino_calibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -49,6 +49,7 @@
  ****************************************************************/
 
 #include <robotino_calibration/camera_base_calibration.h>
+#include <robotino_calibration/TransformationUtilities.h>
 
 #include <std_msgs/Float64.h>
 
@@ -57,42 +58,6 @@
 
 #include <sstream>
 
-
-cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
-{
-	double sy = sin(yaw);
-	double cy = cos(yaw);
-	double sp = sin(pitch);
-	double cp = cos(pitch);
-	double sr = sin(roll);
-	double cr = cos(roll);
-	cv::Mat rotation = (cv::Mat_<double>(3,3) <<
-			cy*cp,		cy*sp*sr - sy*cr,		cy*sp*cr + sy*sr,
-			sy*cp,		sy*sp*sr + cy*cr,		sy*sp*cr - cy*sr,
-			-sp,		cp*sr,					cp*cr);
-
-	return rotation;
-}
-
-cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot)
-{
-	Eigen::Matrix3f rot_eigen;
-	for (int i=0; i<3; ++i)
-		for (int j=0; j<3; ++j)
-			rot_eigen(i,j) = rot.at<double>(i,j);
-	Eigen::Vector3f euler_angles = rot_eigen.eulerAngles(2,1,0);
-	return cv::Vec3d(euler_angles(0), euler_angles(1), euler_angles(2));
-}
-
-cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
-{
-	cv::Mat T = (cv::Mat_<double>(4,4) <<
-			R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
-			R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
-			R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
-			0., 0., 0., 1);
-	return T;
-}
 
 CameraBaseCalibration::CameraBaseCalibration(ros::NodeHandle nh) :
 			node_handle_(nh), transform_listener_(nh), camera_calibration_path_("robotino_calibration/camera_calibration/"),

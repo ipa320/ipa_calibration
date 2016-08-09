@@ -8,7 +8,7 @@
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
  * Project name: squirrel
- * ROS stack name: squirrel_robotino
+ * ROS stack name: squirrel_calibration
  * ROS package name: robotino_calibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -78,39 +78,8 @@
 // Boost
 #include <boost/thread/mutex.hpp>
 
+#include <robotino_calibration/CalibrationUtilities.h>
 
-// compute rotation matrix from roll, pitch, yaw
-// (w, p, r) = (yaW, Pitch, Roll) with
-// 1. rotation = roll around z
-// 2. rotation = pitch around y'
-// 3. rotation = yaw around x''
-// ATTENTION: this definition does not match with the ROS definition (1. yaw around z, 2. pitch around y', 3. roll around x'') -> swap roll and yaw in function call
-cv::Mat rotationMatrixFromYPR(double roll, double pitch, double yaw);
-
-// computes roll, pitch, yaw angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
-cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot);
-
-cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
-
-
-// struct for the configuration (x,y location + base rotation, torso links) of the robot
-struct RobotConfiguration
-{
-	double pose_x_;
-	double pose_y_;
-	double pose_phi_;
-	double pan_angle_;
-	double tilt_angle_;
-
-	RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle)
-	{
-		pose_x_ = pose_x;
-		pose_y_ = pose_y;
-		pose_phi_ = pose_phi;
-		pan_angle_ = pan_angle;
-		tilt_angle_ = tilt_angle;
-	}
-};
 
 class CameraBaseCalibration
 {

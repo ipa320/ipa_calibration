@@ -10,7 +10,7 @@
  *****************************************************************
  *
 * \note
-* Repository name: squirrel_robotino
+* Repository name: squirrel_calibration
 * \note
 * ROS package name: checkerboard_localisation
  *

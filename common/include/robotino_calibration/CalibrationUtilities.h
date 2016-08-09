@@ -48,24 +48,27 @@
  *
  ****************************************************************/
 
-#include <ros/ros.h>
-#include <robotino_calibration/camera_base_calibration.h>
+#ifndef CALIBRATION_UTILITIES_H
+#define CALIBRATION_UTILITIES_H
 
-//#######################
-//#### main programm ####
-int main(int argc, char** argv)
+
+// struct for the configuration (x,y location + base rotation, torso links) of the robot
+struct RobotConfiguration
 {
-	// Initialize ROS, specify name of node
-	ros::init(argc, argv, "camera_base_calibration_node");
+	double pose_x_;
+	double pose_y_;
+	double pose_phi_;
+	double pan_angle_;
+	double tilt_angle_;
 
-	// Create a handle for this node, initialize node
-	ros::NodeHandle nh("~");
+	RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle)
+	{
+		pose_x_ = pose_x;
+		pose_y_ = pose_y;
+		pose_phi_ = pose_phi;
+		pan_angle_ = pan_angle;
+		tilt_angle_ = tilt_angle;
+	}
+};
 
-	bool load_images = false;
-	nh.param("load_images", load_images, false);
-
-	CameraBaseCalibration cb(nh);
-	cb.calibrateCameraToBase(load_images);
-
-	return 0;
-}
+#endif	// CALIBRATION_UTILITIES_H
