@@ -1,3 +1,11 @@
+# Defines how fast new measurements are averaged into the transformation estimate (new_value = (1-update_rate)*old_value + update_rate*measurement). [0,1]
+# double
+update_rate: 0.75
+
+# The name of the computed child frame.
+# string
+child_frame_name: /checkerboard_reference_nav
+
 # the length of the wall segment left of the checkerboard's origin, in[m]
 # double
 wall_length_left: 0.8
