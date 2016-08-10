@@ -67,74 +67,11 @@
 namespace RelativeLocalizationUtilities
 {
 
-void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set)
-{
-	const int iterations = (int)(log(1.-success_probability)/log(1.-inlier_ratio*inlier_ratio));
-#ifdef DEBUG_OUTPUT
-	std::cout << "fitLine: iterations: " << iterations << std::endl;
-#endif
-	const int samples = (int)points.size();
+// success_propability = probability for drawing two inliers at once
+// inlier_ratio = the ratio of line inliers in the point set
+void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set);
 
-	// RANSAC iterations
-	int max_inliers = 0;
-	for (int k=0; k<iterations; ++k)
-	{
-		// draw two different points from samples
-		int index1, index2;
-		if (draw_from_both_halves_of_point_set == false)
-		{
-			index1 = rand()%samples;
-			index2 = index1;
-			while (index2==index1)
-				index2 = rand()%samples;
-		}
-		else
-		{
-			index1 = rand()%(samples/2);
-			index2 = std::min((samples/2)+rand()%(samples/2), samples-1);
-		}
-
-		// compute line equation from points: d = n0 * (x - x0)  (x0=point on line, n0=normalized normal on line, d=distance to line, d=0 -> line)
-		cv::Point2d x0 = points[index1];	// point on line
-		cv::Point2d n0(points[index2].y-points[index1].y, points[index1].x-points[index2].x);	// normal direction on line
-		const double n0_length = sqrt(n0.x*n0.x + n0.y*n0.y);
-		n0.x /= n0_length; n0.y /= n0_length;
-		const double c = -points[index1].x*n0.x - points[index1].y*n0.y;		// distance to line: d = n0*(x-x0) = n0.x*x + n0.y*y + c
-
-		// count inliers
-		int inliers = 0;
-		for (size_t i=0; i<points.size(); ++i)
-			if (fabs(n0.x * points[i].x + n0.y * points[i].y + c) <= max_inlier_distance)
-				++inliers;
-
-		// update best model
-		if (inliers > max_inliers)
-		{
-			max_inliers = inliers;
-			line = cv::Vec4d(points[index1].x, points[index1].y, n0.x, n0.y);		// [x0, y0, n0.x, n0.y]
-		}
-	}
-
-#ifdef DEBUG_OUTPUT
-	std::cout << "Ransac line: " << line << std::endl;
-#endif
-
-	// final optimization with least squares fit
-	const cv::Point2d n0(line[2], line[3]);
-	const double c = -line[0]*n0.x - line[1]*n0.y;
-	std::vector<cv::Point2f> inlier_set;
-	for (size_t i=0; i<points.size(); ++i)
-		if (fabs(n0.x * points[i].x + n0.y * points[i].y + c) <= max_inlier_distance)
-			inlier_set.push_back(cv::Point2f(points[i].x, points[i].y));
-	cv::Vec4f line_ls;
-	cv::fitLine(inlier_set, line_ls, CV_DIST_L2, 0, 0.01, 0.01);	// (vx, vy, x0, y0), where (vx, vy) is a normalized vector collinear to the line and (x0, y0) is a point on the line
-	const double length = sqrt(line_ls[0]*line_ls[0]+line_ls[1]*line_ls[1]);
-	line = cv::Vec4d(line_ls[2], line_ls[3], line_ls[1]/length, -line_ls[0]/length);
-
-#ifdef DEBUG_OUTPUT
-	std::cout << "Optimized line: " << line << std::endl;
-#endif
-}
+double distanceToLine(const double npx, const double npy, const double n0x, const double n0y, const double pointx, const double pointy);
 
 }
 

@@ -12,7 +12,7 @@
 * \note
 * Repository name: squirrel_calibration
 * \note
-* ROS package name: checkerboard_localisation
+* ROS package name: relative_localization
  *
  * \author
  * Author: Richard Bormann
@@ -163,7 +163,7 @@ void CheckerboardLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& 
 
 	// display points of box segment
 	if (marker_pub_.getNumSubscribers() > 0)
-		VisualizationUtilities::publishBoxPoints(laser_scan_msg->header, "box_points", segments, largest_segment, marker_pub_);
+		VisualizationUtilities::publishPointsVisualization(laser_scan_msg->header, "box_points", segments[largest_segment], marker_pub_);
 
 #ifdef DEBUG_OUTPUT
 	std::cout << "Corner point: " << corner_point << std::endl;

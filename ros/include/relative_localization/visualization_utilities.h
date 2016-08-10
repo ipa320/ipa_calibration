@@ -89,7 +89,7 @@ public:
 		marker.color.g = 1.0;
 		marker.color.b = 0.0;
 		marker.color.a = 1.0;
-		marker.scale.x = 0.05;
+		marker.scale.x = 0.025;
 		geometry_msgs::Point point;
 		point.x = px - 5*n0y;
 		point.y = py + 5*n0x;
@@ -102,7 +102,7 @@ public:
 		marker_pub.publish(marker);
 	}
 
-	static void publishBoxPoints(const std_msgs::Header& header, const std::string& name_space, const std::vector< std::vector<cv::Point2d> >& segments, const size_t largest_segment, const ros::Publisher& marker_pub)
+	static void publishPointsVisualization(const std_msgs::Header& header, const std::string& name_space, const std::vector<cv::Point2d>& points, const ros::Publisher& marker_pub)
 	{
 		// display points of box segment
 		visualization_msgs::Marker marker;
@@ -123,11 +123,11 @@ public:
 		marker.color.b = 1.0;
 		marker.color.a = 1.0;
 		marker.scale.x = 0.05;
-		for (size_t i=0; i<segments[largest_segment].size(); ++i)
+		for (size_t i=0; i<points.size(); ++i)
 		{
 			geometry_msgs::Point point;
-			point.x = segments[largest_segment][i].x;
-			point.y = segments[largest_segment][i].y;
+			point.x = points[i].x;
+			point.y = points[i].y;
 			point.z = 0;
 			marker.points.push_back(point);
 		}

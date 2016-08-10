@@ -74,6 +74,8 @@ include_directories(
 add_executable(relative_localization_node
 						ros/src/relative_localization_node.cpp
 						ros/src/checkerboard_localization.cpp
+						ros/src/corner_localization.cpp
+						common/src/relative_localization_utilities.cpp
 )
 add_dependencies(relative_localization_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 target_link_libraries(relative_localization_node

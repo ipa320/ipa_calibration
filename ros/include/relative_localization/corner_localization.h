@@ -19,7 +19,7 @@
  * \author
  * Supervised by:
  *
- * \date Date of creation: 11.03.2015
+ * \date Date of creation: 10.08.2016
  *
  * \brief
  *
@@ -55,31 +55,59 @@
  *
  ****************************************************************/
 
-#include "relative_localization/checkerboard_localization.h"
-#include "relative_localization/corner_localization.h"
+#ifndef CORNER_LOCALISATION_H
+#define CORNER_LOCALISATION_H
 
-int main(int argc, char **argv)
+#include <iostream>
+#include <vector>
+
+// ROS
+#include "ros/ros.h"
+
+// messages
+#include "sensor_msgs/LaserScan.h"
+#include "visualization_msgs/Marker.h"
+
+// tf
+#include <tf/tf.h>
+#include <tf/transform_broadcaster.h>
+
+// dynamic reconfigure
+#include <dynamic_reconfigure/server.h>
+#include <relative_localization/CheckerboardLocalisationConfig.h>
+
+// OpenCV
+#include <opencv/cv.h>
+
+
+class CornerLocalization
 {
-	ros::init(argc, argv,"relative_localization");
+public:
+	CornerLocalization(ros::NodeHandle& nh);
+	~CornerLocalization() {};
 
-	ros::NodeHandle nh("~");
 
-	// load parameters
-	std::string localization_method;
-	std::cout << "\n========== Relative Localization Parameters ==========\n";
-	nh.param<std::string>("localization_method", localization_method, "");
-	std::cout << "localization_method: " << localization_method << std::endl;
+private:
 
-	if (localization_method.compare("checkerboard") == 0)
-	{
-		CheckerboardLocalization cl(nh);
-		ros::spin();
-	}
-	else if (localization_method.compare("corner") == 0)
-	{
-		CornerLocalization cl(nh);
-		ros::spin();
-	}
+	void callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg);
+	void dynamicReconfigureCallback(robotino_calibration::CheckerboardLocalisationConfig& config, uint32_t level);
 
-	return 0;
-}
+	ros::NodeHandle node_handle_;
+	ros::Subscriber laser_scan_sub_;
+	ros::Publisher marker_pub_;
+
+	tf::TransformBroadcaster transform_broadcaster_;
+
+	dynamic_reconfigure::Server<robotino_calibration::CheckerboardLocalisationConfig> dynamic_reconfigure_server_;
+	tf::Vector3 avg_translation_;
+	tf::Quaternion avg_orientation_;
+	double update_rate_;
+	std::string child_frame_name_;
+
+	// parameters
+	double wall_length_left_;		// the length of the wall segment left of the checkerboard's origin, in[m]
+	double wall_length_right_;		// the length of the wall segment right of the checkerboard's origin, in[m]
+	double max_wall_side_distance_;		// the maximum distance of the side wall to the laser scanner, in[m]
+};
+
+#endif // CORNER_LOCALISATION_H

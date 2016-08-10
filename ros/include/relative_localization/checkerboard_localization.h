@@ -12,7 +12,7 @@
 * \note
 * Repository name: squirrel_calibration
 * \note
-* ROS package name: checkerboard_localisation
+* ROS package name: relative_localization
  *
  * \author
  * Author: Richard Bormann
