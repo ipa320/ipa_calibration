@@ -15,7 +15,7 @@
  *
  * Author: Richard Bormann, email:richard.bormann@ipa.fhg.de
  *
- * Date of creation: December 2015
+ * Date of creation: August 2016
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -48,8 +48,8 @@
  *
  ****************************************************************/
 
-#ifndef __CAMERA_BASE_CALIBRATION_CHECKERBOARD_H__
-#define __CAMERA_BASE_CALIBRATION_CHECKERBOARD_H__
+#ifndef __CAMERA_BASE_CALIBRATION_PITAG_H__
+#define __CAMERA_BASE_CALIBRATION_PITAG_H__
 
 // ROS
 #include <ros/ros.h>
@@ -81,13 +81,13 @@
 #include <robotino_calibration/calibration_utilities.h>
 
 
-class CameraBaseCalibrationCheckerboard
+class CameraBaseCalibrationPiTag
 {
 public:
 
-	CameraBaseCalibrationCheckerboard(ros::NodeHandle nh);
+	CameraBaseCalibrationPiTag(ros::NodeHandle nh);
 
-	~CameraBaseCalibrationCheckerboard();
+	~CameraBaseCalibrationPiTag();
 
 	// starts the calibration between camera and base including data acquisition
 	bool calibrateCameraToBase(const bool load_images);
@@ -189,4 +189,4 @@ protected:
 	std::vector<RobotConfiguration> robot_configurations_;	// list of robot configurations for observing the checkerboard
 };
 
-#endif // __CAMERA_BASE_CALIBRATION_CHECKERBOARD_H__
+#endif // __CAMERA_BASE_CALIBRATION_PITAG_H__

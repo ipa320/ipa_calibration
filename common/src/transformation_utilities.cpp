@@ -48,15 +48,10 @@
  *
  ****************************************************************/
 
-#ifndef TRANSFORMATION_UTILITIES_H
-#define TRANSFORMATION_UTILITIES_H
-
-// OpenCV
-#include <opencv/cv.h>
+#include <robotino_calibration/transformation_utilities.h>
 
 // Eigen
-#include <Eigen/src/Core/Matrix.h>
-
+#include <Eigen/Core>
 
 // compute rotation matrix from yaw, pitch, roll
 // (w, p, r) = (yaW, Pitch, Roll) with
@@ -99,5 +94,3 @@ cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
 			0., 0., 0., 1);
 	return T;
 }
-
-#endif	// TRANSFORMATION_UTILITIES_H

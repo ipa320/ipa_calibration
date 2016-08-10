@@ -8,7 +8,7 @@
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
  * Project name: squirrel
- * ROS stack name: squirrel_calibration
+ * ROS stack name: squirrel_robotino
  * ROS package name: robotino_calibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -48,36 +48,23 @@
  *
  ****************************************************************/
 
-#include <ros/ros.h>
-#include <robotino_calibration/camera_base_calibration_checkerboard.h>
+#ifndef _TRANSFORMATION_UTILITIES_H_
+#define _TRANSFORMATION_UTILITIES_H_
 
-//#######################
-//#### main programm ####
-int main(int argc, char** argv)
-{
-	// Initialize ROS, specify name of node
-	ros::init(argc, argv, "camera_base_calibration");
+// OpenCV
+#include <opencv/cv.h>
 
-	// Create a handle for this node, initialize node
-	ros::NodeHandle nh("~");
 
-	// load parameters
-	std::string marker_type;
-	bool load_images = false;
-	std::cout << "\n========== Relative Localization Parameters ==========\n";
-	nh.param<std::string>("marker_type", marker_type, "");
-	std::cout << "marker_type: " << marker_type << std::endl;
-	nh.param("load_images", load_images, false);
-	std::cout << "load_images: " << load_images << std::endl;
+// compute rotation matrix from yaw, pitch, roll
+// (w, p, r) = (yaW, Pitch, Roll) with
+// 1. rotation = yaw around z
+// 2. rotation = pitch around y'
+// 3. rotation = roll around x''
+cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll);
 
-	if (marker_type.compare("checkerboard") == 0)
-	{
-		CameraBaseCalibrationCheckerboard cb(nh);
-		cb.calibrateCameraToBase(load_images);
-	}
-	else if (marker_type.compare("corner") == 0)
-	{
-	}
+// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
+cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot);
 
-	return 0;
-}
+cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
+
+#endif	// _TRANSFORMATION_UTILITIES_H_
