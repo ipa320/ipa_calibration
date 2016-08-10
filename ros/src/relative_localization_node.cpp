@@ -55,7 +55,7 @@
  *
  ****************************************************************/
 
-#include "relative_localization/checkerboard_localization.h"
+#include "relative_localization/box_localization.h"
 #include "relative_localization/corner_localization.h"
 
 int main(int argc, char **argv)
@@ -70,9 +70,9 @@ int main(int argc, char **argv)
 	nh.param<std::string>("localization_method", localization_method, "");
 	std::cout << "localization_method: " << localization_method << std::endl;
 
-	if (localization_method.compare("checkerboard") == 0)
+	if (localization_method.compare("box") == 0)
 	{
-		CheckerboardLocalization cl(nh);
+		BoxLocalization cl(nh);
 		ros::spin();
 	}
 	else if (localization_method.compare("corner") == 0)

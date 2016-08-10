@@ -55,11 +55,11 @@
  *
  ****************************************************************/
 
-#include <relative_localization/checkerboard_localization.h>
+#include <relative_localization/box_localization.h>
 #include <relative_localization/visualization_utilities.h>
 #include <relative_localization/relative_localization_utilities.h>
 
-CheckerboardLocalization::CheckerboardLocalization(ros::NodeHandle& nh)
+BoxLocalization::BoxLocalization(ros::NodeHandle& nh)
 		: node_handle_(nh)
 {
 	// load parameters
@@ -79,20 +79,20 @@ CheckerboardLocalization::CheckerboardLocalization(ros::NodeHandle& nh)
 	marker_pub_ = node_handle_.advertise<visualization_msgs::Marker>("wall_marker", 1);
 
 	// subscribers
-	laser_scan_sub_ = node_handle_.subscribe("laser_scan_in", 0, &CheckerboardLocalization::callback, this);
+	laser_scan_sub_ = node_handle_.subscribe("laser_scan_in", 0, &BoxLocalization::callback, this);
 
 	// dynamic reconfigure
-	dynamic_reconfigure_server_.setCallback(boost::bind(&CheckerboardLocalization::dynamicReconfigureCallback, this, _1, _2));
+	dynamic_reconfigure_server_.setCallback(boost::bind(&BoxLocalization::dynamicReconfigureCallback, this, _1, _2));
 	avg_translation_.setZero();
 }
 
-CheckerboardLocalization::~CheckerboardLocalization()
+BoxLocalization::~BoxLocalization()
 {
 
 }
 
 //#define DEBUG_OUTPUT
-void CheckerboardLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
+void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 {
 	// convert scan to x-y coordinates
 	std::vector<cv::Point2d> scan;
@@ -316,7 +316,7 @@ void CheckerboardLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& 
 //	}
 //}
 
-void CheckerboardLocalization::dynamicReconfigureCallback(robotino_calibration::CheckerboardLocalisationConfig &config, uint32_t level)
+void BoxLocalization::dynamicReconfigureCallback(robotino_calibration::CheckerboardLocalisationConfig &config, uint32_t level)
 {
 	update_rate_ = config.update_rate;
 	child_frame_name_ = config.child_frame_name;

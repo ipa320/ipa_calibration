@@ -73,7 +73,7 @@ include_directories(
 # software for laser scanner based relative localization against landmarks
 add_executable(relative_localization_node
 						ros/src/relative_localization_node.cpp
-						ros/src/checkerboard_localization.cpp
+						ros/src/box_localization.cpp
 						ros/src/corner_localization.cpp
 						common/src/relative_localization_utilities.cpp
 )

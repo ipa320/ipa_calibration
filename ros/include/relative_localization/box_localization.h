@@ -80,11 +80,11 @@
 #include <opencv/cv.h>
 
 
-class CheckerboardLocalization
+class BoxLocalization
 {
 public:
-	CheckerboardLocalization(ros::NodeHandle& nh);
-	~CheckerboardLocalization();
+	BoxLocalization(ros::NodeHandle& nh);
+	~BoxLocalization();
 
 
 private:

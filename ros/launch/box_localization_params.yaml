@@ -4,7 +4,7 @@ update_rate: 0.75
 
 # The name of the computed child frame.
 # string
-child_frame_name: /checkerboard_reference_nav
+child_frame_name: "/landmark_reference_nav"
 
 # the length of the wall segment left of the checkerboard's origin, in[m]
 # double
