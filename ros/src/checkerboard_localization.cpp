@@ -55,7 +55,7 @@
  *
  ****************************************************************/
 
-#include <relative_localization/checkerboard_localisation.h>
+#include <relative_localization/checkerboard_localization.h>
 #include <relative_localization/visualization_utilities.h>
 #include <relative_localization/relative_localization_utilities.h>
 

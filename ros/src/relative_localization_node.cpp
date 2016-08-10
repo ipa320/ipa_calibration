@@ -55,16 +55,25 @@
  *
  ****************************************************************/
 
-#include "relative_localization/checkerboard_localisation.h"
+#include "relative_localization/checkerboard_localization.h"
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv,"checkerboard_localisation");
+	ros::init(argc, argv,"relative_localization");
 
 	ros::NodeHandle nh("~");
 
-	CheckerboardLocalization cl(nh);
+	// load parameters
+	std::string localization_method;
+	std::cout << "\n========== Relative Localization Parameters ==========\n";
+	nh.getParam("localization_method", localization_method);
+	std::cout << "localization_method: " << localization_method << std::endl;
 
-	ros::spin();
+	if (localization_method.compare("checkerboard") == 0)
+	{
+		CheckerboardLocalization cl(nh);
+		ros::spin();
+	}
+
 	return 0;
 }

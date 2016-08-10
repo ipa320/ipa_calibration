@@ -32,7 +32,7 @@ find_package(OpenCV REQUIRED)	# name identical to FindOpenCV.cmake in cmake_modu
 ## Declare ROS messages, services and actions ##
 ################################################
 generate_dynamic_reconfigure_options(
-	cfg/CheckerboardLocalisation.cfg
+	cfg/RelativeLocalization.cfg
 )
 
 ###################################
@@ -71,12 +71,12 @@ include_directories(
 )
 
 # software for laser scanner based relative localization against landmarks
-add_executable(checkerboard_localisation_node
-						ros/src/checkerboard_localisation.cpp 
-						ros/src/checkerboard_localisation_node.cpp
+add_executable(relative_localization_node
+						ros/src/relative_localization_node.cpp
+						ros/src/checkerboard_localization.cpp
 )
-add_dependencies(checkerboard_localisation_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
-target_link_libraries(checkerboard_localisation_node
+add_dependencies(relative_localization_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+target_link_libraries(relative_localization_node
 	${catkin_LIBRARIES}
 	${Boost_LIBRARIES}
 	${OpenCV_LIBRARIES}
@@ -98,7 +98,7 @@ target_link_libraries(checkerboard_localisation_node
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS checkerboard_localisation_node
+install(TARGETS relative_localization_node
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
