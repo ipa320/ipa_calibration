@@ -46,7 +46,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 INCLUDE_DIRS
-#	common/include
+	common/include
 	ros/include
 LIBRARIES
 CATKIN_DEPENDS
@@ -63,7 +63,7 @@ DEPENDS
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-#	common/include
+	common/include
 	ros/include
 	${catkin_INCLUDE_DIRS} 		# same name as find_package
 	${Boost_INCLUDE_DIRS}

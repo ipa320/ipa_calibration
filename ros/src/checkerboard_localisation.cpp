@@ -55,8 +55,9 @@
  *
  ****************************************************************/
 
-#include "relative_localization/checkerboard_localisation.h"
-#include <vector>
+#include <relative_localization/checkerboard_localisation.h>
+#include <relative_localization/visualization_utilities.h>
+#include <relative_localization/relative_localization_utilities.h>
 
 CheckerboardLocalization::CheckerboardLocalization(ros::NodeHandle& nh)
 		: node_handle_(nh)
@@ -106,7 +107,7 @@ void CheckerboardLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& 
 
 	// match line to scan
 	cv::Vec4d line;
-	fitLine(scan, line, 0.1, 0.9999, 0.01, true);
+	RelativeLocalizationUtilities::fitLine(scan, line, 0.1, 0.9999, 0.01, true);
 	if (line.val[0] != line.val[0] || line.val[1] != line.val[1] || line.val[2] != line.val[2] || line.val[3] != line.val[3])
 		return;
 
@@ -116,7 +117,7 @@ void CheckerboardLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& 
 	const double n0x = line.val[2];	// normal direction on the wall (in floor plane x-y)
 	const double n0y = line.val[3];
 	if (marker_pub_.getNumSubscribers() > 0)
-		publishWallVisualization(laser_scan_msg->header, px, py, n0x, n0y);
+		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall", px, py, n0x, n0y, marker_pub_);
 
 	// find blocks in front of the wall
 	std::vector< std::vector<cv::Point2d> > segments;
@@ -162,7 +163,7 @@ void CheckerboardLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& 
 
 	// display points of box segment
 	if (marker_pub_.getNumSubscribers() > 0)
-		publishBoxPoints(laser_scan_msg->header, segments, largest_segment);
+		VisualizationUtilities::publishBoxPoints(laser_scan_msg->header, "box_points", segments, largest_segment, marker_pub_);
 
 #ifdef DEBUG_OUTPUT
 	std::cout << "Corner point: " << corner_point << std::endl;
@@ -179,7 +180,7 @@ void CheckerboardLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& 
 	double y = py - j*n0x;
 	tf::Vector3 translation(x, y, 0.);
 	// direction of x-axis in laser scanner coordinate system
-	Point2d normal(n0x, n0y);
+	cv::Point2d normal(n0x, n0y);
 	if (normal.x*translation.getX() + normal.y*translation.getY() < 0)
 		normal *= -1.;
 	double angle = atan2(normal.y, normal.x);
@@ -327,140 +328,4 @@ void CheckerboardLocalization::dynamicReconfigureCallback(robotino_calibration::
 			<< "\n wall_length_left=" << wall_length_left_
 			<< "\n wall_length_right=" << wall_length_right_
 			<< "\n box_search_width=" << box_search_width_ << "\n";
-}
-
-void CheckerboardLocalization::fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set)
-{
-	const int iterations = (int)(log(1.-success_probability)/log(1.-inlier_ratio*inlier_ratio));
-#ifdef DEBUG_OUTPUT
-	std::cout << "fitLine: iterations: " << iterations << std::endl;
-#endif
-	const int samples = (int)points.size();
-
-	// RANSAC iterations
-	int max_inliers = 0;
-	for (int k=0; k<iterations; ++k)
-	{
-		// draw two different points from samples
-		int index1, index2;
-		if (draw_from_both_halves_of_point_set == false)
-		{
-			index1 = rand()%samples;
-			index2 = index1;
-			while (index2==index1)
-				index2 = rand()%samples;
-		}
-		else
-		{
-			index1 = rand()%(samples/2);
-			index2 = std::min((samples/2)+rand()%(samples/2), samples-1);
-		}
-
-		// compute line equation from points: d = n0 * (x - x0)  (x0=point on line, n0=normalized normal on line, d=distance to line, d=0 -> line)
-		cv::Point2d x0 = points[index1];	// point on line
-		cv::Point2d n0(points[index2].y-points[index1].y, points[index1].x-points[index2].x);	// normal direction on line
-		const double n0_length = sqrt(n0.x*n0.x + n0.y*n0.y);
-		n0.x /= n0_length; n0.y /= n0_length;
-		const double c = -points[index1].x*n0.x - points[index1].y*n0.y;		// distance to line: d = n0*(x-x0) = n0.x*x + n0.y*y + c
-
-		// count inliers
-		int inliers = 0;
-		for (size_t i=0; i<points.size(); ++i)
-			if (fabs(n0.x * points[i].x + n0.y * points[i].y + c) <= max_inlier_distance)
-				++inliers;
-
-		// update best model
-		if (inliers > max_inliers)
-		{
-			max_inliers = inliers;
-			line = cv::Vec4d(points[index1].x, points[index1].y, n0.x, n0.y);		// [x0, y0, n0.x, n0.y]
-		}
-	}
-
-#ifdef DEBUG_OUTPUT
-	std::cout << "Ransac line: " << line << std::endl;
-#endif
-
-	// final optimization with least squares fit
-	const cv::Point2d n0(line[2], line[3]);
-	const double c = -line[0]*n0.x - line[1]*n0.y;
-	std::vector<cv::Point2f> inlier_set;
-	for (size_t i=0; i<points.size(); ++i)
-		if (fabs(n0.x * points[i].x + n0.y * points[i].y + c) <= max_inlier_distance)
-			inlier_set.push_back(cv::Point2f(points[i].x, points[i].y));
-	cv::Vec4f line_ls;
-	cv::fitLine(inlier_set, line_ls, CV_DIST_L2, 0, 0.01, 0.01);	// (vx, vy, x0, y0), where (vx, vy) is a normalized vector collinear to the line and (x0, y0) is a point on the line
-	const double length = sqrt(line_ls[0]*line_ls[0]+line_ls[1]*line_ls[1]);
-	line = cv::Vec4d(line_ls[2], line_ls[3], line_ls[1]/length, -line_ls[0]/length);
-
-#ifdef DEBUG_OUTPUT
-	std::cout << "Optimized line: " << line << std::endl;
-#endif
-}
-
-void CheckerboardLocalization::publishWallVisualization(const std_msgs::Header& header, const double px, const double py, const double n0x, const double n0y)
-{
-	if (marker_pub_.getNumSubscribers() > 0)
-	{
-		visualization_msgs::Marker marker;
-		marker.header = header;
-		marker.ns = "wall";
-		marker.id = 0;
-		marker.type = visualization_msgs::Marker::LINE_LIST;
-		marker.action = visualization_msgs::Marker::ADD;
-		marker.pose.position.x = 0;
-		marker.pose.position.y = 0;
-		marker.pose.position.z = 0;
-		marker.pose.orientation.x = 0.0;
-		marker.pose.orientation.y = 0.0;
-		marker.pose.orientation.z = 0.0;
-		marker.pose.orientation.w = 1.0;
-		marker.color.r = 0.0;
-		marker.color.g = 1.0;
-		marker.color.b = 0.0;
-		marker.color.a = 1.0;
-		marker.scale.x = 0.05;
-		geometry_msgs::Point point;
-		point.x = px - 5*n0y;
-		point.y = py + 5*n0x;
-		point.z = 0;
-		marker.points.push_back(point);
-		point.x = px + 5*n0y;
-		point.y = py - 5*n0x;
-		point.z = 0;
-		marker.points.push_back(point);
-		marker_pub_.publish(marker);
-	}
-}
-
-void CheckerboardLocalization::publishBoxPoints(const std_msgs::Header& header, const std::vector< std::vector<cv::Point2d> >& segments, const size_t largest_segment)
-{
-	// display points of box segment
-	visualization_msgs::Marker marker;
-	marker.header = header;
-	marker.ns = "box_points";
-	marker.id = 0;
-	marker.type = visualization_msgs::Marker::SPHERE_LIST;
-	marker.action = visualization_msgs::Marker::ADD;
-	marker.pose.position.x = 0;
-	marker.pose.position.y = 0;
-	marker.pose.position.z = 0;
-	marker.pose.orientation.x = 0.0;
-	marker.pose.orientation.y = 0.0;
-	marker.pose.orientation.z = 0.0;
-	marker.pose.orientation.w = 1.0;
-	marker.color.r = 0.0;
-	marker.color.g = 0.0;
-	marker.color.b = 1.0;
-	marker.color.a = 1.0;
-	marker.scale.x = 0.05;
-	for (size_t i=0; i<segments[largest_segment].size(); ++i)
-	{
-		geometry_msgs::Point point;
-		point.x = segments[largest_segment][i].x;
-		point.y = segments[largest_segment][i].y;
-		point.z = 0;
-		marker.points.push_back(point);
-	}
-	marker_pub_.publish(marker);
 }
