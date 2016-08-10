@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+	<name>relative_localization</name>
+	<version>0.0.0</version>
+	<description>The relative_localization package. Contains methods for laser scanner based relative localization against landmarks such as walls or corners.</description>
+
+	<license>LGPL</license>
+	<!--url type="website">http://wiki.ros.org/relative_localization</url-->
+
+	<maintainer email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</maintainer>
+	<author email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</author>
+
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<depend>boost</depend>
+	<depend>cmake_modules</depend>
+	<depend>dynamic_reconfigure</depend>
+	<depend>geometry_msgs</depend>
+	<depend>libopencv-dev</depend>
+	<depend>roscpp</depend>
+	<depend>roslib</depend>
+	<depend>sensor_msgs</depend>
+	<depend>std_msgs</depend>
+	<depend>tf</depend>
+	<depend>visualization_msgs</depend>
+
+</package>
