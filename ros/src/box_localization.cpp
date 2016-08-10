@@ -63,7 +63,7 @@ BoxLocalization::BoxLocalization(ros::NodeHandle& nh)
 		: node_handle_(nh)
 {
 	// load parameters
-	std::cout << "\n========== Checkerboard Localization Parameters ==========\n";
+	std::cout << "\n========== Box Localization Parameters ==========\n";
 	node_handle_.param("update_rate", update_rate_, 0.75);
 	std::cout << "update_rate: " << update_rate_ << std::endl;
 	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "");
