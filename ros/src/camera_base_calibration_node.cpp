@@ -56,16 +56,28 @@
 int main(int argc, char** argv)
 {
 	// Initialize ROS, specify name of node
-	ros::init(argc, argv, "camera_base_calibration_node");
+	ros::init(argc, argv, "camera_base_calibration");
 
 	// Create a handle for this node, initialize node
 	ros::NodeHandle nh("~");
 
+	// load parameters
+	std::string localization_method;
 	bool load_images = false;
+	std::cout << "\n========== Relative Localization Parameters ==========\n";
+	nh.param<std::string>("localization_method", localization_method, "");
+	std::cout << "localization_method: " << localization_method << std::endl;
 	nh.param("load_images", load_images, false);
+	std::cout << "load_images: " << load_images << std::endl;
 
-	CameraBaseCalibrationCheckerboard cb(nh);
-	cb.calibrateCameraToBase(load_images);
+	if (localization_method.compare("checkerboard") == 0)
+	{
+		CameraBaseCalibrationCheckerboard cb(nh);
+		cb.calibrateCameraToBase(load_images);
+	}
+	else if (localization_method.compare("corner") == 0)
+	{
+	}
 
 	return 0;
 }
