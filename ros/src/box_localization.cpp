@@ -101,14 +101,14 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; //[rad]
 		double dist = laser_scan_msg->ranges[i];
 		cv::Point2d point(dist*cos(angle), dist*sin(angle));
-		if (point.y > -wall_length_right_ && point.y < wall_length_left_)
+		if (point.y > -wall_length_right_ && point.y < wall_length_left_) // dump points that are too far on left/right in terms of the scanner base
 			scan.push_back(point);
 	}
 
 	// match line to scan
 	cv::Vec4d line;
 	RelativeLocalizationUtilities::fitLine(scan, line, 0.1, 0.9999, 0.01, true);
-	if (line.val[0] != line.val[0] || line.val[1] != line.val[1] || line.val[2] != line.val[2] || line.val[3] != line.val[3])
+	if (line.val[0] != line.val[0] || line.val[1] != line.val[1] || line.val[2] != line.val[2] || line.val[3] != line.val[3]) // check for NaN
 		return;
 
 	// display line
@@ -175,7 +175,13 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 	tf::StampedTransform transform_table_reference;
 	// offset to laser scanner coordinate system
 	// intersection of line from left block point in normal direction with wall line
-	double j = ((corner_point.x-px)*n0y + (py-corner_point.y)*n0x) / (n0x*n0x + n0y*n0y);
+
+	// calculate projection (j*n0') of corner to wall: n0' = n0 rotated by 90°, to get the normal vector in direction of the wall
+	// j = projection length
+	// retrieve translation p' from scanner base to corner base
+	// n0' = [n0y; -n0x]
+	// p' = p + j*n0'
+	double j = ((corner_point.x-px)*n0y + (py-corner_point.y)*n0x) / (n0x*n0x + n0y*n0y); // j = (corner - p) dot n0'
 	double x = px + j*n0y;
 	double y = py - j*n0x;
 	tf::Vector3 translation(x, y, 0.);
@@ -184,7 +190,7 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 	if (normal.x*translation.getX() + normal.y*translation.getY() < 0)
 		normal *= -1.;
 	double angle = atan2(normal.y, normal.x);
-	tf::Quaternion orientation(tf::Vector3(0,0,1), angle);
+	tf::Quaternion orientation(tf::Vector3(0,0,1), angle); // rotation around z by value of angle
 
 	// update transform
 	if (avg_translation_.isZero())
