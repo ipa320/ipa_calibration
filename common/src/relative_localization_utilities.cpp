@@ -97,7 +97,7 @@ void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const doub
 		// count inliers
 		int inliers = 0;
 		for (size_t i=0; i<points.size(); ++i)
-			if (fabs(n0.x * points[i].x + n0.y * points[i].y + c) <= max_inlier_distance)
+			if (fabs(n0.x * points[i].x + n0.y * points[i].y + c) <= max_inlier_distance) // count points that are within a margin around the line
 				++inliers;
 
 		// update best model
@@ -122,7 +122,7 @@ void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const doub
 	cv::Vec4f line_ls;
 	cv::fitLine(inlier_set, line_ls, CV_DIST_L2, 0, 0.01, 0.01);	// (vx, vy, x0, y0), where (vx, vy) is a normalized vector collinear to the line and (x0, y0) is a point on the line
 	const double length = sqrt(line_ls[0]*line_ls[0]+line_ls[1]*line_ls[1]);
-	line = cv::Vec4d(line_ls[2], line_ls[3], line_ls[1]/length, -line_ls[0]/length);
+	line = cv::Vec4d(line_ls[2], line_ls[3], line_ls[1]/length, -line_ls[0]/length); // store optimized line and its normal vector
 
 #ifdef DEBUG_OUTPUT
 	std::cout << "Optimized line: " << line << std::endl;
