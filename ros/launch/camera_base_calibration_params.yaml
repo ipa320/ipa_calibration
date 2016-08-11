@@ -1,12 +1,14 @@
 ### checkerboard parameters
 # side length of the chessboard squares
-chessboard_cell_size: 0.05
+# chessboard_cell_size: 0.05
+chessboard_cell_size: 0.018
 
 # number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
-chessboard_pattern_size: [6,4]
+# chessboard_pattern_size: [6,4]
+chessboard_pattern_size: [9,6]
 
 ### initial values for transformation estimates
-# insert the values as x, y, z, yaw (rot around z), pitch (rot around y), roll (rot around x)
+# insert the values as x, y, z, yaw (rot around z), pitch (rot around y'), roll (rot around x'')
 # the transform from base_frame to torso_lower_frame
 T_base_to_torso_lower_initial: [0.25, 0, 0.5, 0.0, 0.0, 0.0]
 

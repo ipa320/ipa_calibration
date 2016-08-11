@@ -85,9 +85,15 @@
 // 2. rotation = pitch around y'
 // 3. rotation = yaw around x''
 // ATTENTION: this definition does not match with the ROS definition (1. yaw around z, 2. pitch around y', 3. roll around x'') -> swap roll and yaw in function call
-cv::Mat rotationMatrixFromRPY(double roll, double pitch, double yaw);
+// FIX:
+// 1. Yaw around z
+// 2. Pitch around y'
+// 3. Roll around x''
+//cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll);
+cv::Mat rotationMatrixFromRPY(double roll, double pitch, double yaw); // deprecated
 
 // computes roll, pitch, yaw angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
+//ToDo: Change this to YPR so it matches the ROS std. convention.
 cv::Vec3d RPYFromRotationMatrix(const cv::Mat& rot);
 
 cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);

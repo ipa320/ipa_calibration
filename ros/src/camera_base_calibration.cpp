@@ -58,7 +58,7 @@
 #include <sstream>
 
 
-cv::Mat rotationMatrixFromRPY(double roll, double pitch, double yaw)
+/*cv::Mat rotationMatrixFromYPR(double roll, double pitch, double yaw) // deprecated
 {
 	double sr = sin(roll);
 	double cr = cos(roll);
@@ -70,6 +70,23 @@ cv::Mat rotationMatrixFromRPY(double roll, double pitch, double yaw)
 			cr*cp,		cr*sp*sy - sr*cy,		cr*sp*cy + sr*sy,
 			sr*cp,		sr*sp*sy + cr*cy,		sr*sp*cy - cr*sy,
 			-sp,		cp*sy,					cp*cy);
+
+	return rotation;
+}*/
+
+cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
+{
+	double sr = sin(roll);
+	double cr = cos(roll);
+	double sp = sin(pitch);
+	double cp = cos(pitch);
+	double sy = sin(yaw);
+	double cy = cos(yaw);
+
+	cv::Mat rotation = (cv::Mat_<double>(3,3) <<
+	  		cp*cy,		cy*sp*sr - cr*sy,		sr*sy + cr*cy*sp,
+	  		cp*sy,		cr*cy + sp*sr*sy,		cr*sp*sy - cy*sr,
+	  		-sp,		cp*sr,					cp*cr);
 
 	return rotation;
 }
@@ -122,17 +139,17 @@ CameraBaseCalibration::CameraBaseCalibration(ros::NodeHandle nh) :
 	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "checkerboard");
 	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
 	// initial parameters
-	T_base_to_torso_lower_ = makeTransform(rotationMatrixFromRPY(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
-	T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromRPY(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
+	T_base_to_torso_lower_ = makeTransform(rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
+	T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromYPR(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
 	temp.clear();
 	node_handle_.getParam("T_base_to_torso_lower_initial", temp);
 	if (temp.size()==6)
-		T_base_to_torso_lower_ = makeTransform(rotationMatrixFromRPY(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+		T_base_to_torso_lower_ = makeTransform(rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_base_to_torso_lower_initial:\n" << T_base_to_torso_lower_ << std::endl;
 	temp.clear();
 	node_handle_.getParam("T_torso_upper_to_camera_initial", temp);
 	if (temp.size()==6)
-		T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromRPY(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+		T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_torso_upper_to_camera_initial:\n" << T_torso_upper_to_camera_ << std::endl;
 	// optimization parameters
 	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
