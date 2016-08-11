@@ -53,6 +53,9 @@
 // Eigen
 #include <Eigen/Core>
 
+namespace robotino_calibration
+{
+
 // compute rotation matrix from yaw, pitch, roll
 // (w, p, r) = (yaW, Pitch, Roll) with
 // 1. rotation = yaw around z
@@ -93,4 +96,6 @@ cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
 			R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
 			0., 0., 0., 1);
 	return T;
+}
+
 }

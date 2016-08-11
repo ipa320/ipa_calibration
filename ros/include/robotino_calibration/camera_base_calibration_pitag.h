@@ -90,7 +90,7 @@ public:
 	~CameraBaseCalibrationPiTag();
 
 	// starts the calibration between camera and base including data acquisition
-	bool calibrateCameraToBase(const bool load_images);
+	bool calibrateCameraToBase(const bool load_data);
 
 	void setCalibrationStatus(bool calibrated)
 	{
@@ -103,8 +103,6 @@ public:
 
 	void getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera);
 
-	void undistort(const cv::Mat& image, cv::Mat& image_undistorted);
-
 protected:
 
 	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image);
@@ -114,31 +112,20 @@ protected:
 	// acquires images automatically from all set up robot configurations and detects the checkerboard points
 	// @param load_images loads calibration images and transformations from hard disk if set to true (images and transformations are stored automatically during recording from a real camera)
 	// retrieves the image size, checkerboard points per image as well as all relevant transformations
-	bool acquireCalibrationImages(const std::vector<RobotConfiguration>& robot_configurations, const cv::Size pattern_size, const bool load_images,
-			int& image_width, int& image_height, std::vector< std::vector<cv::Point2f> >& points_2d_per_image,
-			std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
-			std::vector<cv::Mat>& T_camera_to_camera_optical_vector);
-
-	// acquire a single image and detect checkerboard points
-	int acquireCalibrationImage(int& image_width, int& image_height, std::vector<cv::Point2f>& points_2d_per_image,
-			const cv::Size pattern_size, const bool load_images, int& image_counter);
+	bool acquireCalibrationData(const std::vector<RobotConfiguration>& robot_configurations, const bool load_data,
+			std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
+			std::vector<cv::Mat>& T_camera_to_marker_vector);
 
 	// moves the robot to a desired location and adjusts the torso joints
 	bool moveRobot(const RobotConfiguration& robot_configuration);
 
-	// generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates
-	void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images);
-
-	// intrinsic camera calibration (+ distortion coefficients)
-	void intrinsicCalibration(const std::vector< std::vector<cv::Point3f> >& pattern_points, const std::vector< std::vector<cv::Point2f> >& camera_points_2d_per_image, const cv::Size& image_size, std::vector<cv::Mat>& rvecs_jai, std::vector<cv::Mat>& tvecs_jai);
-
 	void extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-			std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
-			std::vector<cv::Mat>& T_camera_to_checkerboard_vector);
+			std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
+			std::vector<cv::Mat>& T_camera_to_marker_vector);
 
 	void extrinsicCalibrationTorsoUpperToCamera(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-			std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
-			std::vector<cv::Mat>& T_camera_to_checkerboard_vector);
+			std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
+			std::vector<cv::Mat>& T_camera_to_marker_vector);
 
 	// computes the rigid transform between two sets of corresponding 3d points measured in different coordinate systems
 	// the resulting 4x4 transformation matrix converts point coordinates from the target system into the source coordinate system
@@ -149,12 +136,8 @@ protected:
 
 
 	ros::NodeHandle node_handle_;
-	image_transport::ImageTransport* it_;
-	image_transport::SubscriberFilter color_image_sub_; ///< Color camera image input topic
-	boost::mutex camera_data_mutex_;	// secures read and write operations on camera data
-	cv::Mat camera_image_;		// stores the latest camera image
-	ros::Time latest_image_time_;	// stores time stamp of latest image
-	bool capture_image_;
+
+	ros::ServiceClient pitag_client_;
 
 	ros::Publisher base_controller_;
 	ros::Publisher tilt_controller_;
@@ -166,10 +149,7 @@ protected:
 	std::string camera_frame_;
 	std::string camera_optical_frame_;
 	std::string base_frame_;
-	std::string checkerboard_frame_;
-
-	cv::Mat K_;			// intrinsic matrix for camera
-	cv::Mat distortion_;	// distortion parameters for camera
+	std::string marker_frame_base_name_;
 
 	cv::Mat T_base_to_torso_lower_;		// transformation to estimate from base to torso_lower
 	cv::Mat T_torso_upper_to_camera_;		// transformation to estimate from torso_upper to camera
@@ -180,9 +160,6 @@ protected:
 	std::string camera_calibration_path_;	// path to data
 	std::string tilt_controller_command_;
 	std::string pan_controller_command_;
-
-	double chessboard_cell_size_;	// cell side length in [m]
-	cv::Size chessboard_pattern_size_;		// number of checkerboard corners in x and y direction
 
 	int optimization_iterations_;	// number of iterations for optimization
 

@@ -87,17 +87,17 @@ CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHa
 	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "marker");
 	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
 	// initial parameters
-	T_base_to_torso_lower_ = makeTransform(rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
-	T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromYPR(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
+	T_base_to_torso_lower_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
+	T_torso_upper_to_camera_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
 	temp.clear();
 	node_handle_.getParam("T_base_to_torso_lower_initial", temp);
 	if (temp.size()==6)
-		T_base_to_torso_lower_ = makeTransform(rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+		T_base_to_torso_lower_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_base_to_torso_lower_initial:\n" << T_base_to_torso_lower_ << std::endl;
 	temp.clear();
 	node_handle_.getParam("T_torso_upper_to_camera_initial", temp);
 	if (temp.size()==6)
-		T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+		T_torso_upper_to_camera_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_torso_upper_to_camera_initial:\n" << T_torso_upper_to_camera_ << std::endl;
 	// optimization parameters
 	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
@@ -206,7 +206,7 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	{
 		cv::Mat R, t;
 		cv::Rodrigues(rvecs[i], R);
-		cv::Mat T_camera_to_checkerboard = T_camera_to_camera_optical_vector[i] * makeTransform(R, tvecs[i]);
+		cv::Mat T_camera_to_checkerboard = T_camera_to_camera_optical_vector[i] * robotino_calibration::makeTransform(R, tvecs[i]);
 		T_camera_to_checkerboard_vector.push_back(T_camera_to_checkerboard);
 	}
 
@@ -226,7 +226,7 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 
 	// display calibration parameters
 	std::cout << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
-	cv::Vec3d ypr = YPRFromRotationMatrix(T_base_to_torso_lower_);
+	cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T_base_to_torso_lower_);
 	std::cout << "  <!-- pan_tilt mount positions | handeye calibration | relative to base_link -->\n"
 			  << "  <property name=\"pan_tilt_x\" value=\"" << T_base_to_torso_lower_.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"pan_tilt_y\" value=\"" << T_base_to_torso_lower_.at<double>(1,3) << "\"/>\n"
@@ -234,7 +234,7 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 			  << "  <property name=\"pan_tilt_roll\" value=\"" << ypr.val[2] << "\"/>\n"
 			  << "  <property name=\"pan_tilt_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
 			  << "  <property name=\"pan_tilt_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
-	ypr = YPRFromRotationMatrix(T_torso_upper_to_camera_);
+	ypr = robotino_calibration::YPRFromRotationMatrix(T_torso_upper_to_camera_);
 	std::cout << "  <!-- kinect mount positions | handeye calibration | relative to pan_tilt_link -->\n"
 			  << "  <property name=\"kinect_x\" value=\"" << T_torso_upper_to_camera_.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"kinect_y\" value=\"" << T_torso_upper_to_camera_.at<double>(1,3) << "\"/>\n"
@@ -407,7 +407,7 @@ bool CameraBaseCalibrationCheckerboard::moveRobot(const RobotConfiguration& robo
 	cv::Mat T;
 	if (!getTransform("landmark_reference_nav", "base_link", T))
 		return false;
-	cv::Vec3d ypr = YPRFromRotationMatrix(T);
+	cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T);
 	double robot_yaw = ypr.val[0];
 	geometry_msgs::Twist tw;
 	error_phi = robot_configuration.pose_phi_ - robot_yaw;
@@ -426,7 +426,7 @@ bool CameraBaseCalibrationCheckerboard::moveRobot(const RobotConfiguration& robo
 		{
 			if (!getTransform("landmark_reference_nav", "base_link", T))
 				return false;
-			cv::Vec3d ypr = YPRFromRotationMatrix(T);
+			cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T);
 				double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
 			error_phi = robot_configuration.pose_phi_ - robot_yaw;
@@ -464,7 +464,7 @@ bool CameraBaseCalibrationCheckerboard::moveRobot(const RobotConfiguration& robo
 		{
 			if (!getTransform("landmark_reference_nav", "base_link", T))
 				return false;
-			cv::Vec3d ypr = YPRFromRotationMatrix(T);
+			cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T);
 				double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
 			error_phi = robot_configuration.pose_phi_ - robot_yaw;
@@ -609,7 +609,7 @@ cv::Mat CameraBaseCalibrationCheckerboard::computeExtrinsicTransform(const std::
 	// translation
 	cv::Mat t = -R*cv::Mat(centroid_target) + cv::Mat(centroid_source);
 
-	return makeTransform(R, t);
+	return robotino_calibration::makeTransform(R, t);
 }
 
 bool CameraBaseCalibrationCheckerboard::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
@@ -628,7 +628,7 @@ bool CameraBaseCalibrationCheckerboard::getTransform(const std::string& target_f
 				rotcv.at<double>(v,u) = rot[v].m_floats[u];
 		for (int v=0; v<3; ++v)
 			transcv.at<double>(v) = trans.m_floats[v];
-		T = makeTransform(rotcv, transcv);
+		T = robotino_calibration::makeTransform(rotcv, transcv);
 		//std::cout << "Transform from " << source_frame << " to " << target_frame << ":\n" << T << std::endl;
 	}
 	catch (tf::TransformException& ex)

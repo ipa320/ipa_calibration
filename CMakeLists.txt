@@ -3,6 +3,8 @@ project(robotino_calibration)
 
 set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is system dependency --> sudo apt-get install)
 	cv_bridge
+	cob_fiducials
+	cob_object_detection_msgs
 	geometry_msgs
 	image_transport
 	roscpp

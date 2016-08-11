@@ -54,6 +54,8 @@
 // OpenCV
 #include <opencv/cv.h>
 
+namespace robotino_calibration
+{
 
 // compute rotation matrix from yaw, pitch, roll
 // (w, p, r) = (yaW, Pitch, Roll) with
@@ -66,5 +68,7 @@ cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll);
 cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot);
 
 cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
+
+}
 
 #endif	// _TRANSFORMATION_UTILITIES_H_

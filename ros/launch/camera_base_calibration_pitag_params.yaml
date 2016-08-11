@@ -1,10 +1,3 @@
-### checkerboard parameters
-# side length of the chessboard squares
-chessboard_cell_size: 0.05
-
-# number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
-chessboard_pattern_size: [6,4]
-
 ### initial values for transformation estimates
 # insert the values as x, y, z, yaw (rot around z), pitch (rot around y), roll (rot around x)
 # the transform from base_frame to torso_lower_frame
@@ -15,6 +8,19 @@ T_torso_upper_to_camera_initial: [0.0, 0.065, 0.0, 0.0, 0.0, -1.57]
 
 
 ### checkerboard observation positions for capturing calibration images
+# if this flag is true, then the robot configurations will be sampled on a equally spaced grid from the given ranges, if false, the user-provided configurations in robot_configurations will be used
+# bool
+use_range: true
+
+# ranges for the degrees of freedom of the robot
+# each parameter is set as [min_value, step, max_value]
+# double
+x_range: [-1.5, 0.25, -0.75]       # in [m]
+y_range: [-0.09, 1.0, -0.09]       # in [m], fixed y-coordinate
+phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
+pan_range: [-0.52, 0.02, 0.52]     # in [rad]
+tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
+
 # list of robot configurations for observing the checkerboard measured relative to the checkerboard_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the checkerboard
 # includes 5 parameters per entry: robot pose: x, y, phi and torso: pan, tilt
 robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
@@ -70,7 +76,7 @@ camera_optical_frame: "kinect_rgb_optical_frame"
 base_frame: "base_link"
 
 # do not modify, this is the coordinate system fixed in the upper left checkerboard calibration corner (where 4 squares meet), it will be published to tf via the checkerboard_localisation program
-checkerboard_frame: "checkerboard"
+marker_frame_base_name: "marker"
 
 
 ### program sequence
