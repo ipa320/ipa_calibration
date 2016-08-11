@@ -2,13 +2,6 @@
 
 <launch>
 
-	<!-- transform between marker (e.g. tag or checkerboard) coordinate system and landmark_reference coordinate system
-		marker: for a checkerboard or PiTag - starts in upper left corner of checkerboard pattern, x goes horizontal to the right, y goes downwards to gravity direction, z goes into the plane
-		landmark_reference: similar definition as marker, but located on the left edge of the box in front of the wall at the height of the laser scanner
-		transform between them: no rotation, just a x and y offset (ATTENTION: y offset depends on mounting height of the laser scanner) -->
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker" output="screen" args="0.0 -0.7 0 0 0 0  landmark_reference marker 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 -1.57079632679  landmark_reference_nav landmark_reference 100"/>
-
 	<node ns="box_localization" name="relative_localization" pkg="relative_localization" type="relative_localization_node" output="screen">
 		<rosparam command="load" file="$(find relative_localization)/ros/launch/box_localization_params.yaml"/>
 		<param name="localization_method" value="box" />
