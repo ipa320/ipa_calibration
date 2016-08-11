@@ -8,7 +8,7 @@
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
  * Project name: squirrel
- * ROS stack name: squirrel_robotino
+ * ROS stack name: squirrel_calibration
  * ROS package name: robotino_calibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -48,7 +48,8 @@
  *
  ****************************************************************/
 
-#include <robotino_calibration/camera_base_calibration.h>
+#include <robotino_calibration/camera_base_calibration_checkerboard.h>
+#include <robotino_calibration/transformation_utilities.h>
 
 #include <std_msgs/Float64.h>
 
@@ -58,65 +59,12 @@
 #include <sstream>
 
 
-/*cv::Mat rotationMatrixFromYPR(double roll, double pitch, double yaw) // deprecated
-{
-	double sr = sin(roll);
-	double cr = cos(roll);
-	double sp = sin(pitch);
-	double cp = cos(pitch);
-	double sy = sin(yaw);
-	double cy = cos(yaw);
-	cv::Mat rotation = (cv::Mat_<double>(3,3) <<
-			cr*cp,		cr*sp*sy - sr*cy,		cr*sp*cy + sr*sy,
-			sr*cp,		sr*sp*sy + cr*cy,		sr*sp*cy - cr*sy,
-			-sp,		cp*sy,					cp*cy);
-
-	return rotation;
-}*/
-
-cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
-{
-	double sr = sin(roll);
-	double cr = cos(roll);
-	double sp = sin(pitch);
-	double cp = cos(pitch);
-	double sy = sin(yaw);
-	double cy = cos(yaw);
-
-	cv::Mat rotation = (cv::Mat_<double>(3,3) <<
-	  		cp*cy,		cy*sp*sr - cr*sy,		sr*sy + cr*cy*sp,
-	  		cp*sy,		cr*cy + sp*sr*sy,		cr*sp*sy - cy*sr,
-	  		-sp,		cp*sr,					cp*cr);
-
-	return rotation;
-}
-
-cv::Vec3d RPYFromRotationMatrix(const cv::Mat& rot)
-{
-	Eigen::Matrix3f rot_eigen;
-	for (int i=0; i<3; ++i)
-		for (int j=0; j<3; ++j)
-			rot_eigen(i,j) = rot.at<double>(i,j);
-	Eigen::Vector3f euler_angles = rot_eigen.eulerAngles(2,1,0);
-	return cv::Vec3d(euler_angles(2), euler_angles(1), euler_angles(0));
-}
-
-cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
-{
-	cv::Mat T = (cv::Mat_<double>(4,4) <<
-			R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
-			R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
-			R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
-			0., 0., 0., 1);
-	return T;
-}
-
-CameraBaseCalibration::CameraBaseCalibration(ros::NodeHandle nh) :
+CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHandle nh) :
 			node_handle_(nh), transform_listener_(nh), camera_calibration_path_("robotino_calibration/camera_calibration/"),
 			tilt_controller_command_("/tilt_controller/command"), pan_controller_command_("/pan_controller/command"), capture_image_(true)
 {
 	// load parameters
-	std::cout << "\n========== CameraBaseCalibration Parameters ==========\n";
+	std::cout << "\n========== CameraBaseCalibrationCheckerboard Parameters ==========\n";
 	node_handle_.param("chessboard_cell_size", chessboard_cell_size_, 0.05);
 	std::cout << "chessboard_cell_size: " << chessboard_cell_size_ << std::endl;
 	chessboard_pattern_size_ = cv::Size(6,4);
@@ -136,20 +84,20 @@ CameraBaseCalibration::CameraBaseCalibration(ros::NodeHandle nh) :
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
 	node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
 	std::cout << "base_frame: " << base_frame_ << std::endl;
-	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "checkerboard");
+	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "marker");
 	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
 	// initial parameters
-	T_base_to_torso_lower_ = makeTransform(rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
-	T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromYPR(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
+	T_base_to_torso_lower_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
+	T_torso_upper_to_camera_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
 	temp.clear();
 	node_handle_.getParam("T_base_to_torso_lower_initial", temp);
 	if (temp.size()==6)
-		T_base_to_torso_lower_ = makeTransform(rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+		T_base_to_torso_lower_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_base_to_torso_lower_initial:\n" << T_base_to_torso_lower_ << std::endl;
 	temp.clear();
 	node_handle_.getParam("T_torso_upper_to_camera_initial", temp);
 	if (temp.size()==6)
-		T_torso_upper_to_camera_ = makeTransform(rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+		T_torso_upper_to_camera_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_torso_upper_to_camera_initial:\n" << T_torso_upper_to_camera_ << std::endl;
 	// optimization parameters
 	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
@@ -173,7 +121,7 @@ CameraBaseCalibration::CameraBaseCalibration(ros::NodeHandle nh) :
 	// set up messages
 	it_ = new image_transport::ImageTransport(node_handle_);
 	color_image_sub_.subscribe(*it_, "colorimage_in", 1);
-	color_image_sub_.registerCallback(boost::bind(&CameraBaseCalibration::imageCallback, this, _1));
+	color_image_sub_.registerCallback(boost::bind(&CameraBaseCalibrationCheckerboard::imageCallback, this, _1));
 
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
 	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
@@ -182,13 +130,13 @@ CameraBaseCalibration::CameraBaseCalibration(ros::NodeHandle nh) :
 	ROS_INFO("CameraBaseCalibration initialized.");
 }
 
-CameraBaseCalibration::~CameraBaseCalibration()
+CameraBaseCalibrationCheckerboard::~CameraBaseCalibrationCheckerboard()
 {
 	if (it_ != 0)
 		delete it_;
 }
 
-bool CameraBaseCalibration::convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
+bool CameraBaseCalibrationCheckerboard::convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
 {
 	try
 	{
@@ -204,7 +152,7 @@ bool CameraBaseCalibration::convertImageMessageToMat(const sensor_msgs::Image::C
 	return true;
 }
 
-void CameraBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
+void CameraBaseCalibrationCheckerboard::imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
 {
 	// secure this access with a mutex
 	boost::mutex::scoped_lock lock(camera_data_mutex_);
@@ -222,7 +170,7 @@ void CameraBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& colo
 	}
 }
 
-bool CameraBaseCalibration::calibrateCameraToBase(const bool load_images)
+bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_images)
 {
 	// setup storage folder
 	int return_value = system("mkdir -p robotino_calibration/camera_calibration");
@@ -258,7 +206,7 @@ bool CameraBaseCalibration::calibrateCameraToBase(const bool load_images)
 	{
 		cv::Mat R, t;
 		cv::Rodrigues(rvecs[i], R);
-		cv::Mat T_camera_to_checkerboard = T_camera_to_camera_optical_vector[i] * makeTransform(R, tvecs[i]);
+		cv::Mat T_camera_to_checkerboard = T_camera_to_camera_optical_vector[i] * robotino_calibration::makeTransform(R, tvecs[i]);
 		T_camera_to_checkerboard_vector.push_back(T_camera_to_checkerboard);
 	}
 
@@ -267,33 +215,33 @@ bool CameraBaseCalibration::calibrateCameraToBase(const bool load_images)
 	{
 //		std::cout << "\nExtrinsic optimization run " << i << ":" << std::endl;
 		extrinsicCalibrationBaseToTorsoLower(pattern_points_3d, T_base_to_checkerboard_vector, T_torso_lower_to_torso_upper_vector, T_camera_to_checkerboard_vector);
-//		cv::Vec3d rpy = RPYFromRotationMatrix(T_base_to_torso_lower_);
+//		cv::Vec3d ypr = YPRFromRotationMatrix(T_base_to_torso_lower_);
 //		std::cout << "T_base_to_torso_lower:\n" << T_base_to_torso_lower_ << std::endl;
-//		std::cout << "yaw=" << rpy.val[2] << "   pitch=" << rpy.val[1] << "   roll=" << rpy.val[0] << std::endl;
+//		std::cout << "yaw=" << ypr.val[0] << "   pitch=" << ypr.val[1] << "   roll=" << ypr.val[2] << std::endl;
 		extrinsicCalibrationTorsoUpperToCamera(pattern_points_3d, T_base_to_checkerboard_vector, T_torso_lower_to_torso_upper_vector, T_camera_to_checkerboard_vector);
-//		rpy = RPYFromRotationMatrix(T_torso_upper_to_camera_);
+//		ypr = YPRFromRotationMatrix(T_torso_upper_to_camera_);
 //		std::cout << "T_torso_upper_to_camera:\n" << T_torso_upper_to_camera_ << std::endl;
-//		std::cout << "yaw=" << rpy.val[2] << "   pitch=" << rpy.val[1] << "   roll=" << rpy.val[0] << std::endl;
+//		std::cout << "yaw=" << ypr.val[0] << "   pitch=" << ypr.val[1] << "   roll=" << ypr.val[2] << std::endl;
 	}
 
 	// display calibration parameters
 	std::cout << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
-	cv::Vec3d rpy = RPYFromRotationMatrix(T_base_to_torso_lower_);
+	cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T_base_to_torso_lower_);
 	std::cout << "  <!-- pan_tilt mount positions | handeye calibration | relative to base_link -->\n"
 			  << "  <property name=\"pan_tilt_x\" value=\"" << T_base_to_torso_lower_.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"pan_tilt_y\" value=\"" << T_base_to_torso_lower_.at<double>(1,3) << "\"/>\n"
 			  << "  <property name=\"pan_tilt_z\" value=\"" << T_base_to_torso_lower_.at<double>(2,3) << "\"/>\n"
-			  << "  <property name=\"pan_tilt_roll\" value=\"" << rpy.val[0] << "\"/>\n"
-			  << "  <property name=\"pan_tilt_pitch\" value=\"" << rpy.val[1] << "\"/>\n"
-			  << "  <property name=\"pan_tilt_yaw\" value=\"" << rpy.val[2] << "\"/>\n\n";
-	rpy = RPYFromRotationMatrix(T_torso_upper_to_camera_);
+			  << "  <property name=\"pan_tilt_roll\" value=\"" << ypr.val[2] << "\"/>\n"
+			  << "  <property name=\"pan_tilt_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
+			  << "  <property name=\"pan_tilt_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
+	ypr = robotino_calibration::YPRFromRotationMatrix(T_torso_upper_to_camera_);
 	std::cout << "  <!-- kinect mount positions | handeye calibration | relative to pan_tilt_link -->\n"
 			  << "  <property name=\"kinect_x\" value=\"" << T_torso_upper_to_camera_.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"kinect_y\" value=\"" << T_torso_upper_to_camera_.at<double>(1,3) << "\"/>\n"
 			  << "  <property name=\"kinect_z\" value=\"" << T_torso_upper_to_camera_.at<double>(2,3) << "\"/>\n"
-			  << "  <property name=\"kinect_roll\" value=\"" << rpy.val[0] << "\"/>\n"
-			  << "  <property name=\"kinect_pitch\" value=\"" << rpy.val[1] << "\"/>\n"
-			  << "  <property name=\"kinect_yaw\" value=\"" << rpy.val[2] << "\"/>\n" << std::endl;
+			  << "  <property name=\"kinect_roll\" value=\"" << ypr.val[2] << "\"/>\n"
+			  << "  <property name=\"kinect_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
+			  << "  <property name=\"kinect_yaw\" value=\"" << ypr.val[0] << "\"/>\n" << std::endl;
 
 	// save calibration
 	saveCalibration();
@@ -302,7 +250,7 @@ bool CameraBaseCalibration::calibrateCameraToBase(const bool load_images)
 	return true;
 }
 
-bool CameraBaseCalibration::acquireCalibrationImages(const std::vector<RobotConfiguration>& robot_configurations,
+bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vector<RobotConfiguration>& robot_configurations,
 		const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
 		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_base_to_checkerboard_vector,
 		std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector, std::vector<cv::Mat>& T_camera_to_camera_optical_vector)
@@ -376,7 +324,7 @@ bool CameraBaseCalibration::acquireCalibrationImages(const std::vector<RobotConf
 	return true;
 }
 
-int CameraBaseCalibration::acquireCalibrationImage(int& image_width, int& image_height,
+int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width, int& image_height,
 		std::vector<cv::Point2f>& checkerboard_points_2d, const cv::Size pattern_size, const bool load_images, int& image_counter)
 {
 	int return_value = 0;
@@ -450,17 +398,17 @@ int CameraBaseCalibration::acquireCalibrationImage(int& image_width, int& image_
 	return return_value;
 }
 
-bool CameraBaseCalibration::moveRobot(const RobotConfiguration& robot_configuration)
+bool CameraBaseCalibrationCheckerboard::moveRobot(const RobotConfiguration& robot_configuration)
 {
 	// do not move if close to goal
 	double error_phi = 10;
 	double error_x = 10;
 	double error_y = 10;
 	cv::Mat T;
-	if (!getTransform("checkerboard_reference_nav", "base_link", T))
+	if (!getTransform("landmark_reference_nav", "base_link", T))
 		return false;
-	cv::Vec3d rpy = RPYFromRotationMatrix(T);
-	double robot_yaw = rpy.val[2];
+	cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T);
+	double robot_yaw = ypr.val[0];
 	geometry_msgs::Twist tw;
 	error_phi = robot_configuration.pose_phi_ - robot_yaw;
 	while (error_phi < -CV_PI*0.5)
@@ -476,10 +424,10 @@ bool CameraBaseCalibration::moveRobot(const RobotConfiguration& robot_configurat
 		// control robot angle
 		while(true)
 		{
-			if (!getTransform("checkerboard_reference_nav", "base_link", T))
+			if (!getTransform("landmark_reference_nav", "base_link", T))
 				return false;
-			cv::Vec3d rpy = RPYFromRotationMatrix(T);
-				double robot_yaw = rpy.val[2];
+			cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T);
+				double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
 			error_phi = robot_configuration.pose_phi_ - robot_yaw;
 			while (error_phi < -CV_PI*0.5)
@@ -496,7 +444,7 @@ bool CameraBaseCalibration::moveRobot(const RobotConfiguration& robot_configurat
 		// control position
 		while(true)
 		{
-			if (!getTransform("checkerboard_reference_nav", "base_link", T))
+			if (!getTransform("landmark_reference_nav", "base_link", T))
 				return false;
 			geometry_msgs::Twist tw;
 			error_x = robot_configuration.pose_x_ - T.at<double>(0,3);
@@ -514,10 +462,10 @@ bool CameraBaseCalibration::moveRobot(const RobotConfiguration& robot_configurat
 		// control robot angle
 		while (true)
 		{
-			if (!getTransform("checkerboard_reference_nav", "base_link", T))
+			if (!getTransform("landmark_reference_nav", "base_link", T))
 				return false;
-			cv::Vec3d rpy = RPYFromRotationMatrix(T);
-				double robot_yaw = rpy.val[2];
+			cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T);
+				double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
 			error_phi = robot_configuration.pose_phi_ - robot_yaw;
 			while (error_phi < -CV_PI*0.5)
@@ -547,7 +495,7 @@ bool CameraBaseCalibration::moveRobot(const RobotConfiguration& robot_configurat
 	return true;
 }
 
-void CameraBaseCalibration::computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images)
+void CameraBaseCalibrationCheckerboard::computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images)
 {
 	// prepare chessboard 3d points
 	pattern_points.clear();
@@ -559,7 +507,7 @@ void CameraBaseCalibration::computeCheckerboard3dPoints(std::vector< std::vector
 	pattern_points.resize(number_images, pattern_points[0]);
 }
 
-void CameraBaseCalibration::intrinsicCalibration(const std::vector< std::vector<cv::Point3f> >& pattern_points, const std::vector< std::vector<cv::Point2f> >& camera_points_2d_per_image, const cv::Size& image_size, std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs)
+void CameraBaseCalibrationCheckerboard::intrinsicCalibration(const std::vector< std::vector<cv::Point3f> >& pattern_points, const std::vector< std::vector<cv::Point2f> >& camera_points_2d_per_image, const cv::Size& image_size, std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs)
 {
 	std::cout << "Intrinsic calibration started ..." << std::endl;
 	K_ = cv::Mat::eye(3, 3, CV_64F);
@@ -568,7 +516,7 @@ void CameraBaseCalibration::intrinsicCalibration(const std::vector< std::vector<
 	std::cout << "Intrinsic calibration:\nK:\n" << K_ << "\ndistortion:\n" << distortion_ << std::endl;
 }
 
-void CameraBaseCalibration::extrinsicCalibrationTorsoUpperToCamera(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
+void CameraBaseCalibrationCheckerboard::extrinsicCalibrationTorsoUpperToCamera(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 		std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 		std::vector<cv::Mat>& T_camera_to_checkerboard_vector)
 {
@@ -598,7 +546,7 @@ void CameraBaseCalibration::extrinsicCalibrationTorsoUpperToCamera(std::vector< 
 	T_torso_upper_to_camera_ = computeExtrinsicTransform(points_3d_torso_upper, points_3d_camera);
 }
 
-void CameraBaseCalibration::extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
+void CameraBaseCalibrationCheckerboard::extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 		std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 		std::vector<cv::Mat>& T_camera_to_checkerboard_vector)
 {
@@ -631,7 +579,7 @@ void CameraBaseCalibration::extrinsicCalibrationBaseToTorsoLower(std::vector< st
 	T_base_to_torso_lower_ = computeExtrinsicTransform(points_3d_base, points_3d_torso_lower);
 }
 
-cv::Mat CameraBaseCalibration::computeExtrinsicTransform(const std::vector<cv::Point3d>& points_3d_source, const std::vector<cv::Point3d>& points_3d_target)
+cv::Mat CameraBaseCalibrationCheckerboard::computeExtrinsicTransform(const std::vector<cv::Point3d>& points_3d_source, const std::vector<cv::Point3d>& points_3d_target)
 {
 	// from: http://nghiaho.com/?page_id=671 : ‘A Method for Registration of 3-D Shapes’, by Besl and McKay, 1992.
 	cv::Point3d centroid_source, centroid_target;
@@ -661,10 +609,10 @@ cv::Mat CameraBaseCalibration::computeExtrinsicTransform(const std::vector<cv::P
 	// translation
 	cv::Mat t = -R*cv::Mat(centroid_target) + cv::Mat(centroid_source);
 
-	return makeTransform(R, t);
+	return robotino_calibration::makeTransform(R, t);
 }
 
-bool CameraBaseCalibration::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
+bool CameraBaseCalibrationCheckerboard::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
 {
 	try
 	{
@@ -680,7 +628,7 @@ bool CameraBaseCalibration::getTransform(const std::string& target_frame, const 
 				rotcv.at<double>(v,u) = rot[v].m_floats[u];
 		for (int v=0; v<3; ++v)
 			transcv.at<double>(v) = trans.m_floats[v];
-		T = makeTransform(rotcv, transcv);
+		T = robotino_calibration::makeTransform(rotcv, transcv);
 		//std::cout << "Transform from " << source_frame << " to " << target_frame << ":\n" << T << std::endl;
 	}
 	catch (tf::TransformException& ex)
@@ -692,7 +640,7 @@ bool CameraBaseCalibration::getTransform(const std::string& target_frame, const 
 	return true;
 }
 
-bool CameraBaseCalibration::saveCalibration()
+bool CameraBaseCalibrationCheckerboard::saveCalibration()
 {
 	bool success = true;
 
@@ -716,7 +664,7 @@ bool CameraBaseCalibration::saveCalibration()
 	return success;
 }
 
-bool CameraBaseCalibration::loadCalibration()
+bool CameraBaseCalibrationCheckerboard::loadCalibration()
 {
 	bool success = true;
 
@@ -742,7 +690,7 @@ bool CameraBaseCalibration::loadCalibration()
 	return success;
 }
 
-void CameraBaseCalibration::getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera)
+void CameraBaseCalibrationCheckerboard::getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera)
 {
 	if (calibrated_ == false && loadCalibration() == false)
 	{
@@ -756,7 +704,7 @@ void CameraBaseCalibration::getCalibration(cv::Mat& K, cv::Mat& distortion, cv::
 	T_torso_upper_to_camera = T_torso_upper_to_camera_.clone();
 }
 
-void CameraBaseCalibration::undistort(const cv::Mat& image, cv::Mat& image_undistorted)
+void CameraBaseCalibrationCheckerboard::undistort(const cv::Mat& image, cv::Mat& image_undistorted)
 {
 	if (calibrated_ == false && loadCalibration() == false)
 	{

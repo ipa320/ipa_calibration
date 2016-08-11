@@ -26,7 +26,9 @@ Enter the properties of the used calibration pattern (grid size, square side len
 
 4. Place a box directly below the leftmost line of checkerboard calibration points (i.e. where 4 squares meet). Align the left side of the box with the leftmost calibration points. The box must stand apart from the wall by more than 11 cm. The box is used to localize the calibration pattern with the laser scanner.
 Measure the vertical distance between the laser scanner plane and the upper left checkerboard point and insert the number into file 'squirrel_robotino/robotino_calibration/ros/launch/checkerboard_localisation.launch' at the line:
-<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_checkerboard_reflector" output="screen" args="0.0 -0.7	 0 0 0 0  checkerboard_reference checkerboard 100"/>
+```
+<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker" output="screen" args="0.0 -0.7 0 0 0 0  landmark_reference marker 100"/>
+```
 Replace the -0.7 at the y-offset with your measured number (all other numbers should be 0). Use a negative measure.
 
 5. Check whether all coordinate frame names are correctly chosen is file 'squirrel_robotino/robotino_calibration/ros/launch/camera_base_calibration_params.yaml' at the lines:
@@ -55,11 +57,11 @@ e.g.
  T_torso_upper_to_camera_initial: [0.0, 0.065, 0.0, 0.0, 0.0, -1.57]
  ```
 
-8. Fill in a good amount (i.e. >30) of robot configurations for observing the checkerboard measured relative to the checkerboard_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the checkerboard. This goes into file 'squirrel_robotino/robotino_calibration/ros/launch/camera_base_calibration_params.yaml':
+8. Fill in a good amount (i.e. >30) of robot configurations for observing the checkerboard measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the checkerboard. This goes into file 'squirrel_robotino/robotino_calibration/ros/launch/camera_base_calibration_params.yaml':
 e.g.
  ```
  ### checkerboard observation positions for capturing calibration images
- # list of robot configurations for observing the checkerboard measured relative to the checkerboard_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the checkerboard
+ # list of robot configurations for observing the checkerboard measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link when facing the marker (e.g. checkerboard)
  # includes 5 parameters per entry: robot pose: x, y, phi and torso: pan, tilt
  robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
                         -1.5, -0.17, 0, 0.0, 0.3,

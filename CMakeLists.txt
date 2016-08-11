@@ -3,14 +3,14 @@ project(robotino_calibration)
 
 set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is system dependency --> sudo apt-get install)
 	cv_bridge
-	dynamic_reconfigure
+	cob_fiducials
+	cob_object_detection_msgs
 	geometry_msgs
 	image_transport
 	roscpp
 	roslib
 	sensor_msgs
 	tf
-	visualization_msgs
 )
 
 set(catkin_BUILD_PACKAGES 
@@ -31,25 +31,12 @@ find_package(OpenCV REQUIRED)	# name identical to FindOpenCV.cmake in cmake_modu
 find_package(PCL REQUIRED)
 
 
-################################################
-## Declare ROS messages, services and actions ##
-################################################
-generate_dynamic_reconfigure_options(
-	cfg/CheckerboardLocalisation.cfg
-)
-
 ###################################
 ## catkin specific configuration ##
 ###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 INCLUDE_DIRS
-#	common/include
+	common/include
 	ros/include
 LIBRARIES
 CATKIN_DEPENDS
@@ -67,7 +54,7 @@ DEPENDS
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-#	common/include
+	common/include
 	ros/include
 	${catkin_INCLUDE_DIRS} 		# same name as find_package
 	${Boost_INCLUDE_DIRS}
@@ -75,21 +62,12 @@ include_directories(
 	${PCL_INCLUDE_DIRS}
 )
 
-# software for laser scanner localization of a calibration checkerboard by detecting reflecting markers
-add_executable(checkerboard_localisation_node
-						ros/src/checkerboard_localisation.cpp 
-						ros/src/checkerboard_localisation_node.cpp
-)
-add_dependencies(checkerboard_localisation_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
-target_link_libraries(checkerboard_localisation_node
-	${catkin_LIBRARIES}
-	${Boost_LIBRARIES}
-	${OpenCV_LIBRARIES}
-)
-
 # calibration software
 add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
-										ros/src/camera_base_calibration.cpp)
+										ros/src/camera_base_calibration_checkerboard.cpp
+										ros/src/camera_base_calibration_pitag.cpp
+										common/src/transformation_utilities.cpp
+)
 target_link_libraries(camera_base_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${OpenCV_LIBRARIES}
@@ -113,7 +91,7 @@ add_dependencies(camera_base_calibration	${catkin_EXPORTED_TARGETS})
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS camera_base_calibration checkerboard_localisation_node
+install(TARGETS camera_base_calibration
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
