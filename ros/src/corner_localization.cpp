@@ -226,7 +226,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	}
 }
 
-void CornerLocalization::dynamicReconfigureCallback(robotino_calibration::CheckerboardLocalisationConfig &config, uint32_t level)
+void CornerLocalization::dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig &config, uint32_t level)
 {
 	update_rate_ = config.update_rate;
 	child_frame_name_ = config.child_frame_name;

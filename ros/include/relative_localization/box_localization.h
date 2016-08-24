@@ -55,8 +55,8 @@
  *
  ****************************************************************/
 
-#ifndef CHECKERBOARD_LOCALISATION_H
-#define CHECKERBOARD_LOCALISATION_H
+#ifndef BOX_LOCALIZATION_H
+#define BOX_LOCALIZATION_H
 
 #include <iostream>
 #include <vector>
@@ -74,7 +74,8 @@
 
 // dynamic reconfigure
 #include <dynamic_reconfigure/server.h>
-#include <relative_localization/CheckerboardLocalisationConfig.h>
+//#include <relative_localization/CheckerboardLocalisationConfig.h>
+#include <relative_localization/RelativeLocalizationConfig.h>
 
 // OpenCV
 #include <opencv/cv.h>
@@ -90,7 +91,7 @@ public:
 private:
 
 	void callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg);
-	void dynamicReconfigureCallback(robotino_calibration::CheckerboardLocalisationConfig& config, uint32_t level);
+	void dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig& config, uint32_t level);
 
 	ros::NodeHandle node_handle_;
 	ros::Subscriber laser_scan_sub_;
@@ -98,7 +99,7 @@ private:
 
 	tf::TransformBroadcaster transform_broadcaster_;
 
-	dynamic_reconfigure::Server<robotino_calibration::CheckerboardLocalisationConfig> dynamic_reconfigure_server_;
+	dynamic_reconfigure::Server<robotino_calibration::RelativeLocalizationConfig> dynamic_reconfigure_server_;
 	tf::Vector3 avg_translation_;
 	tf::Quaternion avg_orientation_;
 	double update_rate_;
@@ -110,4 +111,4 @@ private:
 	double box_search_width_;		// the maximum +/-y coordinate in laser scan to search for the localization box, in[m]
 };
 
-#endif // CHECKERBOARD_LOCALISATION_H
+#endif // BOX_LOCALIZATION_H
