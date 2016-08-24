@@ -77,7 +77,7 @@ add_executable(relative_localization_node
 						ros/src/corner_localization.cpp
 						common/src/relative_localization_utilities.cpp
 )
-add_dependencies(relative_localization_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+add_dependencies(relative_localization_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(relative_localization_node
 	${catkin_LIBRARIES}
 	${Boost_LIBRARIES}
