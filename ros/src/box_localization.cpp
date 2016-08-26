@@ -60,35 +60,15 @@
 #include <relative_localization/relative_localization_utilities.h>
 
 BoxLocalization::BoxLocalization(ros::NodeHandle& nh)
-		: node_handle_(nh)
+		: ReferenceLocalization(nh)
 {
-	// load parameters
-	std::cout << "\n========== Box Localization Parameters ==========\n";
-	node_handle_.param("update_rate", update_rate_, 0.75);
-	std::cout << "update_rate: " << update_rate_ << std::endl;
-	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "");
-	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
-	node_handle_.param("wall_length_left", wall_length_left_, 0.75);
-	std::cout << "wall_length_left: " << wall_length_left_ << std::endl;
-	node_handle_.param("wall_length_right", wall_length_right_, 0.75);
-	std::cout << "wall_length_right: " << wall_length_right_ << std::endl;
+	// load subclass parameters
 	node_handle_.param("box_search_width", box_search_width_, 0.5);
 	std::cout << "box_search_width: " << box_search_width_ << std::endl;
-
-	// publishers
-	marker_pub_ = node_handle_.advertise<visualization_msgs::Marker>("wall_marker", 1);
-
-	// subscribers
-	laser_scan_sub_ = node_handle_.subscribe("laser_scan_in", 0, &BoxLocalization::callback, this);
-
-	// dynamic reconfigure
-	dynamic_reconfigure_server_.setCallback(boost::bind(&BoxLocalization::dynamicReconfigureCallback, this, _1, _2));
-	avg_translation_.setZero();
 }
 
 BoxLocalization::~BoxLocalization()
 {
-
 }
 
 //#define DEBUG_OUTPUT
@@ -324,14 +304,7 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 
 void BoxLocalization::dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig &config, uint32_t level)
 {
-	update_rate_ = config.update_rate;
-	child_frame_name_ = config.child_frame_name;
-	wall_length_left_ = config.wall_length_left;
-	wall_length_right_ = config.wall_length_right;
+	ReferenceLocalization::dynamicReconfigureCallback(config, level); //Call to base class
 	box_search_width_ = config.box_search_width;
-	std::cout << "Reconfigure request with\n update_rate=" << update_rate_
-			<< "\n child_frame_name=" << child_frame_name_
-			<< "\n wall_length_left=" << wall_length_left_
-			<< "\n wall_length_right=" << wall_length_right_
-			<< "\n box_search_width=" << box_search_width_ << "\n";
+	std::cout << "box_search_width=" << box_search_width_ << "\n";
 }

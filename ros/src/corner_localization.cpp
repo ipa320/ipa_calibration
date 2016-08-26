@@ -60,115 +60,104 @@
 #include <relative_localization/relative_localization_utilities.h>
 
 CornerLocalization::CornerLocalization(ros::NodeHandle& nh)
-		: node_handle_(nh)
+		: ReferenceLocalization(nh)
 {
-	// load parameters
-	std::cout << "\n========== Corner Localization Parameters ==========\n";
-	node_handle_.param("update_rate", update_rate_, 0.75);
-	std::cout << "update_rate: " << update_rate_ << std::endl;
-	node_handle_.param<std::string>("child_frame_name", child_frame_name_);
-	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
-	node_handle_.param("wall_length_left", wall_length_left_, 0.75);
-	std::cout << "wall_length_left: " << wall_length_left_ << std::endl;
-	node_handle_.param("wall_length_right", wall_length_right_, 0.75);
-	std::cout << "wall_length_right: " << wall_length_right_ << std::endl;
+	// load subclass parameters
 	node_handle_.param("max_wall_side_distance", max_wall_side_distance_, 0.5);
 	std::cout << "max_wall_side_distance: " << max_wall_side_distance_ << std::endl;
+}
 
-	// publishers
-	marker_pub_ = node_handle_.advertise<visualization_msgs::Marker>("wall_marker", 1);
-
-	// subscribers
-	laser_scan_sub_ = node_handle_.subscribe("laser_scan_in", 0, &CornerLocalization::callback, this);
-
-	// dynamic reconfigure
-	dynamic_reconfigure_server_.setCallback(boost::bind(&CornerLocalization::dynamicReconfigureCallback, this, _1, _2));
-	avg_translation_.setZero();
+CornerLocalization::~CornerLocalization()
+{
 }
 
 //#define DEBUG_OUTPUT
 void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 {
-	const double inlier_distance = 0.01;
+	// Retrieve points from side and front wall and put each of those in separate lists
 
-	// 1. frontal wall
-	// convert scan to x-y coordinates
-	std::vector<cv::Point2d> scan_frontal;
-	for (unsigned int i = 0; i < laser_scan_msg->ranges.size(); ++i)
+	std::vector<cv::Point2d> scan_front;
+	std::vector<cv::Point2d> scan_remainder;
+
+	for ( size_t i=0; i<laser_scan_msg->ranges.size(); i++ )
 	{
 		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; //[rad]
 		double dist = laser_scan_msg->ranges[i];
 		cv::Point2d point(dist*cos(angle), dist*sin(angle));
-		if (point.y > -wall_length_right_ && point.y < wall_length_left_)
-			scan_frontal.push_back(point);
+
+		if (point.y > -wall_length_right_ && point.y < wall_length_left_) // front wall points
+			scan_front.push_back(point);
+		else  // rest of points including points of side wall
+			scan_remainder.push_back(point);
 	}
 
-	// match line to scan_frontal
+	// match line to scan_front
+	const double inlier_distance = 0.01;
 	cv::Vec4d line_front;
-	RelativeLocalizationUtilities::fitLine(scan_frontal, line_front, 0.1, 0.99999, inlier_distance, false);
+	RelativeLocalizationUtilities::fitLine(scan_front, line_front, 0.1, 0.99999, inlier_distance, false);
 	if (line_front.val[0] != line_front.val[0] || line_front.val[1] != line_front.val[1] || line_front.val[2] != line_front.val[2] || line_front.val[3] != line_front.val[3])
 		return;
 
-	// display line
-	const double px = line_front.val[0];	// coordinates of a point on the wall
-	const double py = line_front.val[1];
-	const double n0x = line_front.val[2];	// normal direction on the wall (in floor plane x-y)
-	const double n0y = line_front.val[3];
-	if (marker_pub_.getNumSubscribers() > 0)
-		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall_front", px, py, n0x, n0y, marker_pub_);
+	const double px_f = line_front.val[0];	// coordinates of a point on front the wall
+	const double py_f = line_front.val[1];
+	const double n0x_f = line_front.val[2];	// normal direction on the front wall (in floor plane x-y)
+	const double n0y_f = line_front.val[3];
 
-	// 2. side wall
-	// convert scan to x-y coordinates
-	std::vector<cv::Point2d> scan;
-	for (unsigned int i = 0; i < laser_scan_msg->ranges.size(); ++i)
+	if (marker_pub_.getNumSubscribers() > 0)
+		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall_front", px_f, py_f, n0x_f, n0y_f, marker_pub_);
+
+	std::vector<cv::Point2d> scan_side;
+	for ( size_t i=0; i<scan_remainder.size(); i++ )
 	{
-		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; //[rad]
-		double dist = laser_scan_msg->ranges[i];
-		cv::Point2d point(dist*cos(angle), dist*sin(angle));
-		const double d = RelativeLocalizationUtilities::distanceToLine(px, py, n0x, n0y, point.x, point.y);		// remove frontal wall from set
+		const double d = RelativeLocalizationUtilities::distanceToLine(px_f, py_f, n0x_f, n0y_f, scan_side[i].x, scan_side[i].y);	// remove front wall from set
 		if (d > 2*inlier_distance)
-			scan.push_back(point);
+			scan_side.push_back(scan_side[i]);
 	}
 
 	// search a side wall until one is found, which is not too distant and approximately perpendicular to the first
 	cv::Vec4d line_side;
 	for (int i=0; i<10; ++i)
 	{
-		// match line to scan_frontal
-		RelativeLocalizationUtilities::fitLine(scan, line_side, 0.1, 0.99999, inlier_distance, false);
+		// match line to scan_side
+		RelativeLocalizationUtilities::fitLine(scan_side, line_side, 0.1, 0.99999, inlier_distance, false);
 		if (line_side.val[0] != line_side.val[0] || line_side.val[1] != line_side.val[1] || line_side.val[2] != line_side.val[2] || line_side.val[3] != line_side.val[3])
 			return;
 
-		// check line
+		// check if line is good enough
 		const double wall_distance_to_laser_scanner = RelativeLocalizationUtilities::distanceToLine(line_side.val[0], line_side.val[1], line_side.val[2], line_side.val[3], 0., 0.);
-		const double scalar_product = n0x*line_side.val[2] + n0y*line_side.val[3];
+		const double scalar_product = n0x_f*line_side.val[2] + n0y_f*line_side.val[3];
 		if (wall_distance_to_laser_scanner < max_wall_side_distance_ && fabs(scalar_product) < 0.05)
 			break;
 
 		// remove points from last line
-		for (std::vector<cv::Point2d>::iterator it = scan.begin(); it!=scan.end(); )
+		for (std::vector<cv::Point2d>::iterator it = scan_side.begin(); it!=scan_side.end(); )
 		{
 			const double dist = RelativeLocalizationUtilities::distanceToLine(line_side.val[0], line_side.val[1], line_side.val[2], line_side.val[3], it->x, it->y);
 			if (dist <= inlier_distance)
-				it = scan.erase(it);
+				it = scan_side.erase(it);
 			else
 				++it;
 		}
 	}
+
+	const double px_s = line_side.val[0];	// coordinates of a point on the side wall
+	const double py_s = line_side.val[1];
+	const double n0x_s = line_side.val[2];	// normal direction on the side wall (in floor plane x-y)
+	const double n0y_s = line_side.val[3];
+
 	// display line
 	if (marker_pub_.getNumSubscribers() > 0)
-		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall_side", line_side.val[0], line_side.val[1], line_side.val[2], line_side.val[3], marker_pub_);
-
+		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall_side", px_s, py_s, n0x_s, n0y_s, marker_pub_);
 
 	// compute intersection of two wall segments
 	cv::Point2d corner_point;
-	const double a = n0x*px+n0y*py;
-	const double b = line_side.val[2]*line_side.val[0] + line_side.val[3]*line_side.val[1];
-	corner_point.y = (a*line_side.val[2]-b*n0x) / (n0y*line_side.val[2]-n0x*line_side.val[3]);
-	if (fabs(n0x) > fabs(line_side.val[2]))
-		corner_point.x = (a-n0y*corner_point.y) / n0x;
+	const double a = n0x_f*px_f+n0y_f*py_f;
+	const double b = n0x_s*px_s+n0y_s*py_s;
+	corner_point.y = (a*n0x_s-b*n0x_f) / (n0y_f*n0x_s-n0x_f*n0y_s);
+	if (fabs(n0x_f) > fabs(n0x_s))
+		corner_point.x = (a-n0y_f*corner_point.y) / n0x_f;
 	else
-		corner_point.x = (b-line_side.val[3]*corner_point.y) / line_side.val[2];
+		corner_point.x = (b-n0y_s*corner_point.y) / n0x_s;
 	if (corner_point.x == 0 && corner_point.y == 0)
 		return;
 
@@ -187,12 +176,12 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	tf::StampedTransform transform_table_reference;
 	// offset to laser scanner coordinate system
 	// intersection of line from left block point in normal direction with wall line
-	double j = ((corner_point.x-px)*n0y + (py-corner_point.y)*n0x) / (n0x*n0x + n0y*n0y);
-	double x = px + j*n0y;
-	double y = py - j*n0x;
+	double j = ((corner_point.x-px_f)*n0y_f + (py_f-corner_point.y)*n0x_f) / (n0x_f*n0x_f + n0y_f*n0y_f);
+	double x = px_f + j*n0y_f;
+	double y = py_f - j*n0x_f;
 	tf::Vector3 translation(x, y, 0.);
 	// direction of x-axis in laser scanner coordinate system
-	cv::Point2d normal(n0x, n0y);
+	cv::Point2d normal(n0x_f, n0y_f);
 	if (normal.x*translation.getX() + normal.y*translation.getY() < 0)
 		normal *= -1.;
 	double angle = atan2(normal.y, normal.x);
@@ -228,14 +217,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 
 void CornerLocalization::dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig &config, uint32_t level)
 {
-	update_rate_ = config.update_rate;
-	child_frame_name_ = config.child_frame_name;
-	wall_length_left_ = config.wall_length_left;
-	wall_length_right_ = config.wall_length_right;
+	ReferenceLocalization::dynamicReconfigureCallback(config, level);
 	max_wall_side_distance_ = config.max_wall_side_distance;
-	std::cout << "Reconfigure request with\n update_rate=" << update_rate_
-			<< "\n child_frame_name=" << child_frame_name_
-			<< "\n wall_length_left=" << wall_length_left_
-			<< "\n wall_length_right=" << wall_length_right_
-			<< "\n max_wall_side_distance_=" << max_wall_side_distance_ << "\n";
+	std::cout << "max_wall_side_distance_=" << max_wall_side_distance_ << "\n";
 }
