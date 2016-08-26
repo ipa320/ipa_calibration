@@ -50,6 +50,7 @@
 
 #include <ros/ros.h>
 #include <robotino_calibration/camera_base_calibration_checkerboard.h>
+#include <robotino_calibration/camera_base_calibration_pitag.h>
 
 //#######################
 //#### main programm ####

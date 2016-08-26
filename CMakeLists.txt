@@ -64,6 +64,7 @@ include_directories(
 
 # calibration software
 add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
+										ros/src/camera_base_calibration_marker.cpp
 										ros/src/camera_base_calibration_checkerboard.cpp
 										ros/src/camera_base_calibration_pitag.cpp
 										common/src/transformation_utilities.cpp

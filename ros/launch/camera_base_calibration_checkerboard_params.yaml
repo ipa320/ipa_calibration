@@ -15,6 +15,20 @@ T_base_to_torso_lower_initial: [0.25, 0, 0.5, 0.0, 0.0, 0.0]
 # the transform from torso_upper_frame to camera_frame
 T_torso_upper_to_camera_initial: [0.0, 0.065, 0.0, 0.0, 0.0, -1.57]
 
+### Observation positions for capturing calibration images of the marker
+# if this flag is true, then the robot configurations will be sampled on a equally spaced grid from the given ranges, if false, the user-provided configurations in robot_configurations will be used
+# bool
+use_range: true
+
+# ranges for the degrees of freedom of the robot
+# each parameter is set as [min_value, step, max_value]
+# double
+x_range: [-1.5, 0.25, -0.75]       # in [m]
+y_range: [-0.09, 1.0, -0.09]       # in [m], fixed y-coordinate
+phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
+pan_range: [-0.52, 0.02, 0.52]     # in [rad]
+tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
+
 
 ### checkerboard observation positions for capturing calibration images
 # list of robot configurations for observing the checkerboard measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker (e.g. checkerboard)
