@@ -75,8 +75,10 @@ int main(int argc, char** argv)
 		CameraBaseCalibrationCheckerboard cb(nh);
 		cb.calibrateCameraToBase(load_images);
 	}
-	else if (marker_type.compare("corner") == 0)
+	else if (marker_type.compare("pitag") == 0)
 	{
+		CameraBaseCalibrationPiTag pt(nh);
+		pt.calibrateCameraToBase(load_images);
 	}
 
 	return 0;
