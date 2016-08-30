@@ -81,7 +81,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 
 	for ( size_t i=0; i<laser_scan_msg->ranges.size(); i++ )
 	{
-		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; //[rad]
+		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; // [rad]
 		double dist = laser_scan_msg->ranges[i];
 		cv::Point2d point(dist*cos(angle), dist*sin(angle));
 
@@ -109,9 +109,9 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	std::vector<cv::Point2d> scan_side;
 	for ( size_t i=0; i<scan_remainder.size(); i++ )
 	{
-		const double d = RelativeLocalizationUtilities::distanceToLine(px_f, py_f, n0x_f, n0y_f, scan_side[i].x, scan_side[i].y);	// remove front wall from set
+		const double d = RelativeLocalizationUtilities::distanceToLine(px_f, py_f, n0x_f, n0y_f, scan_remainder[i].x, scan_remainder[i].y);	// remove front wall from set
 		if (d > 2*inlier_distance)
-			scan_side.push_back(scan_side[i]);
+			scan_side.push_back(scan_remainder[i]);
 	}
 
 	// search a side wall until one is found, which is not too distant and approximately perpendicular to the first
