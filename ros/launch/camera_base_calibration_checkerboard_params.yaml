@@ -86,7 +86,7 @@ camera_optical_frame: "kinect_rgb_optical_frame"
 base_frame: "base_link"
 
 # do not modify, this is the coordinate system fixed in the upper left checkerboard calibration corner (where 4 squares meet), it will be published to tf via the relative_localization program
-checkerboard_frame: "marker"
+checkerboard_frame: "checkerboard_frame"
 
 
 ### program sequence

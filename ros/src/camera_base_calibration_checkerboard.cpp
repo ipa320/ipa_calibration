@@ -72,6 +72,8 @@ CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHa
 	if (temp.size() == 2)
 		chessboard_pattern_size_ = cv::Size(temp[0], temp[1]);
 	std::cout << "pattern: " << chessboard_pattern_size_ << std::endl;
+	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "marker");
+	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
 
 	// set up messages
 	it_ = new image_transport::ImageTransport(node_handle_);

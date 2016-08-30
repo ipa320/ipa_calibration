@@ -62,7 +62,8 @@
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 			node_handle_(nh), transform_listener_(nh), camera_calibration_path_("robotino_calibration/camera_calibration/"),
-			tilt_controller_command_("/tilt_controller/command"), pan_controller_command_("/pan_controller/command"), calibrated_(false)
+			tilt_controller_command_("/pan_tilt_controller/tilt_joint_position_controller/command"), pan_controller_command_("/pan_tilt_controller/pan_joint_position_controller/command"),
+			calibrated_(false), counter(0), pan_tilt_joint_state_current_(0)
 {
 	// load parameters
 	std::cout << "\n========== CameraBaseCalibration Parameters ==========\n";
@@ -152,6 +153,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	}
 
 	// topics
+	pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>("/pan_tilt_controller/joint_states", 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
 	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
 	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>("/cmd_vel", 1, false);
@@ -159,6 +161,8 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 
 CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 {
+	if (pan_tilt_joint_state_current_!=0)
+		delete pan_tilt_joint_state_current_;
 }
 
 void CameraBaseCalibrationMarker::setCalibrationStatus(bool calibrated)
@@ -166,8 +170,40 @@ void CameraBaseCalibrationMarker::setCalibrationStatus(bool calibrated)
 		calibrated_ = calibrated;
 }
 
+void CameraBaseCalibrationMarker::panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+{
+	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
+	pan_tilt_joint_state_current_ = new sensor_msgs::JointState;
+	*pan_tilt_joint_state_current_ = *msg;
+}
+
 bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_configuration)
 {
+	const double k_base = 0.25;
+	const double k_phi = 0.25;
+	
+	// move pan-tilt unit
+	std_msgs::Float64 msg;
+	msg.data = robot_configuration.pan_angle_;
+	pan_controller_.publish(msg);
+	msg.data = robot_configuration.tilt_angle_;
+	tilt_controller_.publish(msg);
+	
+	if (pan_tilt_joint_state_current_!=0)
+	{
+		while (true)
+		{
+			boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
+			if (fabs(pan_tilt_joint_state_current_->position[0]-robot_configuration.pan_angle_)<0.001 && fabs(pan_tilt_joint_state_current_->position[1]-robot_configuration.tilt_angle_)<0.001)
+				break;
+			ros::spinOnce();
+		}
+	}
+	else
+	{
+		ros::Duration(1).sleep();
+	}
+	
 	// do not move if close to goal
 	double error_phi = 10;
 	double error_x = 10;
@@ -186,7 +222,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 	error_x = robot_configuration.pose_x_ - T.at<double>(0,3);
 	error_y = robot_configuration.pose_y_ - T.at<double>(1,3);
 
-	std::cout << "error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
+	std::cout << "Before control: error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
 	if (fabs(error_phi) > 0.03 || fabs(error_x) > 0.02 || fabs(error_y) > 0.02)
 	{
 		// control robot angle
@@ -204,7 +240,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 				error_phi -= CV_PI;
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
-			tw.angular.z = std::min(0.05, error_phi);
+			tw.angular.z = std::min(0.05, k_phi*error_phi);
 			base_controller_.publish(tw);
 			ros::Rate(20).sleep();
 		}
@@ -221,8 +257,8 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 				break;
 //			std::cout << "error_x: " << error_x << std::endl;
 //			std::cout << "error_y: " << error_y << std::endl;
-			tw.linear.x = std::min(0.05, error_x);
-			tw.linear.y = std::min(0.05, error_y);
+			tw.linear.x = std::min(0.05, k_base*error_x);
+			tw.linear.y = std::min(0.05, k_base*error_y);
 			base_controller_.publish(tw);
 			ros::Rate(20).sleep();
 		}
@@ -242,23 +278,19 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 				error_phi -= CV_PI;
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
-			tw.angular.z = std::min(0.05, error_phi);
+			tw.angular.z = std::min(0.05, k_phi*error_phi);
 			base_controller_.publish(tw);
 			ros::Rate(20).sleep();
 		}
 	}
-
-	std_msgs::Float64 msg;
-	msg.data = robot_configuration.pan_angle_;
-	pan_controller_.publish(msg);
-	msg.data = robot_configuration.tilt_angle_;
-	tilt_controller_.publish(msg);
-
-	ros::Duration(3).sleep();
-
+	
+	std::cout << "After control: error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
 	std::cout << "Positioning successful: x=" << robot_configuration.pose_x_ << ", y=" << robot_configuration.pose_y_
 			<< ", phi=" << robot_configuration.pose_phi_ << ", pan=" << robot_configuration.pan_angle_
-			<< ", tilt=" << robot_configuration.tilt_angle_ << std::endl;
+			<< ", tilt=" << robot_configuration.tilt_angle_ << "\n###############################################################################" << counter++ 
+			<< std::endl;
+			
+	ros::spinOnce();
 
 	return true;
 }

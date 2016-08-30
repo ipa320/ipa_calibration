@@ -56,6 +56,7 @@
 
 #include <tf/transform_listener.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
 
 // image transport
@@ -100,6 +101,11 @@ public:
 
 protected:
 
+	// todo: debug counter - remove
+	int counter;
+
+	void panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+
 	// moves the robot to a desired location and adjusts the torso joints
 	bool moveRobot(const RobotConfiguration& robot_configuration);
 
@@ -123,6 +129,10 @@ protected:
 	ros::Publisher base_controller_;
 	ros::Publisher tilt_controller_;
 	ros::Publisher pan_controller_;
+	ros::Subscriber pan_tilt_state_;
+
+	sensor_msgs::JointState* pan_tilt_joint_state_current_;
+	boost::mutex pan_tilt_joint_state_data_mutex_;	// secures read operations on pan tilt joint state data
 
 	tf::TransformListener transform_listener_;
 	std::string torso_lower_frame_;
