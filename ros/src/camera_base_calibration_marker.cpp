@@ -287,7 +287,9 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 	std::cout << "After control: error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
 	std::cout << "Positioning successful: x=" << robot_configuration.pose_x_ << ", y=" << robot_configuration.pose_y_
 			<< ", phi=" << robot_configuration.pose_phi_ << ", pan=" << robot_configuration.pan_angle_
-			<< ", tilt=" << robot_configuration.tilt_angle_ << "\n###############################################################################" << counter++ 
+			<< ", tilt=" << robot_configuration.tilt_angle_
+			<< "\n############################################################################### "
+			<< counter++ << ". " << elapsed_time_since_start_.getElapsedTimeInSec() << "s"
 			<< std::endl;
 			
 	ros::spinOnce();

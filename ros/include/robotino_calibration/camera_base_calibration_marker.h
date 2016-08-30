@@ -81,6 +81,8 @@
 
 #include <robotino_calibration/calibration_utilities.h>
 
+#include <robotino_calibration/timer.h>
+
 
 class CameraBaseCalibrationMarker
 {
@@ -103,6 +105,7 @@ protected:
 
 	// todo: debug counter - remove
 	int counter;
+	Timer elapsed_time_since_start_;
 
 	void panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
