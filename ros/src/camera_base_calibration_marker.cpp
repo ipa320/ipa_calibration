@@ -293,6 +293,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 			<< std::endl;
 			
 	ros::spinOnce();
+	ros::Duration(0.1).sleep();
 
 	return true;
 }

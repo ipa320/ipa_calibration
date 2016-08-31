@@ -68,10 +68,10 @@ CameraBaseCalibrationPiTag::CameraBaseCalibrationPiTag(ros::NodeHandle nh) :
 	std::cout << "\n========== CameraBaseCalibrationPiTag Parameters ==========\n";
 	node_handle_.param<std::string>("marker_frame_base_name", marker_frame_base_name_, "marker");
 	std::cout << "marker_frame_base_name: " << marker_frame_base_name_ << std::endl;
-	node_handle_.getParam("utilized_marker_ids", utilized_marker_ids_);
-	std::cout << "utilized_marker_ids: \n";
-	for (size_t i=0; i<utilized_marker_ids_.size(); ++i)
-		std::cout << "      " << utilized_marker_ids_[i] << std::endl;
+//	node_handle_.getParam("utilized_marker_ids", utilized_marker_ids_);
+//	std::cout << "utilized_marker_ids: \n";
+//	for (size_t i=0; i<utilized_marker_ids_.size(); ++i)
+//		std::cout << "      " << utilized_marker_ids_[i] << std::endl;
 
 	pitag_client_ = node_handle_.serviceClient<cob_object_detection_msgs::DetectObjects>("get_fiducials");
 
