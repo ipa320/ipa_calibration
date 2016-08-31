@@ -18,10 +18,8 @@ use_range: true
 x_range: [-1.5, 0.25, -0.75]       # in [m]
 y_range: [-1.0, 1.0, -1.0]       # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
-pan_range: [-0.52, 0.1, 0.52]     # in [rad]
-tilt_range: [-0.44, 0.1, 0.44]    # in [rad]
-#pan_range: [-0.52, 0.02, 0.52]     # in [rad]
-#tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
+pan_range: [-0.52, 0.02, 0.52]     # in [rad]
+tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
 
 # list of robot configurations for observing the pitags measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker
 # includes 5 parameters per entry: robot pose: x, y, phi and torso: pan, tilt
