@@ -2,8 +2,8 @@
 
 <launch>
 
-	<arg name="reference" default="box"/>
-	<arg name="marker" default="checkerboard"/>
+	<arg name="reference" default="corner"/>	<!-- box or corner -->
+	<arg name="marker" default="pitag"/>	<!-- checkerboard or pitag -->
 
 	<include file="$(find relative_localization)/ros/launch/$(arg reference)_localization.launch"/>
 	<include file="$(find robotino_calibration)/ros/launch/camera_base_calibration_$(arg marker).launch"/>

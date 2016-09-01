@@ -82,7 +82,6 @@ protected:
 
 	ros::ServiceClient pitag_client_;
 	std::string marker_frame_base_name_;
-//	std::vector<int> utilized_marker_ids_;
 };
 
 #endif // __CAMERA_BASE_CALIBRATION_PITAG_H__

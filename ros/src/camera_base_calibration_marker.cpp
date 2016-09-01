@@ -189,21 +189,6 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 	msg.data = robot_configuration.tilt_angle_;
 	tilt_controller_.publish(msg);
 	
-	if (pan_tilt_joint_state_current_!=0)
-	{
-		while (true)
-		{
-			boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
-			if (fabs(pan_tilt_joint_state_current_->position[0]-robot_configuration.pan_angle_)<0.001 && fabs(pan_tilt_joint_state_current_->position[1]-robot_configuration.tilt_angle_)<0.001)
-				break;
-			ros::spinOnce();
-		}
-	}
-	else
-	{
-		ros::Duration(1).sleep();
-	}
-	
 	// do not move if close to goal
 	double error_phi = 10;
 	double error_x = 10;
@@ -282,8 +267,31 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 			base_controller_.publish(tw);
 			ros::Rate(20).sleep();
 		}
+
+		// turn off robot motion
+		geometry_msgs::Twist tw;
+		tw.linear.x = 0;
+		tw.linear.y = 0;
+		tw.angular.z = 0;
+		base_controller_.publish(tw);
 	}
 	
+	// wait for pan tilt to arrive at goal position
+	if (pan_tilt_joint_state_current_!=0)
+	{
+		while (true)
+		{
+			boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
+			if (fabs(pan_tilt_joint_state_current_->position[0]-robot_configuration.pan_angle_)<0.001 && fabs(pan_tilt_joint_state_current_->position[1]-robot_configuration.tilt_angle_)<0.001)
+				break;
+			ros::spinOnce();
+		}
+	}
+	else
+	{
+		ros::Duration(1).sleep();
+	}
+
 	std::cout << "After control: error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
 	std::cout << "Positioning successful: x=" << robot_configuration.pose_x_ << ", y=" << robot_configuration.pose_y_
 			<< ", phi=" << robot_configuration.pose_phi_ << ", pan=" << robot_configuration.pan_angle_
@@ -293,7 +301,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 			<< std::endl;
 			
 	ros::spinOnce();
-	ros::Duration(0.1).sleep();
+	//ros::Duration(1).sleep();
 
 	return true;
 }
