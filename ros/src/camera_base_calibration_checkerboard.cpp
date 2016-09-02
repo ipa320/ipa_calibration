@@ -163,7 +163,7 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 		T_camera_to_checkerboard_vector.push_back(T_camera_to_checkerboard);
 	}
 
-	// extrinsic calibration between base and torso_lower as well ass torso_upper and camera
+	// extrinsic calibration between base and torso_lower as well as torso_upper and camera
 	for (int i=0; i<optimization_iterations_; ++i)
 	{
 //		std::cout << "\nExtrinsic optimization run " << i << ":" << std::endl;
@@ -178,9 +178,10 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	}
 
 	// display calibration parameters
-	std::cout << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
+	std::stringstream output;
+	output << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
 	cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T_base_to_torso_lower_);
-	std::cout << "  <!-- pan_tilt mount positions | handeye calibration | relative to base_link -->\n"
+	output << "  <!-- pan_tilt mount positions | handeye calibration | relative to base_link -->\n"
 			  << "  <property name=\"pan_tilt_x\" value=\"" << T_base_to_torso_lower_.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"pan_tilt_y\" value=\"" << T_base_to_torso_lower_.at<double>(1,3) << "\"/>\n"
 			  << "  <property name=\"pan_tilt_z\" value=\"" << T_base_to_torso_lower_.at<double>(2,3) << "\"/>\n"
@@ -188,13 +189,21 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 			  << "  <property name=\"pan_tilt_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
 			  << "  <property name=\"pan_tilt_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
 	ypr = robotino_calibration::YPRFromRotationMatrix(T_torso_upper_to_camera_);
-	std::cout << "  <!-- kinect mount positions | handeye calibration | relative to pan_tilt_link -->\n"
+	output << "  <!-- kinect mount positions | handeye calibration | relative to pan_tilt_link -->\n"
 			  << "  <property name=\"kinect_x\" value=\"" << T_torso_upper_to_camera_.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"kinect_y\" value=\"" << T_torso_upper_to_camera_.at<double>(1,3) << "\"/>\n"
 			  << "  <property name=\"kinect_z\" value=\"" << T_torso_upper_to_camera_.at<double>(2,3) << "\"/>\n"
 			  << "  <property name=\"kinect_roll\" value=\"" << ypr.val[2] << "\"/>\n"
 			  << "  <property name=\"kinect_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
 			  << "  <property name=\"kinect_yaw\" value=\"" << ypr.val[0] << "\"/>\n" << std::endl;
+	std::cout << output.str();
+
+	std::string path_file = camera_calibration_path_ + "camera_calibration_urdf.txt";
+	std::fstream file_output;
+	file_output.open(path_file.c_str(), std::ios::out);
+	if (file_output.is_open())
+		file_output << output.str();
+	file_output.close();
 
 	// save calibration
 	saveCalibration();

@@ -94,7 +94,7 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 	// prepare marker 3d points (actually only the point (0,0,0) in the marker coordinate system
 	std::vector< std::vector<cv::Point3f> > pattern_points_3d(T_base_to_marker_vector.size(), std::vector<cv::Point3f>(1, cv::Point3f(0.f, 0.f, 0.f)));
 
-	// extrinsic calibration between base and torso_lower as well ass torso_upper and camera
+	// extrinsic calibration between base and torso_lower as well as torso_upper and camera
 	for (int i=0; i<optimization_iterations_; ++i)
 	{
 //		std::cout << "\nExtrinsic optimization run " << i << ":" << std::endl;

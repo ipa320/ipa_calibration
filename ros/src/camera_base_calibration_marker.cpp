@@ -310,7 +310,7 @@ void CameraBaseCalibrationMarker::extrinsicCalibrationBaseToTorsoLower(std::vect
 		std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 		std::vector<cv::Mat>& T_camera_to_marker_vector)
 {
-	// transform 3d chessboard points to respective coordinates systems (camera and torso_upper)
+	// transform 3d marker points to respective coordinates systems (camera and torso_upper)
 	std::vector<cv::Point3d> points_3d_torso_upper, points_3d_camera;
 	for (size_t i=0; i<pattern_points_3d.size(); ++i)
 	{
