@@ -77,7 +77,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	// Retrieve points from side and front wall and put each of those in separate lists
 
 	std::vector<cv::Point2d> scan_front;
-	std::vector<cv::Point2d> scan_remainder;
+	std::vector<cv::Point2d> scan_all;
 
 	for ( size_t i=0; i<laser_scan_msg->ranges.size(); i++ )
 	{
@@ -87,8 +87,9 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 
 		if (point.y > -wall_length_right_ && point.y < wall_length_left_) // front wall points
 			scan_front.push_back(point);
-		else  // rest of points including points of side wall
-			scan_remainder.push_back(point);
+
+		// store all points in here. Use distant measure to front wall later on to extract side wall points
+		scan_all.push_back(point);
 	}
 
 	// match line to scan_front
@@ -107,11 +108,11 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall_front", px_f, py_f, n0x_f, n0y_f, marker_pub_);
 
 	std::vector<cv::Point2d> scan_side;
-	for ( size_t i=0; i<scan_remainder.size(); i++ )
+	for ( size_t i=0; i<scan_all.size(); i++ )
 	{
-		const double d = RelativeLocalizationUtilities::distanceToLine(px_f, py_f, n0x_f, n0y_f, scan_remainder[i].x, scan_remainder[i].y);	// remove front wall from set
+		const double d = RelativeLocalizationUtilities::distanceToLine(px_f, py_f, n0x_f, n0y_f, scan_all[i].x, scan_all[i].y);	// distance to front wall line
 		if (d > 2*inlier_distance)
-			scan_side.push_back(scan_remainder[i]);
+			scan_side.push_back(scan_all[i]);
 	}
 
 	// search a side wall until one is found, which is not too distant and approximately perpendicular to the first
