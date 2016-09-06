@@ -6,14 +6,14 @@ update_rate: 0.25
 # string
 child_frame_name: "/landmark_reference_nav"
 
-# the length of the wall segment left of the checkerboard's origin, in[m]
+# the (minimum) length of the frontal wall segment left of the laser scanner's origin (assuming the robot faces the frontal wall), in [m]
 # double
 wall_length_left: 0.3
 
-# the length of the wall segment right of the checkerboard's origin, in[m]
+# the (minimum) length of the frontal wall segment right of the laser scanner's origin (assuming the robot faces the frontal wall), in [m]
 # double
 wall_length_right: 0.3
 
-# the maximum distance of the side wall to the laser scanner, in[m]
+# the maximum distance of the side wall to the laser scanner, in [m]
 # double
 max_wall_side_distance: 3.0
