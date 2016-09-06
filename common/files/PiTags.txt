@@ -1,0 +1,3 @@
+Please find the image files of the utilized Pi Tags in the squirrel_calibration/robotino_calibration_sim/worlds/prefabs/pitags/tagxx folders.
+
+You should open these images with a proper image processing program like gimp and print them in 150% magnification (i.e. with 18cm x 18cm image size). This yields a tag size of 15 cm (side length measured at centers of circles).
