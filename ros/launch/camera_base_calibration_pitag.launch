@@ -9,18 +9,18 @@
 		landmark_reference: similar definition as tag_x, but located at the height of the laser scanner on the left edge of the box in front of the wall or in the corner of two walls
 		transform between them: no rotation, just an x, y, and z offset (ATTENTION: height (y or z) offset depends on mounting height of the laser scanner) -->
 	<!-- here the Hokuyo laser mounting height of 0.104 m has been subtracted from the marker's height over ground -->
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_25" output="screen" args="0.8 -0.646 -0.01 0 0 0  landmark_reference tag_25 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_36" output="screen" args="0.8 -0.446 -0.01 0 0 0  landmark_reference tag_36 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_38" output="screen" args="1.0 -0.546 -0.01 0 0 0  landmark_reference tag_38 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 -1.57079632679  landmark_reference_nav landmark_reference 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_48" output="screen" args="-0.6 -0.646 -0.01 0 0 0  landmark_reference_l tag_48 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_55" output="screen" args="-0.6 -0.446 -0.01 0 0 0  landmark_reference_l tag_55 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_64" output="screen" args="-0.4 -0.546 -0.01 0 0 0  landmark_reference_l tag_64 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_l" output="screen" args="0.0 0.0 0.0 0 0 -1.57079632679  landmark_reference_nav landmark_reference_l 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_69" output="screen" args="0.4 0.2 0.094 0 0 0  landmark_reference_g tag_69 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_73" output="screen" args="0.7 0.2 0.094 0 0 0  landmark_reference_g tag_73 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_79" output="screen" args="1.0 0.2 0.094 0 0 0  landmark_reference_g tag_79 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_g" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 -3.14159265359  landmark_reference_nav landmark_reference_g 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_25" output="screen" args="0.8 -0.646 -0.01 0 0 0  landmark_reference_front tag_25 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_36" output="screen" args="0.8 -0.446 -0.01 0 0 0  landmark_reference_front tag_36 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_38" output="screen" args="1.0 -0.546 -0.01 0 0 0  landmark_reference_front tag_38 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_front" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 -1.57079632679  landmark_reference_nav landmark_reference_front 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_48" output="screen" args="-0.6 -0.646 -0.01 0 0 0  landmark_reference_left tag_48 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_55" output="screen" args="-0.6 -0.446 -0.01 0 0 0  landmark_reference_left tag_55 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_64" output="screen" args="-0.4 -0.546 -0.01 0 0 0  landmark_reference_left tag_64 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_left" output="screen" args="0.0 0.0 0.0 0 0 -1.57079632679  landmark_reference_nav landmark_reference_left 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_69" output="screen" args="0.4 0.2 0.094 0 0 0  landmark_reference_ground tag_69 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_73" output="screen" args="0.7 0.2 0.094 0 0 0  landmark_reference_ground tag_73 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_79" output="screen" args="1.0 0.2 0.094 0 0 0  landmark_reference_ground tag_79 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_ground" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 -3.14159265359  landmark_reference_nav landmark_reference_ground 100"/>
 
 	<node ns="camera_base_calibration_pitag" name="camera_base_calibration" pkg="robotino_calibration" type="camera_base_calibration" output="screen">
 		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/camera_base_calibration_pitag_params.yaml"/>

@@ -57,6 +57,7 @@
 #include <pcl/registration/icp.h>
 
 #include <sstream>
+#include <fstream>
 
 
 CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHandle nh) :
