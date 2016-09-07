@@ -87,6 +87,9 @@ public:
 	ReferenceLocalization(ros::NodeHandle& nh);
 	virtual ~ReferenceLocalization();
 
+	// only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis
+	void ShiftReferenceFrameToGround(tf::StampedTransform& reference_frame);
+	// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
 	bool getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T);
 	cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
 
@@ -106,6 +109,7 @@ protected:
 	tf::Vector3 avg_translation_;
 	tf::Quaternion avg_orientation_;
 	double laser_scanner_mounting_height_;
+	bool laser_scanner_mounting_height_received_;
 
 	// parameters
 	double update_rate_;

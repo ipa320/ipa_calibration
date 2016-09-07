@@ -62,7 +62,7 @@
 
 
 ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
-		: node_handle_(nh), transform_listener_(nh), laser_scanner_mounting_height_(0.)
+		: node_handle_(nh), transform_listener_(nh), laser_scanner_mounting_height_(0.), laser_scanner_mounting_height_received_(false)
 {
 	// load parameters
 	std::cout << "\n========== Box Localization Parameters ==========\n";
@@ -104,6 +104,20 @@ void ReferenceLocalization::dynamicReconfigureCallback(robotino_calibration::Rel
 			<< "\n wall_length_right=" << wall_length_right_ << "\n";
 }
 
+// only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis
+void ReferenceLocalization::ShiftReferenceFrameToGround(tf::StampedTransform& reference_frame)
+{
+	cv::Mat T;
+	if (laser_scanner_mounting_height_received_==false && getTransform("base_link", reference_frame.child_frame_id_, T) == true)
+	{
+		laser_scanner_mounting_height_ = T.at<double>(2,3);
+		laser_scanner_mounting_height_received_ = true;
+	}
+
+	tf::Vector3 trans = reference_frame.getOrigin();
+	reference_frame.setOrigin(tf::Vector3(trans.x(), trans.y(), trans.z()-laser_scanner_mounting_height_));
+}
+
 // computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
 bool ReferenceLocalization::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
 {
@@ -121,7 +135,7 @@ bool ReferenceLocalization::getTransform(const std::string& target_frame, const 
 				rotcv.at<double>(v,u) = rot[v].m_floats[u];
 		for (int v=0; v<3; ++v)
 			transcv.at<double>(v) = trans.m_floats[v];
-		T = robotino_calibration::makeTransform(rotcv, transcv);
+		T = makeTransform(rotcv, transcv);
 		//std::cout << "Transform from " << source_frame << " to " << target_frame << ":\n" << T << std::endl;
 	}
 	catch (tf::TransformException& ex)

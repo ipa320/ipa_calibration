@@ -192,11 +192,14 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 	// transform
 	transform_table_reference.setOrigin(avg_translation_);
 	transform_table_reference.setRotation(avg_orientation_);
+	tf::StampedTransform tf_msg(transform_table_reference, laser_scan_msg->header.stamp, laser_scan_msg->header.frame_id, child_frame_name_);
+	if (reference_coordinate_system_at_ground_ == true)
+		ShiftReferenceFrameToGround(tf_msg);
 
 	// publish coordinate system on tf
 	if (publish_tf == true)
 	{
-		transform_broadcaster_.sendTransform(tf::StampedTransform(transform_table_reference, laser_scan_msg->header.stamp, laser_scan_msg->header.frame_id, child_frame_name_));
+		transform_broadcaster_.sendTransform(tf_msg);
 	}
 }
 
