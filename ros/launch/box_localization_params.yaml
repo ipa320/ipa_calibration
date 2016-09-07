@@ -6,6 +6,10 @@ update_rate: 0.75
 # string
 child_frame_name: "/landmark_reference_nav"
 
+# If the laser scanner is mounted parallel to the ground plane and this flag is activated, the reference coordinate system child_frame_name will be established at ground height (instead of laser scanner mounting height)
+# bool
+reference_coordinate_system_at_ground: true
+
 # the (minimum) length of the frontal wall segment left of the laser scanner's origin (assuming the robot faces the wall), in [m]
 # double
 wall_length_left: 0.8

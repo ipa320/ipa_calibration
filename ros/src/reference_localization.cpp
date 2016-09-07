@@ -62,7 +62,7 @@
 
 
 ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
-		: node_handle_(nh), transform_listener_(nh)
+		: node_handle_(nh), transform_listener_(nh), laser_scanner_mounting_height_(0.)
 {
 	// load parameters
 	std::cout << "\n========== Box Localization Parameters ==========\n";
@@ -70,6 +70,8 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	std::cout << "update_rate: " << update_rate_ << std::endl;
 	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "");
 	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
+	node_handle_.param("reference_coordinate_system_at_ground", reference_coordinate_system_at_ground_, false);
+	std::cout << "reference_coordinate_system_at_ground: " << reference_coordinate_system_at_ground_ << std::endl;
 	node_handle_.param("wall_length_left", wall_length_left_, 0.75);
 	std::cout << "wall_length_left: " << wall_length_left_ << std::endl;
 	node_handle_.param("wall_length_right", wall_length_right_, 0.75);
