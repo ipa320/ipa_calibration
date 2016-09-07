@@ -62,7 +62,7 @@
 
 
 ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
-		: node_handle_(nh)
+		: node_handle_(nh), transform_listener_(nh)
 {
 	// load parameters
 	std::cout << "\n========== Box Localization Parameters ==========\n";
@@ -100,4 +100,43 @@ void ReferenceLocalization::dynamicReconfigureCallback(robotino_calibration::Rel
 			<< "\n child_frame_name=" << child_frame_name_
 			<< "\n wall_length_left=" << wall_length_left_
 			<< "\n wall_length_right=" << wall_length_right_ << "\n";
+}
+
+// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
+bool ReferenceLocalization::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
+{
+	try
+	{
+		tf::StampedTransform Ts;
+		transform_listener_.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(1.0));
+		transform_listener_.lookupTransform(target_frame, source_frame, ros::Time(0), Ts);
+		const tf::Matrix3x3& rot = Ts.getBasis();
+		const tf::Vector3& trans = Ts.getOrigin();
+		cv::Mat rotcv(3,3,CV_64FC1);
+		cv::Mat transcv(3,1,CV_64FC1);
+		for (int v=0; v<3; ++v)
+			for (int u=0; u<3; ++u)
+				rotcv.at<double>(v,u) = rot[v].m_floats[u];
+		for (int v=0; v<3; ++v)
+			transcv.at<double>(v) = trans.m_floats[v];
+		T = robotino_calibration::makeTransform(rotcv, transcv);
+		//std::cout << "Transform from " << source_frame << " to " << target_frame << ":\n" << T << std::endl;
+	}
+	catch (tf::TransformException& ex)
+	{
+		ROS_WARN("%s",ex.what());
+		return false;
+	}
+
+	return true;
+}
+
+cv::Mat ReferenceLocalization::makeTransform(const cv::Mat& R, const cv::Mat& t)
+{
+	cv::Mat T = (cv::Mat_<double>(4,4) <<
+			R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
+			R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
+			R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
+			0., 0., 0., 1);
+	return T;
 }
