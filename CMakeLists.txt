@@ -26,7 +26,7 @@ find_package(catkin REQUIRED
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(OpenCV REQUIRED)	# name identical to FindOpenCV.cmake in cmake_modules
 find_package(PCL REQUIRED)
 
@@ -71,6 +71,7 @@ add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
 )
 target_link_libraries(camera_base_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
+	${Boost_LIBRARIES}
 	${OpenCV_LIBRARIES}
 	${PCL_LIBRARIES}
 )

@@ -127,6 +127,9 @@ protected:
 	// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
 	bool getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T);
 
+	// displays the calibration result in the urdf file's format and also stores the screen output to a file
+	void displayAndSaveCalibrationResult(const cv::Mat& T_base_to_torso_lower_, const cv::Mat& T_torso_upper_to_camera_);
+
 
 	ros::NodeHandle node_handle_;
 	ros::Publisher base_controller_;
