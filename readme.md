@@ -1,4 +1,6 @@
-These instructions for running the robot calibration software can be viewed in better quality at http://wiki.ros.org/robotino_calibration .
+These instructions for running the robot calibration software can be viewed in better quality at http://wiki.ros.org/robotino_calibration . The page also contains instructions for alternative localization and calibration methods.
+
+# Camera base calibration using a box for localization and a checkerboard
 
 1. Conduct a laser scanner to base calibration, see README.md in https://github.com/federico-b/squirrel_nav/tree/laser_odom_calibration/laser_odom_calibration.
 
