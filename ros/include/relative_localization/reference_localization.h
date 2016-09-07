@@ -70,6 +70,7 @@
 
 // tf
 #include <tf/tf.h>
+#include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 
 // dynamic reconfigure
@@ -86,6 +87,8 @@ public:
 	ReferenceLocalization(ros::NodeHandle& nh);
 	virtual ~ReferenceLocalization();
 
+	bool getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T);
+	cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
 
 protected:
 
@@ -97,6 +100,7 @@ protected:
 	ros::Publisher marker_pub_;
 
 	tf::TransformBroadcaster transform_broadcaster_;
+	tf::TransformListener transform_listener_;
 
 	dynamic_reconfigure::Server<robotino_calibration::RelativeLocalizationConfig> dynamic_reconfigure_server_;
 	tf::Vector3 avg_translation_;
