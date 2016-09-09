@@ -6,7 +6,7 @@
 		checkerboard: starts in upper left corner of checkerboard pattern, x goes horizontal to the right, y goes downwards to gravity direction, z goes into the plane
 		checkerboard_reference: similar definition as checkerboard, but located on the left edge of the box in front of the wall at the height of the laser scanner
 		transform between them: no rotation, just a x and y offset (ATTENTION: y offset depends on mounting height of the laser scanner) -->
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_checkerboard_reflector" output="screen" args="0.0 -0.7 0 0 0 0  checkerboard_reference checkerboard 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_checkerboard_reflector" output="screen" args="0.0 -0.59 0 0 0 0  checkerboard_reference checkerboard 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_checkerboard_reflector_nav" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 -1.57079632679  checkerboard_reference_nav checkerboard_reference 100"/>
 
 	<node name="checkerboard_localisation" pkg="robotino_calibration" type="checkerboard_localisation_node" output="screen">
