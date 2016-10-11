@@ -13,9 +13,9 @@
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Richard Bormann, email:richard.bormann@ipa.fhg.de
+ * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
  *
- * Date of creation: August 2016
+ * Date of creation: October 2016
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -48,40 +48,70 @@
  *
  ****************************************************************/
 
-#ifndef __CAMERA_BASE_CALIBRATION_PITAG_H__
-#define __CAMERA_BASE_CALIBRATION_PITAG_H__
 
+#include <robotino_calibration/calibration_utilities.h>
+#include <ros/ros.h>
 
-#include <robotino_calibration/camera_base_calibration_marker.h>
-
-
-class CameraBaseCalibrationPiTag : public CameraBaseCalibrationMarker
+namespace calibration_utilities
 {
-public:
+	RobotConfiguration::RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle)
+	{
+		pose_x_ = pose_x;
+		pose_y_ = pose_y;
+		pose_phi_ = pose_phi;
+		pan_angle_ = pan_angle;
+		tilt_angle_ = tilt_angle;
+	}
 
-	CameraBaseCalibrationPiTag(ros::NodeHandle nh);
-	~CameraBaseCalibrationPiTag();
+	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
+	{
+		try
+		{
+			image_ptr = cv_bridge::toCvShare(image_msg, sensor_msgs::image_encodings::BGR8);//image_msg->encoding);
+		}
+		catch (cv_bridge::Exception& e)
+		{
+			ROS_ERROR("ImageFlip::convertColorImageMessageToMat: cv_bridge exception: %s", e.what());
+			return false;
+		}
+		image = image_ptr->image;
 
-	// starts the calibration between camera and base including data acquisition
-	bool calibrateCameraToBase(const bool load_data);
+		return true;
+	}
 
-	// load/save calibration data from/to file
-	bool saveCalibration();
-	bool loadCalibration();
-	void getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera);
+	// generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates
+	void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images)
+	{
+		// prepare chessboard 3d points
+		pattern_points.clear();
+		pattern_points.resize(1);
+		pattern_points[0].resize(pattern_size.height*pattern_size.width);
+		for (int v=0; v<pattern_size.height; ++v)
+			for (int u=0; u<pattern_size.width; ++u)
+				pattern_points[0][v*pattern_size.width+u] = cv::Point3f(u*chessboard_cell_size, v*chessboard_cell_size, 0.f);
+		pattern_points.resize(number_images, pattern_points[0]);
+	}
+}
 
 
-protected:
 
-	// acquires images automatically from all set up robot configurations and detects the checkerboard points
-	// @param load_images loads calibration images and transformations from hard disk if set to true (images and transformations are stored automatically during recording from a real camera)
-	// retrieves the image size, checkerboard points per image as well as all relevant transformations
-	bool acquireCalibrationData(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations, const bool load_data,
-			std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
-			std::vector<cv::Mat>& T_camera_to_marker_vector);
 
-	ros::ServiceClient pitag_client_;
-	std::string marker_frame_base_name_;
-};
 
-#endif // __CAMERA_BASE_CALIBRATION_PITAG_H__
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

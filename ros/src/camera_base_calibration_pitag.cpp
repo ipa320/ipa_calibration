@@ -81,7 +81,7 @@ CameraBaseCalibrationPiTag::~CameraBaseCalibrationPiTag()
 bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 {
 	// setup storage folder
-	int return_value = system("mkdir -p robotino_calibration/camera_calibration");
+	//int return_value = system("mkdir -p robotino_calibration/camera_calibration");
 
 	// acquire images
 	std::vector<cv::Mat> T_base_to_marker_vector;
@@ -117,7 +117,7 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 	return true;
 }
 
-bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<RobotConfiguration>& robot_configurations,
+bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
 		const bool load_data, std::vector<cv::Mat>& T_base_to_marker_vector,
 		std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector, std::vector<cv::Mat>& T_camera_to_marker_vector)
 {
@@ -146,9 +146,9 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<RobotC
 				// retrieve transformations
 				cv::Mat T_base_to_marker, T_torso_lower_to_torso_upper, T_camera_to_camera_optical, T_camera_optical_to_marker, T_camera_to_marker;
 				bool result = true;
-				result &= robotino_calibration::getTransform(transform_listener_, base_frame_, marker_frame, T_base_to_marker);
-				result &= robotino_calibration::getTransform(transform_listener_, torso_lower_frame_, torso_upper_frame_, T_torso_lower_to_torso_upper);
-				result &= robotino_calibration::getTransform(transform_listener_, camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
+				result &= transform_utilities::getTransform(transform_listener_, base_frame_, marker_frame, T_base_to_marker);
+				result &= transform_utilities::getTransform(transform_listener_, torso_lower_frame_, torso_upper_frame_, T_torso_lower_to_torso_upper);
+				result &= transform_utilities::getTransform(transform_listener_, camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
 				if (result == false)
 					continue;
 				tf::Stamped<tf::Pose> pose;
@@ -162,7 +162,7 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<RobotC
 						rotcv.at<double>(v,u) = rot[v].m_floats[u];
 				for (int v=0; v<3; ++v)
 					transcv.at<double>(v) = trans.m_floats[v];
-				T_camera_optical_to_marker = robotino_calibration::makeTransform(rotcv, transcv);
+				T_camera_optical_to_marker = transform_utilities::makeTransform(rotcv, transcv);
 				T_camera_to_marker = T_camera_to_camera_optical*T_camera_optical_to_marker;
 
 				// attach data to array

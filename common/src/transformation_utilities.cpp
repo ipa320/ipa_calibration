@@ -56,112 +56,111 @@
 //Exception
 #include <tf/exceptions.h>
 
-namespace robotino_calibration
+namespace transform_utilities
 {
 
-// compute rotation matrix from yaw, pitch, roll
-// (w, p, r) = (yaW, Pitch, Roll) with
-// 1. rotation = yaw around z
-// 2. rotation = pitch around y'
-// 3. rotation = roll around x''
-cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
-{
-	double sy = sin(yaw);
-	double cy = cos(yaw);
-	double sp = sin(pitch);
-	double cp = cos(pitch);
-	double sr = sin(roll);
-	double cr = cos(roll);
-	cv::Mat rotation = (cv::Mat_<double>(3,3) <<
-			cy*cp,		cy*sp*sr - sy*cr,		cy*sp*cr + sy*sr,
-			sy*cp,		sy*sp*sr + cy*cr,		sy*sp*cr - cy*sr,
-			-sp,		cp*sr,					cp*cr);
-
-	return rotation;
-}
-
-// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
-cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot)
-{
-	Eigen::Matrix3f rot_eigen;
-	for (int i=0; i<3; ++i)
-		for (int j=0; j<3; ++j)
-			rot_eigen(i,j) = rot.at<double>(i,j);
-	Eigen::Vector3f euler_angles = rot_eigen.eulerAngles(2,1,0);
-	return cv::Vec3d(euler_angles(0), euler_angles(1), euler_angles(2));
-}
-
-cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
-{
-	cv::Mat T = (cv::Mat_<double>(4,4) <<
-			R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
-			R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
-			R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
-			0., 0., 0., 1);
-	return T;
-}
-
-// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
-bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
-{
-	try
+	// compute rotation matrix from yaw, pitch, roll
+	// (w, p, r) = (yaW, Pitch, Roll) with
+	// 1. rotation = yaw around z
+	// 2. rotation = pitch around y'
+	// 3. rotation = roll around x''
+	cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
 	{
-		tf::StampedTransform Ts;
-		transform_listener.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(1.0));
-		transform_listener.lookupTransform(target_frame, source_frame, ros::Time(0), Ts);
-		const tf::Matrix3x3& rot = Ts.getBasis();
-		const tf::Vector3& trans = Ts.getOrigin();
-		cv::Mat rotcv(3,3,CV_64FC1);
-		cv::Mat transcv(3,1,CV_64FC1);
-		for (int v=0; v<3; ++v)
-			for (int u=0; u<3; ++u)
-				rotcv.at<double>(v,u) = rot[v].m_floats[u];
-		for (int v=0; v<3; ++v)
-			transcv.at<double>(v) = trans.m_floats[v];
-		T = makeTransform(rotcv, transcv);
-	}
-	catch (tf::TransformException& ex)
-	{
-		ROS_WARN("%s",ex.what());
-		return false;
+		double sy = sin(yaw);
+		double cy = cos(yaw);
+		double sp = sin(pitch);
+		double cp = cos(pitch);
+		double sr = sin(roll);
+		double cr = cos(roll);
+		cv::Mat rotation = (cv::Mat_<double>(3,3) <<
+				cy*cp,		cy*sp*sr - sy*cr,		cy*sp*cr + sy*sr,
+				sy*cp,		sy*sp*sr + cy*cr,		sy*sp*cr - cy*sr,
+				-sp,		cp*sr,					cp*cr);
+
+		return rotation;
 	}
 
-	return true;
-}
-
-// computes the rigid transform between two sets of corresponding 3d points measured in different coordinate systems
-// the resulting 4x4 transformation matrix converts point coordinates from the target system into the source coordinate system
-cv::Mat computeExtrinsicTransform(const std::vector<cv::Point3d>& points_3d_source, const std::vector<cv::Point3d>& points_3d_target)
-{
-	// from: http://nghiaho.com/?page_id=671 : ‘A Method for Registration of 3-D Shapes’, by Besl and McKay, 1992.
-	cv::Point3d centroid_source, centroid_target;
-	for (size_t i=0; i<points_3d_source.size(); ++i)
+	// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
+	cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot)
 	{
-		centroid_source += points_3d_source[i];
-		centroid_target += points_3d_target[i];
+		Eigen::Matrix3f rot_eigen;
+		for (int i=0; i<3; ++i)
+			for (int j=0; j<3; ++j)
+				rot_eigen(i,j) = rot.at<double>(i,j);
+		Eigen::Vector3f euler_angles = rot_eigen.eulerAngles(2,1,0);
+		return cv::Vec3d(euler_angles(0), euler_angles(1), euler_angles(2));
 	}
-	centroid_source *= 1.0/(double)points_3d_source.size();
-	centroid_target *= 1.0/(double)points_3d_target.size();
 
-	// covariance matrix
-	cv::Mat M = cv::Mat::zeros(3,3,CV_64FC1);
-	for (size_t i=0; i<points_3d_source.size(); ++i)
-		M += cv::Mat(points_3d_target[i] - centroid_target)*cv::Mat(points_3d_source[i] - centroid_source).t();
+	cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
+	{
+		cv::Mat T = (cv::Mat_<double>(4,4) <<
+				R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
+				R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
+				R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
+				0., 0., 0., 1);
+		return T;
+	}
 
-	// SVD on covariance matrix yields rotation
-	cv::Mat w, u, vt;
-	cv::SVD::compute(M, w, u, vt, cv::SVD::FULL_UV);
-	cv::Mat R = vt.t()*u.t();
+	// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
+	bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
+	{
+		try
+		{
+			tf::StampedTransform Ts;
+			transform_listener.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(1.0));
+			transform_listener.lookupTransform(target_frame, source_frame, ros::Time(0), Ts);
+			const tf::Matrix3x3& rot = Ts.getBasis();
+			const tf::Vector3& trans = Ts.getOrigin();
+			cv::Mat rotcv(3,3,CV_64FC1);
+			cv::Mat transcv(3,1,CV_64FC1);
+			for (int v=0; v<3; ++v)
+				for (int u=0; u<3; ++u)
+					rotcv.at<double>(v,u) = rot[v].m_floats[u];
+			for (int v=0; v<3; ++v)
+				transcv.at<double>(v) = trans.m_floats[v];
+			T = makeTransform(rotcv, transcv);
+		}
+		catch (tf::TransformException& ex)
+		{
+			ROS_WARN("%s",ex.what());
+			return false;
+		}
 
-	// correct reflection matrix cases
-	if (cv::determinant(R) < 0)
-		for (int r=0; r<3; ++r)
-			R.at<double>(r,2) *= -1;
+		return true;
+	}
 
-	// translation
-	cv::Mat t = -R*cv::Mat(centroid_target) + cv::Mat(centroid_source);
+	// computes the rigid transform between two sets of corresponding 3d points measured in different coordinate systems
+	// the resulting 4x4 transformation matrix converts point coordinates from the target system into the source coordinate system
+	cv::Mat computeExtrinsicTransform(const std::vector<cv::Point3d>& points_3d_source, const std::vector<cv::Point3d>& points_3d_target)
+	{
+		// from: http://nghiaho.com/?page_id=671 : ‘A Method for Registration of 3-D Shapes’, by Besl and McKay, 1992.
+		cv::Point3d centroid_source, centroid_target;
+		for (size_t i=0; i<points_3d_source.size(); ++i)
+		{
+			centroid_source += points_3d_source[i];
+			centroid_target += points_3d_target[i];
+		}
+		centroid_source *= 1.0/(double)points_3d_source.size();
+		centroid_target *= 1.0/(double)points_3d_target.size();
 
-	return makeTransform(R, t);
-}
+		// covariance matrix
+		cv::Mat M = cv::Mat::zeros(3,3,CV_64FC1);
+		for (size_t i=0; i<points_3d_source.size(); ++i)
+			M += cv::Mat(points_3d_target[i] - centroid_target)*cv::Mat(points_3d_source[i] - centroid_source).t();
 
+		// SVD on covariance matrix yields rotation
+		cv::Mat w, u, vt;
+		cv::SVD::compute(M, w, u, vt, cv::SVD::FULL_UV);
+		cv::Mat R = vt.t()*u.t();
+
+		// correct reflection matrix cases
+		if (cv::determinant(R) < 0)
+			for (int r=0; r<3; ++r)
+				R.at<double>(r,2) *= -1;
+
+		// translation
+		cv::Mat t = -R*cv::Mat(centroid_target) + cv::Mat(centroid_source);
+
+		return makeTransform(R, t);
+	}
 }

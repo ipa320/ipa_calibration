@@ -68,6 +68,7 @@ add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
 										ros/src/camera_base_calibration_checkerboard.cpp
 										ros/src/camera_base_calibration_pitag.cpp
 										common/src/transformation_utilities.cpp
+										common/src/calibration_utilities.cpp
 )
 target_link_libraries(camera_base_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
@@ -80,6 +81,7 @@ add_dependencies(camera_base_calibration	${catkin_EXPORTED_TARGETS})
 add_executable(arm_base_calibration  ros/src/arm_base_calibration_node.cpp
 										ros/src/arm_base_calibration.cpp
 										common/src/transformation_utilities.cpp
+										common/src/calibration_utilities.cpp
 )
 target_link_libraries(arm_base_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES

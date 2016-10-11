@@ -51,24 +51,28 @@
 #ifndef CALIBRATION_UTILITIES_H
 #define CALIBRATION_UTILITIES_H
 
+#include <opencv/cv.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
-// struct for the configuration (x,y location + base rotation, torso links) of the robot
-struct RobotConfiguration
+namespace calibration_utilities
 {
-	double pose_x_;
-	double pose_y_;
-	double pose_phi_;
-	double pan_angle_;
-	double tilt_angle_;
-
-	RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle)
+	// struct for the configuration (x,y location + base rotation, torso links) of the robot
+	struct RobotConfiguration
 	{
-		pose_x_ = pose_x;
-		pose_y_ = pose_y;
-		pose_phi_ = pose_phi;
-		pan_angle_ = pan_angle;
-		tilt_angle_ = tilt_angle;
-	}
-};
+		double pose_x_;
+		double pose_y_;
+		double pose_phi_;
+		double pan_angle_;
+		double tilt_angle_;
+
+		RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle);
+	};
+
+	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image);
+
+	// generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates
+	void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images);
+}
 
 #endif	// CALIBRATION_UTILITIES_H

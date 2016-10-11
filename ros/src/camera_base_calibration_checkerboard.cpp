@@ -89,22 +89,6 @@ CameraBaseCalibrationCheckerboard::~CameraBaseCalibrationCheckerboard()
 		delete it_;
 }
 
-bool CameraBaseCalibrationCheckerboard::convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
-{
-	try
-	{
-		image_ptr = cv_bridge::toCvShare(image_msg, sensor_msgs::image_encodings::BGR8);//image_msg->encoding);
-	}
-	catch (cv_bridge::Exception& e)
-	{
-		ROS_ERROR("ImageFlip::convertColorImageMessageToMat: cv_bridge exception: %s", e.what());
-		return false;
-	}
-	image = image_ptr->image;
-
-	return true;
-}
-
 void CameraBaseCalibrationCheckerboard::imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
 {
 	// secure this access with a mutex
@@ -114,7 +98,7 @@ void CameraBaseCalibrationCheckerboard::imageCallback(const sensor_msgs::ImageCo
 	{
 		// read image
 		cv_bridge::CvImageConstPtr color_image_ptr;
-		if (convertImageMessageToMat(color_image_msg, color_image_ptr, camera_image_) == false)
+		if (calibration_utilities::convertImageMessageToMat(color_image_msg, color_image_ptr, camera_image_) == false)
 			return;
 
 		latest_image_time_ = color_image_msg->header.stamp;
@@ -126,7 +110,7 @@ void CameraBaseCalibrationCheckerboard::imageCallback(const sensor_msgs::ImageCo
 bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_images)
 {
 	// setup storage folder
-	int return_value = system("mkdir -p robotino_calibration/camera_calibration");
+	//int return_value = system("mkdir -p robotino_calibration/camera_calibration");
 
 	// pre-cache images
 	if (load_images == false)
@@ -150,7 +134,7 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 
 	// prepare chessboard 3d points
 	std::vector< std::vector<cv::Point3f> > pattern_points_3d;
-	computeCheckerboard3dPoints(pattern_points_3d, chessboard_pattern_size_, chessboard_cell_size_, points_2d_per_image.size());
+	calibration_utilities::computeCheckerboard3dPoints(pattern_points_3d, chessboard_pattern_size_, chessboard_cell_size_, points_2d_per_image.size());
 
 	// intrinsic calibration for camera
 	std::vector<cv::Mat> rvecs, tvecs, T_camera_to_checkerboard_vector;
@@ -159,7 +143,7 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	{
 		cv::Mat R, t;
 		cv::Rodrigues(rvecs[i], R);
-		cv::Mat T_camera_to_checkerboard = T_camera_to_camera_optical_vector[i] * robotino_calibration::makeTransform(R, tvecs[i]);
+		cv::Mat T_camera_to_checkerboard = T_camera_to_camera_optical_vector[i] * transform_utilities::makeTransform(R, tvecs[i]);
 		T_camera_to_checkerboard_vector.push_back(T_camera_to_checkerboard);
 	}
 
@@ -187,7 +171,7 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	return true;
 }
 
-bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vector<RobotConfiguration>& robot_configurations,
+bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
 		const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
 		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_base_to_checkerboard_vector,
 		std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector, std::vector<cv::Mat>& T_camera_to_camera_optical_vector)
@@ -228,9 +212,9 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 		else
 		{
 			bool result = true;
-			result &= robotino_calibration::getTransform(transform_listener_, base_frame_, checkerboard_frame_, T_base_to_checkerboard);
-			result &= robotino_calibration::getTransform(transform_listener_, torso_lower_frame_, torso_upper_frame_, T_torso_lower_to_torso_upper);
-			result &= robotino_calibration::getTransform(transform_listener_, camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
+			result &= transform_utilities::getTransform(transform_listener_, base_frame_, checkerboard_frame_, T_base_to_checkerboard);
+			result &= transform_utilities::getTransform(transform_listener_, torso_lower_frame_, torso_upper_frame_, T_torso_lower_to_torso_upper);
+			result &= transform_utilities::getTransform(transform_listener_, camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
 
 			if (result == false)
 				continue;
@@ -333,18 +317,6 @@ int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width,
 	}
 
 	return return_value;
-}
-
-void CameraBaseCalibrationCheckerboard::computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images)
-{
-	// prepare chessboard 3d points
-	pattern_points.clear();
-	pattern_points.resize(1);
-	pattern_points[0].resize(pattern_size.height*pattern_size.width);
-	for (int v=0; v<pattern_size.height; ++v)
-		for (int u=0; u<pattern_size.width; ++u)
-			pattern_points[0][v*pattern_size.width+u] = cv::Point3f(u*chessboard_cell_size, v*chessboard_cell_size, 0.f);
-	pattern_points.resize(number_images, pattern_points[0]);
 }
 
 void CameraBaseCalibrationCheckerboard::intrinsicCalibration(const std::vector< std::vector<cv::Point3f> >& pattern_points, const std::vector< std::vector<cv::Point2f> >& camera_points_2d_per_image, const cv::Size& image_size, std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs)

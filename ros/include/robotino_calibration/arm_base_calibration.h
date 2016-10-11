@@ -96,7 +96,7 @@ public:
 
 protected:
 
-	bool moveArm(const RobotConfiguration& arm_configuration);
+	bool moveArm(const calibration_utilities::RobotConfiguration& arm_configuration);
 
 	void extrinsicCalibrationBaseToArm(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 			std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_endeff_vector);
@@ -104,7 +104,7 @@ protected:
 	void extrinsicCalibrationEndeffToCheckerboard(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 				std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_endeff_vector);
 
-	bool acquireCalibrationImages(const std::vector<RobotConfiguration>& robot_configurations,
+	bool acquireCalibrationImages(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
 			const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
 			std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_base_to_checkerboard_vector,
 			std::vector<cv::Mat>& T_armbase_to_endeff_vector);
@@ -112,10 +112,6 @@ protected:
 			std::vector<cv::Point2f>& checkerboard_points_2d, const cv::Size pattern_size, const bool load_images, int& image_counter);
 
 	void imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg);
-	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image);
-
-	// generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates
-	void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images);
 
 	// displays the calibration result in the urdf file's format and also stores the screen output to a file
 	void displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm_);
@@ -151,7 +147,7 @@ private:
 
 	int optimization_iterations_;	// number of iterations for optimization
 
-	std::vector<RobotConfiguration> arm_configurations_;	// list of robot configurations for observing the checkerboard
+	std::vector<calibration_utilities::RobotConfiguration> arm_configurations_;	// list of robot configurations for observing the checkerboard
 
 	image_transport::ImageTransport* it_;
 	image_transport::SubscriberFilter color_image_sub_; ///< Color camera image input topic
