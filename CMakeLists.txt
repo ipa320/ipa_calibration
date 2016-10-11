@@ -77,6 +77,18 @@ target_link_libraries(camera_base_calibration
 )
 add_dependencies(camera_base_calibration	${catkin_EXPORTED_TARGETS})
 
+add_executable(arm_base_calibration  ros/src/arm_base_calibration_node.cpp
+										ros/src/arm_base_calibration.cpp
+										common/src/transformation_utilities.cpp
+)
+target_link_libraries(arm_base_calibration
+	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
+	${Boost_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	${PCL_LIBRARIES}
+)
+add_dependencies(arm_base_calibration	${catkin_EXPORTED_TARGETS})
+
 
 #############
 ## Install ##
@@ -94,6 +106,12 @@ add_dependencies(camera_base_calibration	${catkin_EXPORTED_TARGETS})
 
 ## Mark executables and/or libraries for installation
 install(TARGETS camera_base_calibration
+	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS arm_base_calibration
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

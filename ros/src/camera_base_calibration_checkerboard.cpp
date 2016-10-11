@@ -228,9 +228,9 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 		else
 		{
 			bool result = true;
-			result &= getTransform(base_frame_, checkerboard_frame_, T_base_to_checkerboard);
-			result &= getTransform(torso_lower_frame_, torso_upper_frame_, T_torso_lower_to_torso_upper);
-			result &= getTransform(camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
+			result &= robotino_calibration::getTransform(transform_listener_, base_frame_, checkerboard_frame_, T_base_to_checkerboard);
+			result &= robotino_calibration::getTransform(transform_listener_, torso_lower_frame_, torso_upper_frame_, T_torso_lower_to_torso_upper);
+			result &= robotino_calibration::getTransform(transform_listener_, camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
 
 			if (result == false)
 				continue;

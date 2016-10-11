@@ -146,9 +146,9 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<RobotC
 				// retrieve transformations
 				cv::Mat T_base_to_marker, T_torso_lower_to_torso_upper, T_camera_to_camera_optical, T_camera_optical_to_marker, T_camera_to_marker;
 				bool result = true;
-				result &= getTransform(base_frame_, marker_frame, T_base_to_marker);
-				result &= getTransform(torso_lower_frame_, torso_upper_frame_, T_torso_lower_to_torso_upper);
-				result &= getTransform(camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
+				result &= robotino_calibration::getTransform(transform_listener_, base_frame_, marker_frame, T_base_to_marker);
+				result &= robotino_calibration::getTransform(transform_listener_, torso_lower_frame_, torso_upper_frame_, T_torso_lower_to_torso_upper);
+				result &= robotino_calibration::getTransform(transform_listener_, camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
 				if (result == false)
 					continue;
 				tf::Stamped<tf::Pose> pose;

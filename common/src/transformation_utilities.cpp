@@ -53,6 +53,9 @@
 // Eigen
 #include <Eigen/Core>
 
+//Exception
+#include <tf/exceptions.h>
+
 namespace robotino_calibration
 {
 
@@ -96,6 +99,69 @@ cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
 			R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
 			0., 0., 0., 1);
 	return T;
+}
+
+// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
+bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
+{
+	try
+	{
+		tf::StampedTransform Ts;
+		transform_listener.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(1.0));
+		transform_listener.lookupTransform(target_frame, source_frame, ros::Time(0), Ts);
+		const tf::Matrix3x3& rot = Ts.getBasis();
+		const tf::Vector3& trans = Ts.getOrigin();
+		cv::Mat rotcv(3,3,CV_64FC1);
+		cv::Mat transcv(3,1,CV_64FC1);
+		for (int v=0; v<3; ++v)
+			for (int u=0; u<3; ++u)
+				rotcv.at<double>(v,u) = rot[v].m_floats[u];
+		for (int v=0; v<3; ++v)
+			transcv.at<double>(v) = trans.m_floats[v];
+		T = makeTransform(rotcv, transcv);
+	}
+	catch (tf::TransformException& ex)
+	{
+		ROS_WARN("%s",ex.what());
+		return false;
+	}
+
+	return true;
+}
+
+// computes the rigid transform between two sets of corresponding 3d points measured in different coordinate systems
+// the resulting 4x4 transformation matrix converts point coordinates from the target system into the source coordinate system
+cv::Mat computeExtrinsicTransform(const std::vector<cv::Point3d>& points_3d_source, const std::vector<cv::Point3d>& points_3d_target)
+{
+	// from: http://nghiaho.com/?page_id=671 : ‘A Method for Registration of 3-D Shapes’, by Besl and McKay, 1992.
+	cv::Point3d centroid_source, centroid_target;
+	for (size_t i=0; i<points_3d_source.size(); ++i)
+	{
+		centroid_source += points_3d_source[i];
+		centroid_target += points_3d_target[i];
+	}
+	centroid_source *= 1.0/(double)points_3d_source.size();
+	centroid_target *= 1.0/(double)points_3d_target.size();
+
+	// covariance matrix
+	cv::Mat M = cv::Mat::zeros(3,3,CV_64FC1);
+	for (size_t i=0; i<points_3d_source.size(); ++i)
+		M += cv::Mat(points_3d_target[i] - centroid_target)*cv::Mat(points_3d_source[i] - centroid_source).t();
+
+	// SVD on covariance matrix yields rotation
+	cv::Mat w, u, vt;
+	cv::SVD::compute(M, w, u, vt, cv::SVD::FULL_UV);
+	cv::Mat R = vt.t()*u.t();
+
+	// correct reflection matrix cases
+	if (cv::determinant(R) < 0)
+		for (int r=0; r<3; ++r)
+			R.at<double>(r,2) *= -1;
+
+	// translation
+	cv::Mat t = -R*cv::Mat(centroid_target) + cv::Mat(centroid_source);
+
+	return makeTransform(R, t);
 }
 
 }

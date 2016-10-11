@@ -8,14 +8,14 @@
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
  * Project name: squirrel
- * ROS stack name: squirrel_robotino
+ * ROS stack name: squirrel_calibration
  * ROS package name: robotino_calibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Richard Bormann, email:richard.bormann@ipa.fhg.de
+ * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
  *
- * Date of creation: December 2015
+ * Date of creation: October 2016
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -48,35 +48,27 @@
  *
  ****************************************************************/
 
-#ifndef _TRANSFORMATION_UTILITIES_H_
-#define _TRANSFORMATION_UTILITIES_H_
+#include <ros/ros.h>
+#include <robotino_calibration/arm_base_calibration.h>
 
-// OpenCV
-#include <opencv/cv.h>
-
-#include <tf/transform_listener.h>
-
-namespace robotino_calibration
+//#######################
+//#### main programm ####
+int main(int argc, char** argv)
 {
-// compute rotation matrix from yaw, pitch, roll
-// (w, p, r) = (yaW, Pitch, Roll) with
-// 1. rotation = yaw around z
-// 2. rotation = pitch around y'
-// 3. rotation = roll around x''
-cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll);
+	// Initialize ROS, specify name of node
+	ros::init(argc, argv, "arm_base_calibration");
 
-// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
-cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot);
+	// Create a handle for this node, initialize node
+	ros::NodeHandle nh("~");
 
-cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
+	// load parameters
+	bool load_images = false;
+	std::cout << "\n========== Relative Localization Parameters ==========\n";
+	nh.param("load_images", load_images, false);
+	std::cout << "load_images: " << load_images << std::endl;
 
-// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
-bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T);
+	ArmBaseCalibration armCal(nh);
+	armCal.calibrateArmToBase(load_images);
 
-// computes the rigid transform between two sets of corresponding 3d points measured in different coordinate systems
-// the resulting 4x4 transformation matrix converts point coordinates from the target system into the source coordinate system
-cv::Mat computeExtrinsicTransform(const std::vector<cv::Point3d>& points_3d_source, const std::vector<cv::Point3d>& points_3d_target);
-
+	return 0;
 }
-
-#endif	// _TRANSFORMATION_UTILITIES_H_

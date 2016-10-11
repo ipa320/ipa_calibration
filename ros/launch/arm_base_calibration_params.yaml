@@ -1,0 +1,93 @@
+### checkerboard parameters
+# side length of the chessboard squares
+# chessboard_cell_size: 0.05
+chessboard_cell_size: 0.018
+
+# number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
+# chessboard_pattern_size: [6,4]
+chessboard_pattern_size: [9,6]
+
+### initial values for transformation estimates
+# insert the values as x, y, z, yaw (rot around z), pitch (rot around y'), roll (rot around x'')
+# transform from base to first link of arm.
+T_base_to_arm_initial: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+### Observation positions for capturing calibration images of the marker
+# if this flag is true, then the robot configurations will be sampled on a equally spaced grid from the given ranges, if false, the user-provided configurations in arm_configurations will be used
+# bool
+use_range: true
+
+# ranges for the degrees of freedom of the robot
+# each parameter is set as [min_value, step, max_value]
+# double
+x_range: [-1.5, 0.25, -0.75]       # in [m]
+y_range: [-0.09, 1.0, -0.09]       # in [m], fixed y-coordinate
+phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
+pan_range: [-0.52, 0.02, 0.52]     # in [rad]
+tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
+
+
+### checkerboard observation positions for capturing calibration images
+# list of robot configurations for observing the checkerboard measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker (e.g. checkerboard)
+# includes 5 parameters per entry: robot pose: x, y, phi and torso: pan, tilt
+arm_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
+                       -1.5, -0.17, 0, 0.0, 0.3,
+                       -1.5, -0.17, 0, -0.15, 0.3,
+                       -1.5, -0.17, 0, -0.3, 0.3,
+                       -1.5, -0.17, 0, -0.5, 0.3,
+                       -1.5, -0.17, 0, 0.15, 0.05,
+                       -1.5, -0.17, 0, 0.0, 0.05,
+                       -1.5, -0.17, 0, -0.15, 0.05,
+                       -1.5, -0.17, 0, -0.3, 0.05,
+                       -1.5, -0.17, 0, -0.5, 0.05,
+                       -1.5, -0.17, 0, 0.15, -0.2,
+                       -1.5, -0.17, 0, 0.0, -0.2,
+                       -1.5, -0.17, 0, -0.15, -0.2,
+                       -1.5, -0.17, 0, -0.35, -0.2,
+                       -1.5, -0.17, 0, -0.5, -0.2,
+                       -1.0, -0.17, 0, 0.0, 0.2,
+                       -1.0, -0.17, 0, -0.2, 0.2,
+                       -1.0, -0.17, 0, -0.45, 0.2,
+                       -1.0, -0.17, 0, 0.0, 0.05,
+                       -1.0, -0.17, 0, -0.2, 0.05,
+                       -1.0, -0.17, 0, -0.45, 0.05,
+                       -1.0, -0.17, 0, 0.0, -0.15,
+                       -1.0, -0.17, 0, -0.2, -0.15,
+                       -1.0, -0.17, 0, -0.45, -0.15,
+                       -0.85, -0.17, 0, 0.0, 0.15,
+                       -0.85, -0.17, 0, -0.15, 0.15,
+                       -0.85, -0.17, 0, -0.35, 0.2,
+                       -0.85, -0.17, 0, 0.0, 0.05,
+                       -0.85, -0.17, 0, -0.15, 0.05,
+                       -0.85, -0.17, 0, -0.35, 0.05,
+                       -0.85, -0.17, 0, 0.0, -0.1,
+                       -0.85, -0.17, 0, -0.15, -0.1,
+                       -0.85, -0.17, 0, -0.35, -0.1]
+
+
+# link names for the robot coordinate systems
+# string
+# camera frame with fixed transform to torso_upper_frame [transform from torso_upper_frame to camera will be calibrated by this program]
+camera_frame: "kinect_link"
+
+# this is the camera coordinate system which refers to the color image sensor [the transformations between camera_frame and camera_optical_frame should be available from tf]
+camera_optical_frame: "kinect_rgb_optical_frame"
+
+# the robot base frame [the transformation between laser scanner and base should be accomplished before, the transform from base_frame to torso_lower_framewill be calibrated by this program]
+base_frame: "base_link"
+
+# arm frame attached to robot base
+arm_frame: "arm_link"
+
+# do not modify, this is the coordinate system fixed in the upper left checkerboard calibration corner (where 4 squares meet), it will be published to tf via the relative_localization program
+checkerboard_frame: "checkerboard_frame"
+
+
+### program sequence
+# loads calibration images and transforms from disk if set to true
+# bool
+load_images: false
+
+# number of optimization iterations
+# int
+optimization_iterations: 100

@@ -208,7 +208,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 	double error_x = 10;
 	double error_y = 10;
 	cv::Mat T;
-	if (!getTransform("landmark_reference_nav", "base_link", T))
+	if (!robotino_calibration::getTransform(transform_listener_, "landmark_reference_nav", "base_link", T))
 		return false;
 	cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T);
 	double robot_yaw = ypr.val[0];
@@ -227,7 +227,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 		// control robot angle
 		while(true)
 		{
-			if (!getTransform("landmark_reference_nav", "base_link", T))
+			if (!robotino_calibration::getTransform(transform_listener_, "landmark_reference_nav", "base_link", T))
 				return false;
 			cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T);
 				double robot_yaw = ypr.val[0];
@@ -247,7 +247,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 		// control position
 		while(true)
 		{
-			if (!getTransform("landmark_reference_nav", "base_link", T))
+			if (!robotino_calibration::getTransform(transform_listener_, "landmark_reference_nav", "base_link", T))
 				return false;
 			geometry_msgs::Twist tw;
 			error_x = robot_configuration.pose_x_ - T.at<double>(0,3);
@@ -265,7 +265,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 		// control robot angle
 		while (true)
 		{
-			if (!getTransform("landmark_reference_nav", "base_link", T))
+			if (!robotino_calibration::getTransform(transform_listener_, "landmark_reference_nav", "base_link", T))
 				return false;
 			cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T);
 				double robot_yaw = ypr.val[0];
@@ -347,7 +347,7 @@ void CameraBaseCalibrationMarker::extrinsicCalibrationBaseToTorsoLower(std::vect
 		}
 	}
 
-	T_torso_upper_to_camera_ = computeExtrinsicTransform(points_3d_torso_upper, points_3d_camera);
+	T_torso_upper_to_camera_ = robotino_calibration::computeExtrinsicTransform(points_3d_torso_upper, points_3d_camera);
 }
 
 void CameraBaseCalibrationMarker::extrinsicCalibrationTorsoUpperToCamera(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
@@ -380,12 +380,12 @@ void CameraBaseCalibrationMarker::extrinsicCalibrationTorsoUpperToCamera(std::ve
 		}
 	}
 
-	T_base_to_torso_lower_ = computeExtrinsicTransform(points_3d_base, points_3d_torso_lower);
+	T_base_to_torso_lower_ = robotino_calibration::computeExtrinsicTransform(points_3d_base, points_3d_torso_lower);
 }
 
 // computes the rigid transform between two sets of corresponding 3d points measured in different coordinate systems
 // the resulting 4x4 transformation matrix converts point coordinates from the target system into the source coordinate system
-cv::Mat CameraBaseCalibrationMarker::computeExtrinsicTransform(const std::vector<cv::Point3d>& points_3d_source, const std::vector<cv::Point3d>& points_3d_target)
+/*cv::Mat CameraBaseCalibrationMarker::computeExtrinsicTransform(const std::vector<cv::Point3d>& points_3d_source, const std::vector<cv::Point3d>& points_3d_target)
 {
 	// from: http://nghiaho.com/?page_id=671 : ‘A Method for Registration of 3-D Shapes’, by Besl and McKay, 1992.
 	cv::Point3d centroid_source, centroid_target;
@@ -416,10 +416,10 @@ cv::Mat CameraBaseCalibrationMarker::computeExtrinsicTransform(const std::vector
 	cv::Mat t = -R*cv::Mat(centroid_target) + cv::Mat(centroid_source);
 
 	return robotino_calibration::makeTransform(R, t);
-}
+}*/
 
 // computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
-bool CameraBaseCalibrationMarker::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
+/*bool CameraBaseCalibrationMarker::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
 {
 	try
 	{
@@ -445,7 +445,7 @@ bool CameraBaseCalibrationMarker::getTransform(const std::string& target_frame, 
 	}
 
 	return true;
-}
+}*/
 
 void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult(const cv::Mat& T_base_to_torso_lower_, const cv::Mat& T_torso_upper_to_camera_)
 {
