@@ -71,7 +71,7 @@ CameraBaseCalibrationPiTag::CameraBaseCalibrationPiTag(ros::NodeHandle nh) :
 
 	pitag_client_ = node_handle_.serviceClient<cob_object_detection_msgs::DetectObjects>("get_fiducials");
 
-	ROS_INFO("CameraBaseCalibration initialized.");
+	ROS_INFO("CameraBaseCalibrationPiTag initialized.");
 }
 
 CameraBaseCalibrationPiTag::~CameraBaseCalibrationPiTag()
@@ -87,7 +87,7 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 	std::vector<cv::Mat> T_base_to_marker_vector;
 	std::vector<cv::Mat> T_torso_lower_to_torso_upper_vector;
 	std::vector<cv::Mat> T_camera_to_marker_vector;
-	acquireCalibrationData(robot_configurations_, load_data,
+	acquireCalibrationData(movement_configurations_, load_data,
 			T_base_to_marker_vector, T_torso_lower_to_torso_upper_vector, T_camera_to_marker_vector);
 
 	// prepare marker 3d points (actually only the point (0,0,0) in the marker coordinate system
@@ -122,7 +122,7 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 		std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector, std::vector<cv::Mat>& T_camera_to_marker_vector)
 {
 	std::stringstream path;
-	path << camera_calibration_path_ << "pitag_data.yml";
+	path << calibration_storage_path_ << "pitag_data.yml";
 
 	// capture images from different perspectives
 	if (load_data == false)
@@ -213,7 +213,7 @@ bool CameraBaseCalibrationPiTag::saveCalibration()
 	bool success = true;
 
 	// save calibration
-	std::string filename = camera_calibration_path_ + "camera_calibration.yml";
+	std::string filename = calibration_storage_path_ + "camera_calibration.yml";
 	cv::FileStorage fs(filename.c_str(), cv::FileStorage::WRITE);
 	if (fs.isOpened() == true)
 	{
@@ -222,7 +222,7 @@ bool CameraBaseCalibrationPiTag::saveCalibration()
 	}
 	else
 	{
-		std::cout << "Error: CameraBaseCalibration::saveCalibration: Could not write calibration to file.";
+		std::cout << "Error: CameraBaseCalibrationPiTag::saveCalibration: Could not write calibration to file.";
 		success = false;
 	}
 	fs.release();
@@ -235,7 +235,7 @@ bool CameraBaseCalibrationPiTag::loadCalibration()
 	bool success = true;
 
 	// load calibration
-	std::string filename = camera_calibration_path_ + "camera_calibration.yml";
+	std::string filename = calibration_storage_path_ + "camera_calibration.yml";
 	cv::FileStorage fs(filename.c_str(), cv::FileStorage::READ);
 	if (fs.isOpened() == true)
 	{
@@ -244,7 +244,7 @@ bool CameraBaseCalibrationPiTag::loadCalibration()
 	}
 	else
 	{
-		std::cout << "Error: CameraBaseCalibration::loadCalibration: Could not read calibration from file.";
+		std::cout << "Error: CameraBaseCalibrationPiTag::loadCalibration: Could not read calibration from file.";
 		success = false;
 	}
 	fs.release();
@@ -254,11 +254,11 @@ bool CameraBaseCalibrationPiTag::loadCalibration()
 	return success;
 }
 
-void CameraBaseCalibrationPiTag::getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera)
+void CameraBaseCalibrationPiTag::getCalibration(cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera)
 {
 	if (calibrated_ == false && loadCalibration() == false)
 	{
-		std::cout << "Error: CameraBaseCalibration not calibrated and no calibration data available on disk." << std::endl;
+		std::cout << "Error: CameraBaseCalibrationPiTag not calibrated and no calibration data available on disk." << std::endl;
 		return;
 	}
 

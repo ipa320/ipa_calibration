@@ -54,23 +54,12 @@
 #include <std_msgs/Float64.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
-#include <boost/filesystem.hpp>
 #include <sstream>
 #include <fstream>
 
 ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
-		node_handle_(nh), transform_listener_(nh), arm_calibration_path_("robotino_calibration/arm_calibration/"), calibrated_(false)
+		RobotCalibration(nh)
 {
-	// create data storage path if it does not yet exist
-	boost::filesystem::path storage_path(arm_calibration_path_);
-	if (boost::filesystem::exists(storage_path) == false)
-	{
-		if (boost::filesystem::create_directories(storage_path) == false && boost::filesystem::exists(storage_path) == false)
-		{
-			std::cout << "Error: ArmBaseCalibration::ArmBaseCalibration: Could not create directory " << storage_path << std::endl;
-			return;
-		}
-	}
 
 	// load parameters
 	std::cout << "\n========== ArmBaseCalibration Parameters ==========\n";
@@ -88,8 +77,6 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
 
 	// coordinate frame name parameters
-	node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
-	std::cout << "base_frame: " << base_frame_ << std::endl;
 	node_handle_.param<std::string>("armbase_frame", armbase_frame_, "");
 	std::cout << "armbase_frame: " << armbase_frame_ << std::endl;
 	node_handle_.param<std::string>("endeff_frame_", endeff_frame_, "");
@@ -110,67 +97,6 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 		T_endeff_to_checkerboard_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_endeff_to_checkerboard_initial:\n" << T_endeff_to_checkerboard_ << std::endl;
 
-	// optimization parameters
-	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
-	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
-	// pan/tilt unit positions and robot base locations relative to marker
-	bool use_range = false;
-	node_handle_.param("use_range", use_range, false);
-	std::cout << "use_range: " << use_range << std::endl;
-	if (use_range == true)
-	{
-		// create robot configurations from regular grid
-		std::vector<double> x_range;
-		node_handle_.getParam("x_range", x_range);
-		std::vector<double> y_range;
-		node_handle_.getParam("y_range", y_range);
-		std::vector<double> phi_range;
-		node_handle_.getParam("phi_range", phi_range);
-		std::vector<double> pan_range;
-		node_handle_.getParam("pan_range", pan_range);
-		std::vector<double> tilt_range;
-		node_handle_.getParam("tilt_range", tilt_range);
-		if (x_range.size()!=3 || y_range.size()!=3 || phi_range.size()!=3 || pan_range.size()!=3 || tilt_range.size()!=3)
-		{
-			ROS_ERROR("One of the range vectors has wrong size.");
-			return;
-		}
-		if (x_range[0] == x_range[2] || x_range[1] == 0.)		// this sets the step to something bigger than 0
-			x_range[1] = 1.0;
-		if (y_range[0] == y_range[2] || y_range[1] == 0.)
-			y_range[1] = 1.0;
-		if (phi_range[0] == phi_range[2] || phi_range[1] == 0.)
-			phi_range[1] = 1.0;
-		if (pan_range[0] == pan_range[2] || pan_range[1] == 0.)
-			pan_range[1] = 1.0;
-		if (tilt_range[0] == tilt_range[2] || tilt_range[1] == 0.)
-			tilt_range[1] = 1.0;
-		for (double x=x_range[0]; x<=x_range[2]; x+=x_range[1])
-			for (double y=y_range[0]; y<=y_range[2]; y+=y_range[1])
-				for (double phi=phi_range[0]; phi<=phi_range[2]; phi+=phi_range[1])
-					for (double pan=pan_range[0]; pan<=pan_range[2]; pan+=pan_range[1])
-						for (double tilt=tilt_range[0]; tilt<=tilt_range[2]; tilt+=tilt_range[1])
-							arm_configurations_.push_back(calibration_utilities::RobotConfiguration(x, y, phi, pan, tilt));
-	}
-	else
-	{
-		// read out user-defined robot configurations
-		temp.clear();
-		node_handle_.getParam("robot_configurations", temp);
-		const int number_configurations = temp.size()/5;
-		if (temp.size()%5 != 0 || temp.size() < 3*5)
-		{
-			ROS_ERROR("The robot_configurations vector should contain at least 3 configurations with 5 values each.");
-			return;
-		}
-		std::cout << "Robot configurations:\n";
-		for (int i=0; i<number_configurations; ++i)
-		{
-			arm_configurations_.push_back(calibration_utilities::RobotConfiguration(temp[5*i], temp[5*i+1], temp[5*i+2], temp[5*i+3], temp[5*i+4]));
-			std::cout << temp[5*i] << "\t" << temp[5*i+1] << "\t" << temp[5*i+2] << "\t" << temp[5*i+3] << "\t" << temp[5*i+4] << std::endl;
-		}
-	}
-
 	// topics
 	/*pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>("/pan_tilt_controller/joint_states", 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
@@ -182,18 +108,13 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	color_image_sub_.subscribe(*it_, "colorimage_in", 1);
 	color_image_sub_.registerCallback(boost::bind(&ArmBaseCalibration::imageCallback, this, _1));
 
-	ROS_INFO("CameraBaseCalibration initialized.");
+	ROS_INFO("ArmBaseCalibration initialized.");
 }
 
 ArmBaseCalibration::~ArmBaseCalibration()
 {
 	if (it_ != 0)
 		delete it_;
-}
-
-void ArmBaseCalibration::setCalibrationStatus(bool calibrated)
-{
-		calibrated_ = calibrated;
 }
 
 void ArmBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
@@ -235,7 +156,7 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	std::vector< std::vector<cv::Point2f> > points_2d_per_image;
 	std::vector<cv::Mat> T_base_to_checkerboard_vector;
 	std::vector<cv::Mat> T_armbase_to_endeff_vector;
-	acquireCalibrationImages(arm_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_base_to_checkerboard_vector,
+	acquireCalibrationImages(movement_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_base_to_checkerboard_vector,
 			T_armbase_to_endeff_vector);
 
 	// prepare chessboard 3d points
@@ -284,7 +205,7 @@ bool ArmBaseCalibration::acquireCalibrationImages(const std::vector<calibration_
 		// retrieve transformations
 		cv::Mat T_base_to_checkerboard, T_armbase_to_endeff;
 		std::stringstream path;
-		path << arm_calibration_path_ << image_counter << ".yml";
+		path << calibration_storage_path_ << image_counter << ".yml";
 		if (load_images)
 		{
 			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
@@ -368,7 +289,7 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 	{
 		// load image from file
 		std::stringstream ss;
-		ss << arm_calibration_path_ << image_counter;
+		ss << calibration_storage_path_ << image_counter;
 		std::string image_name = ss.str() + ".png";
 		image = cv::imread(image_name.c_str(), 0);
 		if (image.empty())
@@ -393,7 +314,7 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 		if (load_images == false)
 		{
 			std::stringstream ss;
-			ss << arm_calibration_path_ << image_counter;
+			ss << calibration_storage_path_ << image_counter;
 			std::string image_name = ss.str() + ".png";
 			cv::imwrite(image_name.c_str(), image);
 		}
@@ -479,7 +400,7 @@ bool ArmBaseCalibration::saveCalibration()
 	bool success = true;
 
 	// save calibration
-	std::string filename = arm_calibration_path_ + "arm_calibration.yml";
+	std::string filename = calibration_storage_path_ + "arm_calibration.yml";
 	cv::FileStorage fs(filename.c_str(), cv::FileStorage::WRITE);
 	if (fs.isOpened() == true)
 	{
@@ -501,7 +422,7 @@ bool ArmBaseCalibration::loadCalibration()
 	bool success = true;
 
 	// load calibration
-	std::string filename = arm_calibration_path_ + "camera_calibration.yml";
+	std::string filename = calibration_storage_path_ + "arm_calibration.yml";
 	cv::FileStorage fs(filename.c_str(), cv::FileStorage::READ);
 	if (fs.isOpened() == true)
 	{
@@ -532,7 +453,7 @@ void ArmBaseCalibration::getCalibration(cv::Mat& T_base_to_armbase, cv::Mat& T_e
 	T_endeff_to_checkerboard = T_endeff_to_checkerboard_.clone();
 }
 
-void ArmBaseCalibration::displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm)
+void ArmBaseCalibration::displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm) //ToDo: Change output format when properties are known!
 {
 	// display calibration parameters
 	std::stringstream output;
@@ -547,7 +468,7 @@ void ArmBaseCalibration::displayAndSaveCalibrationResult(const cv::Mat& T_base_t
 			  << "  <property name=\"arm_base_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
 	std::cout << output.str();
 
-	std::string path_file = arm_calibration_path_ + "arm_calibration_urdf.txt";
+	std::string path_file = calibration_storage_path_ + "arm_calibration_urdf.txt";
 	std::fstream file_output;
 	file_output.open(path_file.c_str(), std::ios::out);
 	if (file_output.is_open())

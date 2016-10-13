@@ -78,10 +78,12 @@
 
 // Boost
 #include <boost/thread/mutex.hpp>
+
 #include <robotino_calibration/calibration_utilities.h>
+#include <robotino_calibration/robot_calibration.h>
 
 
-class ArmBaseCalibration
+class ArmBaseCalibration : public RobotCalibration
 {
 public:
 
@@ -91,7 +93,6 @@ public:
 	bool saveCalibration();
 	bool loadCalibration();
 	void getCalibration(cv::Mat& T_base_to_armbase, cv::Mat& T_endeff_to_checkerboard);
-	void setCalibrationStatus(bool calibrated);
 
 
 protected:
@@ -119,7 +120,6 @@ protected:
 
 private:
 
-	ros::NodeHandle node_handle_;
 	/*ros::Publisher base_controller_;
 	ros::Publisher tilt_controller_;
 	ros::Publisher pan_controller_;
@@ -128,9 +128,7 @@ private:
 	sensor_msgs::JointState* pan_tilt_joint_state_current_;
 	boost::mutex pan_tilt_joint_state_data_mutex_;	// secures read operations on pan tilt joint state data
 */
-	tf::TransformListener transform_listener_;
 	//std::vector<std::string> arm_frames_; // list of all arms links
-	std::string base_frame_;
 	std::string checkerboard_frame_;
 	std::string armbase_frame_;
 	std::string endeff_frame_;
@@ -138,16 +136,9 @@ private:
 	cv::Mat T_base_to_armbase_;		// transformation to estimate from base to first link of arm
 	cv::Mat T_endeff_to_checkerboard_;
 
-	bool calibrated_;	// only true if cameras were calibrated or a calibration was loaded before
-
 	// parameters
-	std::string arm_calibration_path_;	// path to data
 	/*std::string tilt_controller_command_;
 	std::string pan_controller_command_;*/
-
-	int optimization_iterations_;	// number of iterations for optimization
-
-	std::vector<calibration_utilities::RobotConfiguration> arm_configurations_;	// list of robot configurations for observing the checkerboard
 
 	image_transport::ImageTransport* it_;
 	image_transport::SubscriberFilter color_image_sub_; ///< Color camera image input topic
@@ -155,9 +146,6 @@ private:
 	cv::Mat camera_image_;		// stores the latest camera image
 	ros::Time latest_image_time_;	// stores time stamp of latest image
 	bool capture_image_;
-
-	//cv::Mat K_;			// intrinsic matrix for camera
-	//cv::Mat distortion_;	// distortion parameters for camera
 
 	double chessboard_cell_size_;	// cell side length in [m]
 	cv::Size chessboard_pattern_size_;		// number of checkerboard corners in x and y direction

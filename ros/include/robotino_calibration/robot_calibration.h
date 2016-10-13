@@ -13,9 +13,9 @@
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Richard Bormann, email:richard.bormann@ipa.fhg.de
+ * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
  *
- * Date of creation: August 2016
+ * Date of creation: October 2016
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -48,40 +48,39 @@
  *
  ****************************************************************/
 
-#ifndef __CAMERA_BASE_CALIBRATION_PITAG_H__
-#define __CAMERA_BASE_CALIBRATION_PITAG_H__
+#ifndef ROBOT_CALIBRATION_H_
+#define ROBOT_CALIBRATION_H_
 
 
-#include <robotino_calibration/camera_base_calibration_marker.h>
+#include <ros/ros.h>
+#include <tf/transform_listener.h>
+#include <robotino_calibration/calibration_utilities.h>
 
 
-class CameraBaseCalibrationPiTag : public CameraBaseCalibrationMarker
+class RobotCalibration
 {
 public:
 
-	CameraBaseCalibrationPiTag(ros::NodeHandle nh);
-	~CameraBaseCalibrationPiTag();
-
-	// starts the calibration between camera and base including data acquisition
-	bool calibrateCameraToBase(const bool load_data);
-
-	// load/save calibration data from/to file
-	bool saveCalibration();
-	bool loadCalibration();
-	void getCalibration(cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera);
+	RobotCalibration(ros::NodeHandle nh);
+	virtual ~RobotCalibration();
+	virtual bool saveCalibration() = 0;
+	virtual bool loadCalibration() = 0;
+	void setCalibrationStatus(bool calibrated);
 
 
 protected:
 
-	// acquires images automatically from all set up robot configurations and detects the checkerboard points
-	// @param load_images loads calibration images and transformations from hard disk if set to true (images and transformations are stored automatically during recording from a real camera)
-	// retrieves the image size, checkerboard points per image as well as all relevant transformations
-	bool acquireCalibrationData(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations, const bool load_data,
-			std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
-			std::vector<cv::Mat>& T_camera_to_marker_vector);
+	void createStorageFolder();
+	//virtual void move();
 
-	ros::ServiceClient pitag_client_;
-	std::string marker_frame_base_name_;
+	bool calibrated_;
+	int optimization_iterations_;	// number of iterations for optimization
+	tf::TransformListener transform_listener_;
+	ros::NodeHandle node_handle_;
+	std::string base_frame_;
+	std::string calibration_storage_path_;  // path to data
+	std::vector<calibration_utilities::RobotConfiguration> movement_configurations_;  // defines limb or robot movement, depending on implementation
 };
 
-#endif // __CAMERA_BASE_CALIBRATION_PITAG_H__
+
+#endif /* ROBOT_CALIBRATION_H_ */

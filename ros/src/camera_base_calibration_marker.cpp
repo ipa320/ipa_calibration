@@ -57,30 +57,15 @@
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
 
-#include <boost/filesystem.hpp>
-
 #include <sstream>
 #include <fstream>
 
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
-			node_handle_(nh), transform_listener_(nh), camera_calibration_path_("robotino_calibration/camera_calibration/"),
-			tilt_controller_command_("/pan_tilt_controller/tilt_joint_position_controller/command"), pan_controller_command_("/pan_tilt_controller/pan_joint_position_controller/command"),
-			calibrated_(false), counter(0), pan_tilt_joint_state_current_(0)
+			RobotCalibration(nh), counter(0), pan_tilt_joint_state_current_(0)
 {
-	// create data storage path if it does not yet exist
-	boost::filesystem::path storage_path(camera_calibration_path_);
-	if (boost::filesystem::exists(storage_path) == false)
-	{
-		if (boost::filesystem::create_directories(storage_path) == false && boost::filesystem::exists(storage_path) == false)
-		{
-			std::cout << "Error: CameraBaseCalibrationMarker::CameraBaseCalibrationMarker: Could not create directory " << storage_path << std::endl;
-			return;
-		}
-	}
-
 	// load parameters
-	std::cout << "\n========== CameraBaseCalibration Parameters ==========\n";
+	std::cout << "\n========== CameraBaseCalibrationMarker Parameters ==========\n";
 	// coordinate frame name parameters
 	node_handle_.param<std::string>("torso_lower_frame", torso_lower_frame_, "base_pan_link");
 	std::cout << "torso_lower_frame: " << torso_lower_frame_ << std::endl;
@@ -90,8 +75,15 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	std::cout << "camera_frame: " << camera_frame_ << std::endl;
 	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "kinect_rgb_optical_frame");
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
-	node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
-	std::cout << "base_frame: " << base_frame_ << std::endl;
+	node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/pan_tilt_controller/tilt_joint_position_controller/command");
+	std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
+	node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/pan_tilt_controller/pan_joint_position_controller/command");
+	std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
+	node_handle_.param<std::string>("joint_state_command", joint_state_command_, "/pan_tilt_controller/joint_states");
+	std::cout << "joint_state_command: " << joint_state_command_ << std::endl;
+	node_handle_.param<std::string>("velocity_command", velocity_command_, "/cmd_vel");
+	std::cout << "velocity_command: " << velocity_command_ << std::endl;
+
 	// initial parameters
 	T_base_to_torso_lower_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
 	T_torso_upper_to_camera_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
@@ -105,83 +97,18 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	if (temp.size()==6)
 		T_torso_upper_to_camera_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_torso_upper_to_camera_initial:\n" << T_torso_upper_to_camera_ << std::endl;
-	// optimization parameters
-	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
-	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
-	// pan/tilt unit positions and robot base locations relative to marker
-	bool use_range = false;
-	node_handle_.param("use_range", use_range, false);
-	std::cout << "use_range: " << use_range << std::endl;
-	if (use_range == true)
-	{
-		// create robot configurations from regular grid
-		std::vector<double> x_range;
-		node_handle_.getParam("x_range", x_range);
-		std::vector<double> y_range;
-		node_handle_.getParam("y_range", y_range);
-		std::vector<double> phi_range;
-		node_handle_.getParam("phi_range", phi_range);
-		std::vector<double> pan_range;
-		node_handle_.getParam("pan_range", pan_range);
-		std::vector<double> tilt_range;
-		node_handle_.getParam("tilt_range", tilt_range);
-		if (x_range.size()!=3 || y_range.size()!=3 || phi_range.size()!=3 || pan_range.size()!=3 || tilt_range.size()!=3)
-		{
-			ROS_ERROR("One of the range vectors has wrong size.");
-			return;
-		}
-		if (x_range[0] == x_range[2] || x_range[1] == 0.)		// this sets the step to something bigger than 0
-			x_range[1] = 1.0;
-		if (y_range[0] == y_range[2] || y_range[1] == 0.)
-			y_range[1] = 1.0;
-		if (phi_range[0] == phi_range[2] || phi_range[1] == 0.)
-			phi_range[1] = 1.0;
-		if (pan_range[0] == pan_range[2] || pan_range[1] == 0.)
-			pan_range[1] = 1.0;
-		if (tilt_range[0] == tilt_range[2] || tilt_range[1] == 0.)
-			tilt_range[1] = 1.0;
-		for (double x=x_range[0]; x<=x_range[2]; x+=x_range[1])
-			for (double y=y_range[0]; y<=y_range[2]; y+=y_range[1])
-				for (double phi=phi_range[0]; phi<=phi_range[2]; phi+=phi_range[1])
-					for (double pan=pan_range[0]; pan<=pan_range[2]; pan+=pan_range[1])
-						for (double tilt=tilt_range[0]; tilt<=tilt_range[2]; tilt+=tilt_range[1])
-							robot_configurations_.push_back(calibration_utilities::RobotConfiguration(x, y, phi, pan, tilt));
-	}
-	else
-	{
-		// read out user-defined robot configurations
-		temp.clear();
-		node_handle_.getParam("robot_configurations", temp);
-		const int number_configurations = temp.size()/5;
-		if (temp.size()%5 != 0 || temp.size() < 3*5)
-		{
-			ROS_ERROR("The robot_configurations vector should contain at least 3 configurations with 5 values each.");
-			return;
-		}
-		std::cout << "Robot configurations:\n";
-		for (int i=0; i<number_configurations; ++i)
-		{
-			robot_configurations_.push_back(calibration_utilities::RobotConfiguration(temp[5*i], temp[5*i+1], temp[5*i+2], temp[5*i+3], temp[5*i+4]));
-			std::cout << temp[5*i] << "\t" << temp[5*i+1] << "\t" << temp[5*i+2] << "\t" << temp[5*i+3] << "\t" << temp[5*i+4] << std::endl;
-		}
-	}
 
 	// topics
-	pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>("/pan_tilt_controller/joint_states", 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);
+	pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>(joint_state_command_, 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
 	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
-	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>("/cmd_vel", 1, false);
+	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(velocity_command_, 1, false);
 }
 
 CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 {
 	if (pan_tilt_joint_state_current_!=0)
 		delete pan_tilt_joint_state_current_;
-}
-
-void CameraBaseCalibrationMarker::setCalibrationStatus(bool calibrated)
-{
-		calibrated_ = calibrated;
 }
 
 void CameraBaseCalibrationMarker::panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
@@ -358,12 +285,12 @@ void CameraBaseCalibrationMarker::extrinsicCalibrationTorsoUpperToCamera(std::ve
 	std::vector<cv::Point3d> points_3d_base, points_3d_torso_lower;
 	for (size_t i=0; i<pattern_points_3d.size(); ++i)
 	{
-		cv::Mat T_torso_lower_to_checkerboard = T_torso_lower_to_torso_upper_vector[i] * T_torso_upper_to_camera_ * T_camera_to_marker_vector[i];
-//		std::cout << "T_base_to_checkerboard_vector[" << i << "]:\n" << T_base_to_checkerboard_vector[i] << std::endl;
-//		std::cout << "T_torso_lower_to_checkerboard:\n" << T_torso_lower_to_checkerboard << std::endl;
+		cv::Mat T_torso_lower_to_marker = T_torso_lower_to_torso_upper_vector[i] * T_torso_upper_to_camera_ * T_camera_to_marker_vector[i];
+//		std::cout << "T_base_to_marker_vector[" << i << "]:\n" << T_base_to_marker_vector[i] << std::endl;
+//		std::cout << "T_torso_lower_to_marker:\n" << T_torso_lower_to_marker << std::endl;
 //		std::cout << "T_torso_lower_to_torso_upper_vector[i]:\n" << T_torso_lower_to_torso_upper_vector[i] << std::endl;
 //		std::cout << "T_torso_upper_to_camera_:\n" << T_torso_upper_to_camera_ << std::endl;
-//		std::cout << "T_camera_to_checkerboard_vector[i]:\n" << T_camera_to_checkerboard_vector[i] << std::endl;
+//		std::cout << "T_camera_to_marker_vector[i]:\n" << T_camera_to_marker_vector[i] << std::endl;
 		for (size_t j=0; j<pattern_points_3d[i].size(); ++j)
 		{
 			cv::Mat point = cv::Mat(cv::Vec4d(pattern_points_3d[i][j].x, pattern_points_3d[i][j].y, pattern_points_3d[i][j].z, 1.0));
@@ -374,7 +301,7 @@ void CameraBaseCalibrationMarker::extrinsicCalibrationTorsoUpperToCamera(std::ve
 			points_3d_base.push_back(cv::Point3d(point_base.at<double>(0), point_base.at<double>(1), point_base.at<double>(2)));
 
 			// to torso_upper coordinate
-			cv::Mat point_torso_lower = T_torso_lower_to_checkerboard * point;
+			cv::Mat point_torso_lower = T_torso_lower_to_marker * point;
 			//std::cout << "point_torso_lower: " << pattern_points_3d[i][j].x <<", "<< pattern_points_3d[i][j].y <<", "<< pattern_points_3d[i][j].z << " --> " << point_torso_lower.at<double>(0) <<", "<< point_torso_lower.at<double>(1) << ", " << point_torso_lower.at<double>(2) << std::endl;
 			points_3d_torso_lower.push_back(cv::Point3d(point_torso_lower.at<double>(0), point_torso_lower.at<double>(1), point_torso_lower.at<double>(2)));
 		}
@@ -406,7 +333,7 @@ void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult(const cv::Mat&
 			  << "  <property name=\"kinect_yaw\" value=\"" << ypr.val[0] << "\"/>\n" << std::endl;
 	std::cout << output.str();
 
-	std::string path_file = camera_calibration_path_ + "camera_calibration_urdf.txt";
+	std::string path_file = calibration_storage_path_ + "camera_calibration_urdf.txt";
 	std::fstream file_output;
 	file_output.open(path_file.c_str(), std::ios::out);
 	if (file_output.is_open())

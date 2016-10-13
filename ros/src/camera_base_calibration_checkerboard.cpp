@@ -80,7 +80,7 @@ CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHa
 	color_image_sub_.subscribe(*it_, "colorimage_in", 1);
 	color_image_sub_.registerCallback(boost::bind(&CameraBaseCalibrationCheckerboard::imageCallback, this, _1));
 
-	ROS_INFO("CameraBaseCalibration initialized.");
+	ROS_INFO("CameraBaseCalibrationCheckerboard initialized.");
 }
 
 CameraBaseCalibrationCheckerboard::~CameraBaseCalibrationCheckerboard()
@@ -129,7 +129,7 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	std::vector<cv::Mat> T_base_to_checkerboard_vector;
 	std::vector<cv::Mat> T_torso_lower_to_torso_upper_vector;
 	std::vector<cv::Mat> T_camera_to_camera_optical_vector;
-	acquireCalibrationImages(robot_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_base_to_checkerboard_vector,
+	acquireCalibrationImages(movement_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_base_to_checkerboard_vector,
 			T_torso_lower_to_torso_upper_vector, T_camera_to_camera_optical_vector);
 
 	// prepare chessboard 3d points
@@ -192,7 +192,7 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 		// retrieve transformations
 		cv::Mat T_base_to_checkerboard, T_torso_lower_to_torso_upper, T_camera_to_camera_optical;
 		std::stringstream path;
-		path << camera_calibration_path_ << image_counter << ".yml";
+		path << calibration_storage_path_ << image_counter << ".yml";
 		if (load_images)
 		{
 			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
@@ -280,7 +280,7 @@ int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width,
 	{
 		// load image from file
 		std::stringstream ss;
-		ss << camera_calibration_path_ << image_counter;
+		ss << calibration_storage_path_ << image_counter;
 		std::string image_name = ss.str() + ".png";
 		image = cv::imread(image_name.c_str(), 0);
 		if (image.empty())
@@ -305,7 +305,7 @@ int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width,
 		if (load_images == false)
 		{
 			std::stringstream ss;
-			ss << camera_calibration_path_ << image_counter;
+			ss << calibration_storage_path_ << image_counter;
 			std::string image_name = ss.str() + ".png";
 			cv::imwrite(image_name.c_str(), image);
 		}
@@ -333,7 +333,7 @@ bool CameraBaseCalibrationCheckerboard::saveCalibration()
 	bool success = true;
 
 	// save calibration
-	std::string filename = camera_calibration_path_ + "camera_calibration.yml";
+	std::string filename = calibration_storage_path_ + "camera_calibration.yml";
 	cv::FileStorage fs(filename.c_str(), cv::FileStorage::WRITE);
 	if (fs.isOpened() == true)
 	{
@@ -344,7 +344,7 @@ bool CameraBaseCalibrationCheckerboard::saveCalibration()
 	}
 	else
 	{
-		std::cout << "Error: CameraBaseCalibration::saveCalibration: Could not write calibration to file.";
+		std::cout << "Error: CameraBaseCalibrationCheckerboard::saveCalibration: Could not write calibration to file.";
 		success = false;
 	}
 	fs.release();
@@ -357,7 +357,7 @@ bool CameraBaseCalibrationCheckerboard::loadCalibration()
 	bool success = true;
 
 	// load calibration
-	std::string filename = camera_calibration_path_ + "camera_calibration.yml";
+	std::string filename = calibration_storage_path_ + "camera_calibration.yml";
 	cv::FileStorage fs(filename.c_str(), cv::FileStorage::READ);
 	if (fs.isOpened() == true)
 	{
@@ -368,7 +368,7 @@ bool CameraBaseCalibrationCheckerboard::loadCalibration()
 	}
 	else
 	{
-		std::cout << "Error: CameraBaseCalibration::loadCalibration: Could not read calibration from file.";
+		std::cout << "Error: CameraBaseCalibrationCheckerboard::loadCalibration: Could not read calibration from file.";
 		success = false;
 	}
 	fs.release();
@@ -382,7 +382,7 @@ void CameraBaseCalibrationCheckerboard::getCalibration(cv::Mat& K, cv::Mat& dist
 {
 	if (calibrated_ == false && loadCalibration() == false)
 	{
-		std::cout << "Error: CameraBaseCalibration not calibrated and no calibration data available on disk." << std::endl;
+		std::cout << "Error: CameraBaseCalibrationCheckerboard not calibrated and no calibration data available on disk." << std::endl;
 		return;
 	}
 
@@ -396,7 +396,7 @@ void CameraBaseCalibrationCheckerboard::undistort(const cv::Mat& image, cv::Mat&
 {
 	if (calibrated_ == false && loadCalibration() == false)
 	{
-		std::cout << "Error: HandCameraCalibration not calibrated and no calibration data available on disk." << std::endl;
+		std::cout << "Error: CameraBaseCalibrationCheckerboard not calibrated and no calibration data available on disk." << std::endl;
 		return;
 	}
 

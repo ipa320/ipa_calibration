@@ -88,6 +88,16 @@ base_frame: "base_link"
 # do not modify, this is the coordinate system fixed in the upper left checkerboard calibration corner (where 4 squares meet), it will be published to tf via the relative_localization program
 checkerboard_frame: "checkerboard_frame"
 
+# commands needed to move the robot and camera
+# string
+tilt_controller_command: "/pan_tilt_controller/tilt_joint_position_controller/command"
+pan_controller_command: "/pan_tilt_controller/pan_joint_position_controller/command"
+joint_state_command: "/pan_tilt_controller/joint_states"
+velocity_command: "/cmd_vel"
+
+# storage folder that holds the calibration output
+# string
+calibration_storage_path: "robotino_calibration/calibration/"
 
 ### program sequence
 # loads calibration images and transforms from disk if set to true
