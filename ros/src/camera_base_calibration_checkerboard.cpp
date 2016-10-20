@@ -72,7 +72,7 @@ CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHa
 	if (temp.size() == 2)
 		chessboard_pattern_size_ = cv::Size(temp[0], temp[1]);
 	std::cout << "pattern: " << chessboard_pattern_size_ << std::endl;
-	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "marker");
+	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "checkerboard_frame");
 	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
 
 	// set up messages
@@ -129,7 +129,7 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	std::vector<cv::Mat> T_base_to_checkerboard_vector;
 	std::vector<cv::Mat> T_torso_lower_to_torso_upper_vector;
 	std::vector<cv::Mat> T_camera_to_camera_optical_vector;
-	acquireCalibrationImages(movement_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_base_to_checkerboard_vector,
+	acquireCalibrationImages(robot_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_base_to_checkerboard_vector,
 			T_torso_lower_to_torso_upper_vector, T_camera_to_camera_optical_vector);
 
 	// prepare chessboard 3d points

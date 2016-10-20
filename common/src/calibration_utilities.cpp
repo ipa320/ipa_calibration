@@ -63,6 +63,13 @@ namespace calibration_utilities
 		tilt_angle_ = tilt_angle;
 	}
 
+	EndeffectorConfiguration::EndeffectorConfiguration(const double pose_x, const double pose_y, const double pose_z)
+	{
+		pose_x_ = pose_x;
+		pose_y_ = pose_y;
+		pose_z_ = pose_z;
+	}
+
 	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
 	{
 		try

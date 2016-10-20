@@ -79,7 +79,6 @@ protected:
 	ros::NodeHandle node_handle_;
 	std::string base_frame_;
 	std::string calibration_storage_path_;  // path to data
-	std::vector<calibration_utilities::RobotConfiguration> movement_configurations_;  // defines limb or robot movement, depending on implementation
 };
 
 

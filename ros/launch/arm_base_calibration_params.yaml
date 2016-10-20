@@ -10,59 +10,29 @@ chessboard_pattern_size: [9,6]
 ### initial values for transformation estimates
 # insert the values as x, y, z, yaw (rot around z), pitch (rot around y'), roll (rot around x'')
 # transform from base to first link of arm.
-T_base_to_arm_initial: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+T_base_to_armbase_initial: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-### Observation positions for capturing calibration images of the marker
-# if this flag is true, then the robot configurations will be sampled on a equally spaced grid from the given ranges, if false, the user-provided configurations in arm_configurations will be used
-# bool
-use_range: true
-
-# ranges for the degrees of freedom of the robot
-# each parameter is set as [min_value, step, max_value]
-# double
-x_range: [-1.5, 0.25, -0.75]       # in [m]
-y_range: [-0.09, 1.0, -0.09]       # in [m], fixed y-coordinate
-phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
-pan_range: [-0.52, 0.02, 0.52]     # in [rad]
-tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
-
+# insert the values as x, y, z, yaw (rot around z), pitch (rot around y'), roll (rot around x'')
+# transform from end effector to checkerboard
+T_endeff_to_checkerboard_initial: [0, 0, 0, 0, 0, 0]
 
 ### checkerboard observation positions for capturing calibration images
 # list of robot configurations for observing the checkerboard measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker (e.g. checkerboard)
-# includes 5 parameters per entry: robot pose: x, y, phi and torso: pan, tilt
-arm_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
-                       -1.5, -0.17, 0, 0.0, 0.3,
-                       -1.5, -0.17, 0, -0.15, 0.3,
-                       -1.5, -0.17, 0, -0.3, 0.3,
-                       -1.5, -0.17, 0, -0.5, 0.3,
-                       -1.5, -0.17, 0, 0.15, 0.05,
-                       -1.5, -0.17, 0, 0.0, 0.05,
-                       -1.5, -0.17, 0, -0.15, 0.05,
-                       -1.5, -0.17, 0, -0.3, 0.05,
-                       -1.5, -0.17, 0, -0.5, 0.05,
-                       -1.5, -0.17, 0, 0.15, -0.2,
-                       -1.5, -0.17, 0, 0.0, -0.2,
-                       -1.5, -0.17, 0, -0.15, -0.2,
-                       -1.5, -0.17, 0, -0.35, -0.2,
-                       -1.5, -0.17, 0, -0.5, -0.2,
-                       -1.0, -0.17, 0, 0.0, 0.2,
-                       -1.0, -0.17, 0, -0.2, 0.2,
-                       -1.0, -0.17, 0, -0.45, 0.2,
-                       -1.0, -0.17, 0, 0.0, 0.05,
-                       -1.0, -0.17, 0, -0.2, 0.05,
-                       -1.0, -0.17, 0, -0.45, 0.05,
-                       -1.0, -0.17, 0, 0.0, -0.15,
-                       -1.0, -0.17, 0, -0.2, -0.15,
-                       -1.0, -0.17, 0, -0.45, -0.15,
-                       -0.85, -0.17, 0, 0.0, 0.15,
-                       -0.85, -0.17, 0, -0.15, 0.15,
-                       -0.85, -0.17, 0, -0.35, 0.2,
-                       -0.85, -0.17, 0, 0.0, 0.05,
-                       -0.85, -0.17, 0, -0.15, 0.05,
-                       -0.85, -0.17, 0, -0.35, 0.05,
-                       -0.85, -0.17, 0, 0.0, -0.1,
-                       -0.85, -0.17, 0, -0.15, -0.1,
-                       -0.85, -0.17, 0, -0.35, -0.1]
+# includes 3 parameters per entry: end effector pose: x, y, z
+endeff_configurations: [-1.5, -0.17, 0,
+                       -1.5, -0.12, 0.03
+                       -1.5, -0.10, 0.06,
+                       -1.5, -0.05, 0.02,
+                       -1.5, -0.02, -0.01,
+                       -1.5, 0, -0.06,
+                        -1, 0.02, -1,
+                       -0.2, 0.05, -0.5,
+                       0, 0.1, -0.2,
+                       0.05, 0.13, 0.05,
+                       8, 0.17, 0.1,
+                       1, 0.17, 0.12,
+                       1.2, 0.17, 0.8,
+                       1.5, 0.17, 0]
 
 
 # link names for the robot coordinate systems
@@ -71,7 +41,10 @@ arm_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
 base_frame: "base_link"
 
 # arm frame attached to robot base
-arm_frame: "arm_link"
+armbase_frame: "arm_link"
+
+# end effector fram attached to arm
+endeff_frame: "endeff_frame"
 
 
 ### program sequence

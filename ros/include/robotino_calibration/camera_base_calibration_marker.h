@@ -140,6 +140,8 @@ protected:
 	std::string pan_controller_command_;
 	std::string joint_state_command_;
 	std::string velocity_command_;
+
+	std::vector<calibration_utilities::RobotConfiguration> robot_configurations_;  // wished robot configurations used for calibration
 };
 
 

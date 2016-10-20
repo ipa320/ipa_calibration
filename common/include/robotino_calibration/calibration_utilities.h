@@ -69,6 +69,16 @@ namespace calibration_utilities
 		RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle);
 	};
 
+	// struct for the end effector configurations
+	struct EndeffectorConfiguration
+	{
+		double pose_x_;
+		double pose_y_;
+		double pose_z_;
+
+		EndeffectorConfiguration(const double pose_x, const double pose_y, const double pose_z);
+	};
+
 	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image);
 
 	// generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates

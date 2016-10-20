@@ -98,6 +98,63 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 		T_torso_upper_to_camera_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_torso_upper_to_camera_initial:\n" << T_torso_upper_to_camera_ << std::endl;
 
+	bool use_range = false;
+	node_handle_.param("use_range", use_range, false);
+	std::cout << "use_range: " << use_range << std::endl;
+	if (use_range == true)
+	{
+		// create robot configurations from regular grid
+		std::vector<double> x_range;
+		node_handle_.getParam("x_range", x_range);
+		std::vector<double> y_range;
+		node_handle_.getParam("y_range", y_range);
+		std::vector<double> phi_range;
+		node_handle_.getParam("phi_range", phi_range);
+		std::vector<double> pan_range;
+		node_handle_.getParam("pan_range", pan_range);
+		std::vector<double> tilt_range;
+		node_handle_.getParam("tilt_range", tilt_range);
+		if (x_range.size()!=3 || y_range.size()!=3 || phi_range.size()!=3 || pan_range.size()!=3 || tilt_range.size()!=3)
+		{
+			ROS_ERROR("One of the range vectors has wrong size.");
+			return;
+		}
+		if (x_range[0] == x_range[2] || x_range[1] == 0.)		// this sets the step to something bigger than 0
+			x_range[1] = 1.0;
+		if (y_range[0] == y_range[2] || y_range[1] == 0.)
+			y_range[1] = 1.0;
+		if (phi_range[0] == phi_range[2] || phi_range[1] == 0.)
+			phi_range[1] = 1.0;
+		if (pan_range[0] == pan_range[2] || pan_range[1] == 0.)
+			pan_range[1] = 1.0;
+		if (tilt_range[0] == tilt_range[2] || tilt_range[1] == 0.)
+			tilt_range[1] = 1.0;
+		for (double x=x_range[0]; x<=x_range[2]; x+=x_range[1])
+			for (double y=y_range[0]; y<=y_range[2]; y+=y_range[1])
+				for (double phi=phi_range[0]; phi<=phi_range[2]; phi+=phi_range[1])
+					for (double pan=pan_range[0]; pan<=pan_range[2]; pan+=pan_range[1])
+						for (double tilt=tilt_range[0]; tilt<=tilt_range[2]; tilt+=tilt_range[1])
+							robot_configurations_.push_back(calibration_utilities::RobotConfiguration(x, y, phi, pan, tilt));
+	}
+	else
+	{
+		// read out user-defined robot configurations
+		std::vector<double> temp;
+		node_handle_.getParam("robot_configurations", temp);
+		const int number_configurations = temp.size()/5;
+		if (temp.size()%5 != 0 || temp.size() < 3*5)
+		{
+			ROS_ERROR("The robot_configurations vector should contain at least 3 configurations with 5 values each.");
+			return;
+		}
+		std::cout << "Robot configurations:\n";
+		for (int i=0; i<number_configurations; ++i)
+		{
+			robot_configurations_.push_back(calibration_utilities::RobotConfiguration(temp[5*i], temp[5*i+1], temp[5*i+2], temp[5*i+3], temp[5*i+4]));
+			std::cout << temp[5*i] << "\t" << temp[5*i+1] << "\t" << temp[5*i+2] << "\t" << temp[5*i+3] << "\t" << temp[5*i+4] << std::endl;
+		}
+	}
+
 	// topics
 	pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>(joint_state_command_, 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
@@ -154,7 +211,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		// control robot angle
 		while(true)
 		{
-			if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", "base_link", T))
+			if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", base_frame_, T))
 				return false;
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 				double robot_yaw = ypr.val[0];
@@ -174,7 +231,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		// control position
 		while(true)
 		{
-			if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", "base_link", T))
+			if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", base_frame_, T))
 				return false;
 			geometry_msgs::Twist tw;
 			error_x = robot_configuration.pose_x_ - T.at<double>(0,3);
@@ -192,7 +249,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		// control robot angle
 		while (true)
 		{
-			if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", "base_link", T))
+			if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", base_frame_, T))
 				return false;
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 				double robot_yaw = ypr.val[0];

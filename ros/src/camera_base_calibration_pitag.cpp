@@ -87,7 +87,7 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 	std::vector<cv::Mat> T_base_to_marker_vector;
 	std::vector<cv::Mat> T_torso_lower_to_torso_upper_vector;
 	std::vector<cv::Mat> T_camera_to_marker_vector;
-	acquireCalibrationData(movement_configurations_, load_data,
+	acquireCalibrationData(robot_configurations_, load_data,
 			T_base_to_marker_vector, T_torso_lower_to_torso_upper_vector, T_camera_to_marker_vector);
 
 	// prepare marker 3d points (actually only the point (0,0,0) in the marker coordinate system
