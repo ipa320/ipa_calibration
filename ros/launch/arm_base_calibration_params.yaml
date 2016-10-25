@@ -46,6 +46,10 @@ armbase_frame: "arm_link"
 # end effector fram attached to arm
 endeff_frame: "endeff_frame"
 
+# storage folder that holds the calibration output
+# string
+calibration_storage_path: "~/.ros/robotino_calibration/calibration"
+
 
 ### program sequence
 # loads calibration images and transforms from disk if set to true

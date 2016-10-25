@@ -71,7 +71,6 @@ public:
 protected:
 
 	void createStorageFolder();
-	//virtual void move();
 
 	bool calibrated_;
 	int optimization_iterations_;	// number of iterations for optimization

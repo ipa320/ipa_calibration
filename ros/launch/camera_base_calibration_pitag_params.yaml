@@ -89,7 +89,7 @@ velocity_command: "/cmd_vel"
 
 # storage folder that holds the calibration output
 # string
-calibration_storage_path: "robotino_calibration/calibration/"
+calibration_storage_path: "~/.ros/robotino_calibration/calibration"
 
 ### program sequence
 # loads calibration images and transforms from disk if set to true

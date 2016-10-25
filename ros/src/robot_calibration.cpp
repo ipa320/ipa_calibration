@@ -56,16 +56,16 @@
 RobotCalibration::RobotCalibration(ros::NodeHandle nh) :
 		node_handle_(nh), transform_listener_(nh), calibrated_(false)
 {
-	createStorageFolder();
-
 	// load parameters
 	std::cout << "\n========== Calibration Parameters ==========\n";
 	node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
 	std::cout << "base_frame: " << base_frame_ << std::endl;
-	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "robotino_calibration/calibration/");
+	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/robotino_calibration/calibration");
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
 	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
 	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
+
+	createStorageFolder();
 }
 
 RobotCalibration::~RobotCalibration()
@@ -76,6 +76,7 @@ RobotCalibration::~RobotCalibration()
 void RobotCalibration::createStorageFolder()
 {
 	boost::filesystem::path storage_path(calibration_storage_path_);
+
 	if (boost::filesystem::exists(storage_path) == false)
 	{
 		if (boost::filesystem::create_directories(storage_path) == false && boost::filesystem::exists(storage_path) == false)
