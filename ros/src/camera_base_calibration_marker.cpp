@@ -192,7 +192,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	double error_x = 10;
 	double error_y = 10;
 	cv::Mat T;
-	if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", "base_link", T))
+	if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", base_frame_, T))
 		return false;
 	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 	double robot_yaw = ypr.val[0];
