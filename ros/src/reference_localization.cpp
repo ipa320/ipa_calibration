@@ -57,7 +57,7 @@
 
 
 #include <relative_localization/reference_localization.h>
-#include <relative_localization/visualization_utilities.h>
+//#include <relative_localization/visualization_utilities.h>
 #include <relative_localization/relative_localization_utilities.h>
 
 
@@ -76,12 +76,16 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	std::cout << "wall_length_left: " << wall_length_left_ << std::endl;
 	node_handle_.param("wall_length_right", wall_length_right_, 0.75);
 	std::cout << "wall_length_right: " << wall_length_right_ << std::endl;
+	node_handle_.param<std::string>("laser_scanner_command", laser_scanner_command_, "/laser_scanner_in");
+	std::cout << "laser_scanner_command: " << laser_scanner_command_ << std::endl;
+	node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
+	std::cout << "base_frame: " << base_frame_ << std::endl;
 
 	// publishers
 	marker_pub_ = node_handle_.advertise<visualization_msgs::Marker>("wall_marker", 1);
 
 	// subscribers
-	laser_scan_sub_ = node_handle_.subscribe("laser_scan_in", 0, &ReferenceLocalization::callback, this);
+	laser_scan_sub_ = node_handle_.subscribe(laser_scanner_command_, 0, &ReferenceLocalization::callback, this);
 
 	// dynamic reconfigure
 	dynamic_reconfigure_server_.setCallback(boost::bind(&ReferenceLocalization::dynamicReconfigureCallback, this, _1, _2));
@@ -108,7 +112,7 @@ void ReferenceLocalization::dynamicReconfigureCallback(robotino_calibration::Rel
 void ReferenceLocalization::ShiftReferenceFrameToGround(tf::StampedTransform& reference_frame)
 {
 	cv::Mat T;
-	if (laser_scanner_mounting_height_received_==false && getTransform("base_link", reference_frame.child_frame_id_, T) == true)
+	if (laser_scanner_mounting_height_received_==false && RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, reference_frame.child_frame_id_, T) == true)
 	{
 		laser_scanner_mounting_height_ = T.at<double>(2,3);
 		laser_scanner_mounting_height_received_ = true;
@@ -116,44 +120,4 @@ void ReferenceLocalization::ShiftReferenceFrameToGround(tf::StampedTransform& re
 
 	tf::Vector3 trans = reference_frame.getOrigin();
 	reference_frame.setOrigin(tf::Vector3(trans.x(), trans.y(), trans.z()-laser_scanner_mounting_height_));
-}
-
-//ToDo: Remove these functions if possible and use the ones inside transformation_utilities
-// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
-bool ReferenceLocalization::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
-{
-	try
-	{
-		tf::StampedTransform Ts;
-		transform_listener_.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(1.0));
-		transform_listener_.lookupTransform(target_frame, source_frame, ros::Time(0), Ts);
-		const tf::Matrix3x3& rot = Ts.getBasis();
-		const tf::Vector3& trans = Ts.getOrigin();
-		cv::Mat rotcv(3,3,CV_64FC1);
-		cv::Mat transcv(3,1,CV_64FC1);
-		for (int v=0; v<3; ++v)
-			for (int u=0; u<3; ++u)
-				rotcv.at<double>(v,u) = rot[v].m_floats[u];
-		for (int v=0; v<3; ++v)
-			transcv.at<double>(v) = trans.m_floats[v];
-		T = makeTransform(rotcv, transcv);
-		//std::cout << "Transform from " << source_frame << " to " << target_frame << ":\n" << T << std::endl;
-	}
-	catch (tf::TransformException& ex)
-	{
-		ROS_WARN("%s",ex.what());
-		return false;
-	}
-
-	return true;
-}
-
-cv::Mat ReferenceLocalization::makeTransform(const cv::Mat& R, const cv::Mat& t)
-{
-	cv::Mat T = (cv::Mat_<double>(4,4) <<
-			R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
-			R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
-			R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
-			0., 0., 0., 1);
-	return T;
 }

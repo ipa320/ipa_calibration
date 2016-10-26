@@ -62,6 +62,7 @@
 #include <vector>
 
 #include <opencv/cv.h>
+#include <tf/transform_listener.h>
 
 
 namespace RelativeLocalizationUtilities
@@ -72,6 +73,11 @@ namespace RelativeLocalizationUtilities
 void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set);
 
 double distanceToLine(const double npx, const double npy, const double n0x, const double n0y, const double pointx, const double pointy);
+
+cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
+
+// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
+bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T);
 
 }
 

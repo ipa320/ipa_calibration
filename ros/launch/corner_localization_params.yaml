@@ -21,3 +21,11 @@ wall_length_right: 0.3
 # the maximum distance of the side wall to the laser scanner, in [m]
 # double
 max_wall_side_distance: 3.0
+
+# base link of robot
+# string
+base_frame: "Base_link"
+
+# laser scanner topic
+# string
+laser_scanner_command: "/laser_scanner_in"

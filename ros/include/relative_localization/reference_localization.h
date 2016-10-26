@@ -89,9 +89,7 @@ public:
 
 	// only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis
 	void ShiftReferenceFrameToGround(tf::StampedTransform& reference_frame);
-	// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
-	bool getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T);
-	cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
+
 
 protected:
 
@@ -113,6 +111,8 @@ protected:
 
 	// parameters
 	double update_rate_;
+	std::string base_frame_;
+	std::string laser_scanner_command_;
 	std::string child_frame_name_;
 	bool reference_coordinate_system_at_ground_;	// if the laser scanner is mounted parallel to the ground plane and this flag is activated, the reference coordinate system child_frame_name will be established at ground height (instead of laser scanner mounting height)
 	double wall_length_left_;		// the length of the wall segment left of the checkerboard's origin, in[m]

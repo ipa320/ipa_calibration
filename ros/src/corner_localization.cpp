@@ -88,10 +88,9 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 
 
 		// ToDo: Transform laser scanner points to base frame
-
-		cv::Point3d point_3d_laser(point.x, point.y, 0);
+		cv::Mat point_3d_laser(cv::Vec4d(point.x, point.y, 0, 1.0));
 		cv::Mat T;
-		getTransform("base_link", "laser_scanner", T);
+		RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, laser_scanner_command_, T);
 		cv::Mat point_base_mat = T*point_3d_laser;
 		cv::Point2d point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
 
