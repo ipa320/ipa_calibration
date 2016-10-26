@@ -85,6 +85,22 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 		double dist = laser_scan_msg->ranges[i];
 		cv::Point2d point(dist*cos(angle), dist*sin(angle));
 
+
+
+		// ToDo: Transform laser scanner points to base frame
+
+		cv::Point3d point_3d_laser(point.x, point.y, 0);
+		cv::Mat T;
+		getTransform("base_link", "laser_scanner", T);
+		cv::Mat point_base_mat = T*point_3d_laser;
+		cv::Point2d point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
+
+		// Check if point is inside polygone and push to scan_front if that's the case
+
+		// END
+
+
+
 		if (point.y > -wall_length_right_ && point.y < wall_length_left_) // front wall points
 			scan_front.push_back(point);
 

@@ -118,6 +118,7 @@ void ReferenceLocalization::ShiftReferenceFrameToGround(tf::StampedTransform& re
 	reference_frame.setOrigin(tf::Vector3(trans.x(), trans.y(), trans.z()-laser_scanner_mounting_height_));
 }
 
+//ToDo: Remove these functions if possible and use the ones inside transformation_utilities
 // computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
 bool ReferenceLocalization::getTransform(const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
 {
