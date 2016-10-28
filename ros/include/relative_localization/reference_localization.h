@@ -95,6 +95,7 @@ protected:
 
 	virtual void callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg) = 0;
 	virtual void dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig& config, uint32_t level);
+	void ComputeChildFrame(const cv::Vec4d& line, const cv::Point2d& corner_point, const std_msgs::Header::_stamp_type& time_stamp);
 
 	ros::NodeHandle node_handle_;
 	ros::Subscriber laser_scan_sub_;
