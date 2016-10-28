@@ -83,28 +83,23 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	{
 		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; // [rad]
 		double dist = laser_scan_msg->ranges[i];
-		cv::Point2d point(dist*cos(angle), dist*sin(angle));
+		//cv::Point2d point(dist*cos(angle), dist*sin(angle));
 
 
 
 		// ToDo: Transform laser scanner points to base frame
-		cv::Mat point_3d_laser(cv::Vec4d(point.x, point.y, 0, 1.0));
+		cv::Mat point_laser(cv::Vec4d(dist*cos(angle), dist*sin(angle), 0, 1.0));
 		cv::Mat T;
-		RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, laser_scanner_command_, T);
-		cv::Mat point_base_mat = T*point_3d_laser;
+		RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, laser_scan_msg->header.frame_id, T);
+		cv::Mat point_base_mat = T*point_laser;
 		cv::Point2d point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
 
 		// Check if point is inside polygone and push to scan_front if that's the case
-
-		// END
-
-
-
-		if (point.y > -wall_length_right_ && point.y < wall_length_left_) // front wall points
-			scan_front.push_back(point);
+		if ( cv::pointPolygonTest(front_wall_polygon_, point_2d_base, false) >= 0.f) // front wall points
+			scan_front.push_back(point_2d_base);
 
 		// store all points in here. Use distant measure to front wall later on to extract side wall points
-		scan_all.push_back(point);
+		scan_all.push_back(point_2d_base);
 	}
 
 	// match line to scan_front
@@ -140,9 +135,9 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 			return;
 
 		// check if line is good enough
-		const double wall_distance_to_laser_scanner = RelativeLocalizationUtilities::distanceToLine(line_side.val[0], line_side.val[1], line_side.val[2], line_side.val[3], 0., 0.);
+		const double wall_distance_to_base = RelativeLocalizationUtilities::distanceToLine(line_side.val[0], line_side.val[1], line_side.val[2], line_side.val[3], 0., 0.);
 		const double scalar_product = n0x_f*line_side.val[2] + n0y_f*line_side.val[3];
-		if (wall_distance_to_laser_scanner < max_wall_side_distance_ && fabs(scalar_product) < 0.05)
+		if (wall_distance_to_base < max_wall_side_distance_ && fabs(scalar_product) < 0.05)
 			break;
 
 		// remove points from last line

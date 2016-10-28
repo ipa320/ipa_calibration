@@ -115,8 +115,9 @@ protected:
 	std::string laser_scanner_command_;
 	std::string child_frame_name_;
 	bool reference_coordinate_system_at_ground_;	// if the laser scanner is mounted parallel to the ground plane and this flag is activated, the reference coordinate system child_frame_name will be established at ground height (instead of laser scanner mounting height)
-	double wall_length_left_;		// the length of the wall segment left of the checkerboard's origin, in[m]
-	double wall_length_right_;		// the length of the wall segment right of the checkerboard's origin, in[m]
+	//double wall_length_left_;		// the length of the wall segment left of the checkerboard's origin, in[m]
+	//double wall_length_right_;		// the length of the wall segment right of the checkerboard's origin, in[m]
+	std::vector<cv::Point2f> front_wall_polygon_;
 };
 
 

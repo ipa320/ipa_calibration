@@ -72,14 +72,30 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
 	node_handle_.param("reference_coordinate_system_at_ground", reference_coordinate_system_at_ground_, false);
 	std::cout << "reference_coordinate_system_at_ground: " << reference_coordinate_system_at_ground_ << std::endl;
-	node_handle_.param("wall_length_left", wall_length_left_, 0.75);
-	std::cout << "wall_length_left: " << wall_length_left_ << std::endl;
-	node_handle_.param("wall_length_right", wall_length_right_, 0.75);
-	std::cout << "wall_length_right: " << wall_length_right_ << std::endl;
+	//node_handle_.param("wall_length_left", wall_length_left_, 0.75);
+	//std::cout << "wall_length_left: " << wall_length_left_ << std::endl;
+	//node_handle_.param("wall_length_right", wall_length_right_, 0.75);
+	//std::cout << "wall_length_right: " << wall_length_right_ << std::endl;
 	node_handle_.param<std::string>("laser_scanner_command", laser_scanner_command_, "/laser_scanner_in");
 	std::cout << "laser_scanner_command: " << laser_scanner_command_ << std::endl;
 	node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
 	std::cout << "base_frame: " << base_frame_ << std::endl;
+
+	// read out user-defined polygon that defines the area of laser scanner points being taken into account for wall detection
+	std::vector<double> temp;
+	node_handle_.getParam("front_wall_polygon", temp);
+	const int num_points = temp.size()/2;
+	if (temp.size()%2 != 0 || temp.size() < 3*2)
+	{
+		ROS_ERROR("The front_wall_polygon vector should contain at least 3 points with 2 values (x,y) each.");
+		return;
+	}
+	std::cout << "Polygon Points:\n";
+	for (int i=0; i<num_points; ++i)
+	{
+		front_wall_polygon_.push_back(cv::Point2d(temp[2*i], temp[2*i+1]));
+		std::cout << temp[5*i] << "\t" << temp[5*i+1] << std::endl;
+	}
 
 	// publishers
 	marker_pub_ = node_handle_.advertise<visualization_msgs::Marker>("wall_marker", 1);
@@ -100,12 +116,12 @@ void ReferenceLocalization::dynamicReconfigureCallback(robotino_calibration::Rel
 {
 	update_rate_ = config.update_rate;
 	child_frame_name_ = config.child_frame_name;
-	wall_length_left_ = config.wall_length_left;
-	wall_length_right_ = config.wall_length_right;
+	//wall_length_left_ = config.wall_length_left;
+	//wall_length_right_ = config.wall_length_right;
 	std::cout << "Reconfigure request with\n update_rate=" << update_rate_
-			<< "\n child_frame_name=" << child_frame_name_
-			<< "\n wall_length_left=" << wall_length_left_
-			<< "\n wall_length_right=" << wall_length_right_ << "\n";
+			<< "\n child_frame_name=" << child_frame_name_ << "\n";
+			//<< "\n wall_length_left=" << wall_length_left_
+			//<< "\n wall_length_right=" << wall_length_right_ << "\n";
 }
 
 // only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis

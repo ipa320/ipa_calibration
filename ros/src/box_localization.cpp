@@ -71,6 +71,8 @@ BoxLocalization::~BoxLocalization()
 {
 }
 
+//ToDo: Define box search polygon as well!
+
 //#define DEBUG_OUTPUT
 void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 {
@@ -80,9 +82,21 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 	{
 		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; //[rad]
 		double dist = laser_scan_msg->ranges[i];
-		cv::Point2d point(dist*cos(angle), dist*sin(angle));
+
+
+		cv::Mat point_laser(cv::Vec4d(dist*cos(angle), dist*sin(angle), 0, 1.0));
+		cv::Mat T;
+		RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, laser_scan_msg->header.frame_id, T);
+		cv::Mat point_base_mat = T*point_laser;
+		cv::Point2d point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
+
+		// Check if point is inside polygone and push to scan_front if that's the case
+		if ( cv::pointPolygonTest(front_wall_polygon_, point_2d_base, false) >= 0.f) // front wall points
+			scan.push_back(point_2d_base);
+
+		/*cv::Point2d point(dist*cos(angle), dist*sin(angle));
 		if (point.y > -wall_length_right_ && point.y < wall_length_left_) // dump points that are too far on left/right in terms of the scanner base
-			scan.push_back(point);
+			scan.push_back(point);*/
 	}
 
 	// match line to scan
