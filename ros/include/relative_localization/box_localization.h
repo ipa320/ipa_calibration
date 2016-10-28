@@ -93,7 +93,8 @@ protected:
 	void callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg);
 	void dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig& config, uint32_t level);
 
-	double box_search_width_;		// the maximum +/-y coordinate in laser scan to search for the localization box, in[m]
+	//double box_search_width_;		// the maximum +/-y coordinate in laser scan to search for the localization box, in[m]
+	std::vector<cv::Point2f> box_search_polygon_;
 };
 
 #endif // BOX_LOCALIZATION_H

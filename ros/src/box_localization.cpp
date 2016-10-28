@@ -63,8 +63,24 @@ BoxLocalization::BoxLocalization(ros::NodeHandle& nh)
 		: ReferenceLocalization(nh)
 {
 	// load subclass parameters
-	node_handle_.param("box_search_width", box_search_width_, 0.5);
-	std::cout << "box_search_width: " << box_search_width_ << std::endl;
+	//node_handle_.param("box_search_width", box_search_width_, 0.5);
+	//std::cout << "box_search_width: " << box_search_width_ << std::endl;
+
+	// read out user-defined box search polygon
+	std::vector<double> temp;
+	node_handle_.getParam("box_search_polygon", temp);
+	const int num_points = temp.size()/2;
+	if (temp.size()%2 != 0 || temp.size() < 3*2)
+	{
+		ROS_ERROR("The box_search_polygon vector should contain at least 3 points with 2 values (x,y) each.");
+		return;
+	}
+	std::cout << "Box Search Polygon Points:\n";
+	for (int i=0; i<num_points; ++i)
+	{
+		box_search_polygon_.push_back(cv::Point2f(temp[2*i], temp[2*i+1]));
+		std::cout << temp[5*i] << "\t" << temp[5*i+1] << std::endl;
+	}
 }
 
 BoxLocalization::~BoxLocalization()
@@ -88,7 +104,7 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 		cv::Mat T;
 		RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, laser_scan_msg->header.frame_id, T);
 		cv::Mat point_base_mat = T*point_laser;
-		cv::Point2d point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
+		cv::Point2f point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
 
 		// Check if point is inside polygone and push to scan_front if that's the case
 		if ( cv::pointPolygonTest(front_wall_polygon_, point_2d_base, false) >= 0.f) // front wall points
@@ -120,7 +136,7 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 	for (unsigned int i = 0; i < scan.size(); ++i)
 	{
 		//double distance_to_robot = scan[i].x*scan[i].x + scan[i].y*scan[i].y;
-		if (scan[i].y < box_search_width_ && scan[i].y > -box_search_width_)	// only search for block in front of the robot
+		if ( cv::pointPolygonTest(box_search_polygon_, scan[i], false) >= 0 )	// only search for block inside search polygon
 		{
 			double d = fabs(n0x*(scan[i].x-px) + n0y*(scan[i].y-py));		// distance to wall
 			if (d<0.1 && in_reflector_segment==true)

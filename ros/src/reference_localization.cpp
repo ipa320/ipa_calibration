@@ -90,10 +90,10 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 		ROS_ERROR("The front_wall_polygon vector should contain at least 3 points with 2 values (x,y) each.");
 		return;
 	}
-	std::cout << "Polygon Points:\n";
+	std::cout << "Front Wall Polygon Points:\n";
 	for (int i=0; i<num_points; ++i)
 	{
-		front_wall_polygon_.push_back(cv::Point2d(temp[2*i], temp[2*i+1]));
+		front_wall_polygon_.push_back(cv::Point2f(temp[2*i], temp[2*i+1]));
 		std::cout << temp[5*i] << "\t" << temp[5*i+1] << std::endl;
 	}
 

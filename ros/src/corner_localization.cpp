@@ -92,7 +92,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 		cv::Mat T;
 		RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, laser_scan_msg->header.frame_id, T);
 		cv::Mat point_base_mat = T*point_laser;
-		cv::Point2d point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
+		cv::Point2f point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
 
 		// Check if point is inside polygone and push to scan_front if that's the case
 		if ( cv::pointPolygonTest(front_wall_polygon_, point_2d_base, false) >= 0.f) // front wall points
