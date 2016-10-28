@@ -218,7 +218,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	// transform
 	transform_table_reference.setOrigin(avg_translation_);
 	transform_table_reference.setRotation(avg_orientation_);
-	tf::StampedTransform tf_msg(transform_table_reference, laser_scan_msg->header.stamp, laser_scan_msg->header.frame_id, child_frame_name_);
+	tf::StampedTransform tf_msg(transform_table_reference, laser_scan_msg->header.stamp, base_frame_/*laser_scan_msg->header.frame_id*/, child_frame_name_);
 	if (reference_coordinate_system_at_ground_ == true)
 		ShiftReferenceFrameToGround(tf_msg);
 
