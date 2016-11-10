@@ -205,7 +205,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	error_x = robot_configuration.pose_x_ - T.at<double>(0,3);
 	error_y = robot_configuration.pose_y_ - T.at<double>(1,3);
 
-	std::cout << "Before control: error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
+	//std::cout << "Before control: error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
 	if (fabs(error_phi) > 0.03 || fabs(error_x) > 0.02 || fabs(error_y) > 0.02)
 	{
 		// control robot angle
@@ -290,13 +290,13 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		ros::Duration(1).sleep();
 	}
 
-	std::cout << "After control: error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
+	/*std::cout << "After control: error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
 	std::cout << "Positioning successful: x=" << robot_configuration.pose_x_ << ", y=" << robot_configuration.pose_y_
 			<< ", phi=" << robot_configuration.pose_phi_ << ", pan=" << robot_configuration.pan_angle_
 			<< ", tilt=" << robot_configuration.tilt_angle_
 			<< "\n############################################################################### "
 			<< counter++ << ". " << elapsed_time_since_start_.getElapsedTimeInSec() << "s"
-			<< std::endl;
+			<< std::endl;*/
 			
 	ros::spinOnce();
 	//ros::Duration(1).sleep();
