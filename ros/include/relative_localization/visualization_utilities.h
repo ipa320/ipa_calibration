@@ -73,7 +73,8 @@ public:
 	static void publishWallVisualization(const std_msgs::Header& header, const std::string& name_space, const double px, const double py, const double n0x, const double n0y, const ros::Publisher& marker_pub)
 	{
 		visualization_msgs::Marker marker;
-		marker.header = header;
+		//marker.header = header;
+		marker.header.frame_id = "base_link";
 		marker.ns = name_space;
 		marker.id = 0;
 		marker.type = visualization_msgs::Marker::LINE_LIST;
@@ -106,9 +107,10 @@ public:
 	{
 		// display points of box segment
 		visualization_msgs::Marker marker;
-		marker.header = header;
+		//marker.header = header;
+		marker.header.frame_id = "base_link";
 		marker.ns = name_space;
-		marker.id = 0;
+		marker.id = 1;
 		marker.type = visualization_msgs::Marker::SPHERE_LIST;
 		marker.action = visualization_msgs::Marker::ADD;
 		marker.pose.position.x = 0;
@@ -129,6 +131,38 @@ public:
 			point.x = points[i].x;
 			point.y = points[i].y;
 			point.z = 0;
+			marker.points.push_back(point);
+		}
+		marker_pub.publish(marker);
+	}
+
+	static void publishWallDetectionPolygon(const std_msgs::Header& header, const std::string& name_space, const std::vector<cv::Point2f>& points, const float height, const ros::Publisher& marker_pub)
+	{
+		visualization_msgs::Marker marker;
+		//marker.header = header;
+		marker.header.frame_id = "base_link";
+		marker.ns = name_space;
+		marker.id = 2;
+		marker.type = visualization_msgs::Marker::LINE_STRIP;
+		marker.action = visualization_msgs::Marker::ADD;
+		marker.pose.position.x = 0;
+		marker.pose.position.y = 0;
+		marker.pose.position.z = 0;
+		marker.pose.orientation.x = 0.0;
+		marker.pose.orientation.y = 0.0;
+		marker.pose.orientation.z = 0.0;
+		marker.pose.orientation.w = 1.0;
+		marker.color.r = 1.0;
+		marker.color.g = 0.0;
+		marker.color.b = 0.0;
+		marker.color.a = 1.0;
+		marker.scale.x = 0.025;
+		for (size_t i=0; i<points.size(); ++i)
+		{
+			geometry_msgs::Point point;
+			point.x = points[i].x;
+			point.y = points[i].y;
+			point.z = height;
 			marker.points.push_back(point);
 		}
 		marker_pub.publish(marker);

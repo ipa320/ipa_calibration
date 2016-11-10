@@ -58,26 +58,6 @@
 #ifndef BOX_LOCALIZATION_H
 #define BOX_LOCALIZATION_H
 
-/*#include <iostream>
-#include <vector>
-
-// ROS
-#include "ros/ros.h"
-
-// messages
-#include "sensor_msgs/LaserScan.h"
-#include "visualization_msgs/Marker.h"
-
-// tf
-#include <tf/tf.h>
-#include <tf/transform_broadcaster.h>
-
-// dynamic reconfigure
-#include <dynamic_reconfigure/server.h>
-#include <relative_localization/RelativeLocalizationConfig.h>
-
-// OpenCV
-#include <opencv/cv.h>*/
 
 #include <relative_localization/reference_localization.h>
 

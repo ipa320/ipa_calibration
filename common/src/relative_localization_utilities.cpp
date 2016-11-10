@@ -67,6 +67,12 @@ namespace RelativeLocalizationUtilities
 	#endif
 		const int samples = (int)points.size();
 
+		if ( samples < 2 )
+		{
+			std::cout << "ERROR: Not enough points to fit a line!" << std::endl;
+			return;
+		}
+
 		// RANSAC iterations
 		int max_inliers = 0;
 		for (int k=0; k<iterations; ++k)

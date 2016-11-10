@@ -107,8 +107,9 @@ protected:
 	dynamic_reconfigure::Server<robotino_calibration::RelativeLocalizationConfig> dynamic_reconfigure_server_;
 	tf::Vector3 avg_translation_;
 	tf::Quaternion avg_orientation_;
-	double laser_scanner_mounting_height_;
-	bool laser_scanner_mounting_height_received_;
+	double base_height_;
+	//double laser_scanner_mounting_height_;
+	//bool laser_scanner_mounting_height_received_;
 
 	// parameters
 	double update_rate_;
