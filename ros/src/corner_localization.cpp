@@ -74,6 +74,9 @@ CornerLocalization::~CornerLocalization()
 //#define DEBUG_OUTPUT
 void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 {
+	if (marker_pub_.getNumSubscribers() > 0) // Display wall detection polygon
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "wall_polygon", front_wall_polygon_, 0, marker_pub_);
+
 	// Retrieve points from side and front wall and put each of those in separate lists
 	std::vector<cv::Point2d> scan_front;
 	std::vector<cv::Point2d> scan_all;
@@ -111,10 +114,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	const double n0y_f = line_front.val[3];
 
 	if (marker_pub_.getNumSubscribers() > 0)
-	{
 		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall_front", px_f, py_f, n0x_f, n0y_f, marker_pub_);
-		VisualizationUtilities::publishWallDetectionPolygon(laser_scan_msg->header, "wall_polygon", front_wall_polygon_, 0, marker_pub_);
-	}
 
 	std::vector<cv::Point2d> scan_side;
 	for ( size_t i=0; i<scan_all.size(); i++ )

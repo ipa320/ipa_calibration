@@ -136,7 +136,7 @@ public:
 		marker_pub.publish(marker);
 	}
 
-	static void publishWallDetectionPolygon(const std_msgs::Header& header, const std::string& name_space, const std::vector<cv::Point2f>& points, const float height, const ros::Publisher& marker_pub)
+	static void publishDetectionPolygon(const std_msgs::Header& header, const std::string& name_space, const std::vector<cv::Point2f>& points, const float height, const ros::Publisher& marker_pub)
 	{
 		visualization_msgs::Marker marker;
 		//marker.header = header;
