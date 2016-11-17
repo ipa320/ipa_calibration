@@ -57,7 +57,8 @@
 #include <pcl/registration/icp.h>
 #include <sstream>
 #include <fstream>
-#include <boost/make_shared.hpp>
+#include <memory>
+//#include <boost/make_shared.hpp>
 
 
 //ToDo: Adjust displayAndSaveCalibrationResult() for new EndeffToChecker or remove the optimization for it.
@@ -120,9 +121,10 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	// Init movement queue
 	robotinoQueue_ = KUKADU_SHARED_PTR<kukadu::KukieControlQueue>(new kukadu::KukieControlQueue("real", "robotino", nh));
 	robotinoQueue_->startQueue();
-	std::string list[] = {"base_jointx", "base_jointy", "base_jointz", "arm_joint1", "arm_joint2", "arm_joint3", "arm_joint4", "arm_joint5"};
-    std::vector<std::string> controlledJoints(list, list+8);
-    boost::shared_ptr<kukadu::MoveItKinematics> mvKin = boost::make_shared<kukadu::MoveItKinematics>(robotinoQueue_, nh, "robotino", controlledJoints, "arm_link5");
+	std::vector<std::string> controlledJoints{"base_jointx", "base_jointy", "base_jointz", "arm_joint1", "arm_joint2", "arm_joint3", "arm_joint4", "arm_joint5"};
+	//std::string list[] = {"base_jointx", "base_jointy", "base_jointz", "arm_joint1", "arm_joint2", "arm_joint3", "arm_joint4", "arm_joint5"};
+    //std::vector<std::string> controlledJoints(list, list+8);
+    std::shared_ptr<kukadu::MoveItKinematics> mvKin = std::make_shared<kukadu::MoveItKinematics>(robotinoQueue_, nh, "robotino", controlledJoints, "arm_link5");
     robotinoQueue_->setKinematics(mvKin);
     robotinoQueue_->setPathPlanner(mvKin);
     if(robotinoQueue_->getCurrentMode() != kukadu::KukieControlQueue::KUKA_JNT_POS_MODE)
