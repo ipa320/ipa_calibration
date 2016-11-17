@@ -36,6 +36,7 @@ laser_scanner_command: "/scan" #"/laser_scanner_in"
 
 # Polygon points that define the area which is used to find the front wall inside.
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points.
+# vector<Point2f>
 front_wall_polygon: [0, 0.75,
                      3, 0.75,
                      3, -0.75,
@@ -44,6 +45,7 @@ front_wall_polygon: [0, 0.75,
 
 # Polygon points that defaine the area which is used to find the box inside.
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points.
+# vector<Point2f>
 box_search_polygon: [0, 0.5,
                      1.5, 0.5,
                      1.5, -0.5,
