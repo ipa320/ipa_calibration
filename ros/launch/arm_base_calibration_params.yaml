@@ -37,14 +37,14 @@ endeff_configurations: [-1.5, -0.17, 0,
 
 # link names for the robot coordinate systems
 # string
-# the robot base frame [the transformation between laser scanner and base should be accomplished before, the transform from base_frame to torso_lower_framewill be calibrated by this program]
+# the robot base frame [the transformation between laser scanner and base should be accomplished before, the transform from base_frame to torso_lower_frame will be calibrated by this program]
 base_frame: "base_link"
 
 # arm frame attached to robot base
-armbase_frame: "arm_link"
+armbase_frame: "arm_base_link"
 
-# end effector fram attached to arm
-endeff_frame: "endeff_frame"
+# end effector frame attached to arm
+endeff_frame: "hand_base_link"
 
 # storage folder that holds the calibration output
 # string

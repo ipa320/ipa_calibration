@@ -51,19 +51,20 @@
 
 #include <robotino_calibration/arm_base_calibration.h>
 #include <robotino_calibration/transformation_utilities.h>
-#include <std_msgs/Float64MultiArray.h>
+//#include <std_msgs/Float64MultiArray.h>
 #include <geometry_msgs/Point.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
 #include <sstream>
 #include <fstream>
+#include <boost/make_shared.hpp>
+
 
 //ToDo: Adjust displayAndSaveCalibrationResult() for new EndeffToChecker or remove the optimization for it.
 
 ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 		RobotCalibration(nh)
 {
-
 	// load parameters
 	std::cout << "\n========== ArmBaseCalibration Parameters ==========\n";
 
@@ -116,6 +117,20 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 		std::cout << temp[5*i] << "\t" << temp[5*i+1] << "\t" << temp[5*i+2] << std::endl;
 	}
 
+	// Init movement queue
+	robotinoQueue_ = KUKADU_SHARED_PTR<kukadu::KukieControlQueue>(new kukadu::KukieControlQueue("real", "robotino", nh));
+	robotinoQueue_->startQueue();
+	std::string list[] = {"base_jointx", "base_jointy", "base_jointz", "arm_joint1", "arm_joint2", "arm_joint3", "arm_joint4", "arm_joint5"};
+    std::vector<std::string> controlledJoints(list, list+8);
+    boost::shared_ptr<kukadu::MoveItKinematics> mvKin = boost::make_shared<kukadu::MoveItKinematics>(robotinoQueue_, nh, "robotino", controlledJoints, "arm_link5");
+    robotinoQueue_->setKinematics(mvKin);
+    robotinoQueue_->setPathPlanner(mvKin);
+    if(robotinoQueue_->getCurrentMode() != kukadu::KukieControlQueue::KUKA_JNT_POS_MODE)
+    {
+        robotinoQueue_->stopCurrentMode();
+        robotinoQueue_->switchMode(kukadu::KukieControlQueue::KUKA_JNT_POS_MODE);
+    }
+
 	// topics
 	/*pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>("/pan_tilt_controller/joint_states", 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
@@ -123,8 +138,8 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>("/cmd_vel", 1, false);*/
 
 	// topics
-	endeff_position_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(endeff_position_controller_command_, 1, false);
-	endeff_state_ = node_handle_.subscribe<sensor_msgs::JointState>(endeff_state_command_, 0, &ArmBaseCalibration::endeffStateCallback, this);
+	//endeff_position_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(endeff_position_controller_command_, 1, false);
+	//endeff_state_ = node_handle_.subscribe<sensor_msgs::JointState>(endeff_state_command_, 0, &ArmBaseCalibration::endeffStateCallback, this);
 
 	// set up messages
 	it_ = new image_transport::ImageTransport(node_handle_);
@@ -138,16 +153,16 @@ ArmBaseCalibration::~ArmBaseCalibration()
 {
 	if (it_ != 0)
 		delete it_;
-	if (endeff_state_current_!=0)
-		delete endeff_state_current_;
+	//if (endeff_state_current_!=0)
+		//delete endeff_state_current_;
 }
 
-void ArmBaseCalibration::endeffStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+/*void ArmBaseCalibration::endeffStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
 	boost::mutex::scoped_lock lock(endeff_state_data_mutex_);
 	endeff_state_current_ = new sensor_msgs::JointState;
 	*endeff_state_current_ = *msg;
-}
+}*/
 
 void ArmBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
 {
@@ -213,34 +228,29 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 
 bool ArmBaseCalibration::moveArm(const calibration_utilities::EndeffectorConfiguration& endeff_configuration)
 {
-	const double k_base = 0.25;
+	//const double k_base = 0.25;
 
-	geometry_msgs::Point pos;
-	pos.x = endeff_configuration.pose_x_; //Question: Which coord sys does the arm end effector use?
-	pos.y = endeff_configuration.pose_y_;
-	pos.z = endeff_configuration.pose_z_;
-
-	endeff_position_controller_.publish(pos);
+	geometry_msgs::Pose newPose;
+	newPose.position.x = endeff_configuration.pose_x_;
+	newPose.position.y = endeff_configuration.pose_y_;
+	newPose.position.z = endeff_configuration.pose_z_;
+	robotinoQueue_->cartesianPtp(newPose);
 
 	//Wait for arm to move
-	if ( endeff_state_current_ != 0 )
+	int count = 0;
+	while (count++ < 100) //Max. 5 seconds to reach goal
 	{
-		int count = 0;
-		while (count++ < 100) //Max. 5 seconds to reach goal
-		{
-			boost::mutex::scoped_lock(endeff_state_data_mutex_);
-			if (fabs(endeff_state_current_->position[0]-endeff_configuration.pose_x_)<0.001 && fabs(endeff_state_current_->position[1]-endeff_configuration.pose_y_)<0.001 && fabs(endeff_state_current_->position[2]-endeff_configuration.pose_z_)<0.001)
-				break;
+		//boost::mutex::scoped_lock(endeff_state_data_mutex_);
+		geometry_msgs::Point curPos = robotinoQueue_->getCurrentCartesianPose().position;
+		if (fabs(curPos.x-endeff_configuration.pose_x_)<0.001 && fabs(curPos.y-endeff_configuration.pose_y_)<0.001 && fabs(curPos.z-endeff_configuration.pose_z_)<0.001)
+			break;
 
-			ros::spinOnce();
-			ros::Duration(0.05).sleep();
-		}
-
-		if ( count >= 100 )
-			ROS_WARN("Could not reach arm configuration x:'%f' y:%f z:%f.", endeff_configuration.pose_x_, endeff_configuration.pose_y_, endeff_configuration.pose_z_);
+		//ros::spinOnce();
+		ros::Duration(0.05).sleep();
 	}
-	else
-		ros::Duration(1).sleep();
+
+	if ( count >= 100 )
+		ROS_WARN("Could not reach arm configuration x:'%f' y:%f z:%f.", endeff_configuration.pose_x_, endeff_configuration.pose_y_, endeff_configuration.pose_z_);
 
 	return true;
 }

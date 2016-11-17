@@ -81,6 +81,8 @@
 #include <robotino_calibration/calibration_utilities.h>
 #include <robotino_calibration/robot_calibration.h>
 
+#include <kukadu/kukadu.hpp>
+
 
 class ArmBaseCalibration : public RobotCalibration
 {
@@ -118,9 +120,6 @@ protected:
 	// displays the calibration result in the urdf file's format and also stores the screen output to a file
 	void displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm_);
 
-
-private:
-
 	/*ros::Publisher base_controller_;
 	ros::Publisher tilt_controller_;
 	ros::Publisher pan_controller_;
@@ -129,10 +128,12 @@ private:
 	sensor_msgs::JointState* pan_tilt_joint_state_current_;
 	boost::mutex pan_tilt_joint_state_data_mutex_;	// secures read operations on pan tilt joint state data
 */
-	ros::Publisher endeff_position_controller_;
-	ros::Subscriber endeff_state_;
-	sensor_msgs::JointState* endeff_state_current_;
-	boost::mutex endeff_state_data_mutex_;	// secures read operations on pan tilt joint state data
+	KUKADU_SHARED_PTR<kukadu::KukieControlQueue> robotinoQueue_;
+
+	//ros::Publisher endeff_position_controller_;
+	//ros::Subscriber endeff_state_;
+	//sensor_msgs::JointState* endeff_state_current_;
+	//boost::mutex endeff_state_data_mutex_;	// secures read operations on pan tilt joint state data
 
 	//std::vector<std::string> arm_frames_; // list of all arms links
 	std::string checkerboard_frame_;
@@ -143,10 +144,8 @@ private:
 	cv::Mat T_endeff_to_checkerboard_;
 
 	// parameters
-	/*std::string tilt_controller_command_;
-	std::string pan_controller_command_;*/
-	std::string endeff_position_controller_command_;
-	std::string endeff_state_command_;
+	//std::string endeff_position_controller_command_;
+	//std::string endeff_state_command_;
 
 	image_transport::ImageTransport* it_;
 	image_transport::SubscriberFilter color_image_sub_; ///< Color camera image input topic
