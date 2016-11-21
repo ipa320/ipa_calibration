@@ -58,7 +58,6 @@
 #include <sstream>
 #include <fstream>
 #include <memory>
-//#include <boost/make_shared.hpp>
 
 
 //ToDo: Adjust displayAndSaveCalibrationResult() for new EndeffToChecker or remove the optimization for it.
@@ -87,6 +86,9 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	node_handle_.param<std::string>("endeff_frame", endeff_frame_, "");
 	std::cout << "endeff_frame: " << endeff_frame_ << std::endl;
 
+	node_handle_.param<std::string>("arm_links", arm_links_, "base_jointx,base_jointy,base_jointz,arm_joint1,arm_joint2,arm_joint3,arm_joint4,arm_joint5");
+	std::cout << "arm_links: " << arm_links_ << std::endl;
+
 	// initial parameters
 	temp.clear();
 	T_base_to_armbase_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.0, 0.0, 0.0)));
@@ -108,7 +110,7 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	const int number_configurations = temp.size()/3;
 	if (temp.size()%3 != 0 || temp.size() < 3*3)
 	{
-		ROS_ERROR("The robot_configurations vector should contain at least 3 configurations with 3 values each.");
+		ROS_ERROR("The endeff_configurations vector should contain at least 3 configurations with 3 values each.");
 		return;
 	}
 	std::cout << "End effector configurations:\n";
@@ -119,29 +121,19 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	}
 
 	// Init movement queue
-	robotinoQueue_ = KUKADU_SHARED_PTR<kukadu::KukieControlQueue>(new kukadu::KukieControlQueue("real", "robotino", nh));
-	robotinoQueue_->startQueue();
-	std::vector<std::string> controlledJoints{"base_jointx", "base_jointy", "base_jointz", "arm_joint1", "arm_joint2", "arm_joint3", "arm_joint4", "arm_joint5"};
-	//std::string list[] = {"base_jointx", "base_jointy", "base_jointz", "arm_joint1", "arm_joint2", "arm_joint3", "arm_joint4", "arm_joint5"};
-    //std::vector<std::string> controlledJoints(list, list+8);
-    std::shared_ptr<kukadu::MoveItKinematics> mvKin = std::make_shared<kukadu::MoveItKinematics>(robotinoQueue_, nh, "robotino", controlledJoints, "arm_link5");
-    robotinoQueue_->setKinematics(mvKin);
-    robotinoQueue_->setPathPlanner(mvKin);
-    if(robotinoQueue_->getCurrentMode() != kukadu::KukieControlQueue::KUKA_JNT_POS_MODE)
-    {
-        robotinoQueue_->stopCurrentMode();
-        robotinoQueue_->switchMode(kukadu::KukieControlQueue::KUKA_JNT_POS_MODE);
-    }
-
-	// topics
-	/*pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>("/pan_tilt_controller/joint_states", 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);
-	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
-	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
-	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>("/cmd_vel", 1, false);*/
-
-	// topics
-	//endeff_position_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(endeff_position_controller_command_, 1, false);
-	//endeff_state_ = node_handle_.subscribe<sensor_msgs::JointState>(endeff_state_command_, 0, &ArmBaseCalibration::endeffStateCallback, this);
+	robotinoQueue_ = std::make_shared<kukadu::KukieControlQueue>("real", "robotino", nh);
+	queueThread_ = robotinoQueue_->startQueue();
+	std::vector<std::string> controlledJoints = strToVect(arm_links_, ',');
+	std::shared_ptr<kukadu::MoveItKinematics> mvKin = std::make_shared<kukadu::MoveItKinematics>(robotinoQueue_, nh, "robotino", controlledJoints, "arm_link5");
+	robotinoQueue_->setKinematics(mvKin);
+	robotinoQueue_->setPathPlanner(mvKin);
+	if(robotinoQueue_->getCurrentMode() != kukadu::KukieControlQueue::KUKA_JNT_POS_MODE)
+	{
+		robotinoQueue_->stopCurrentMode();
+		robotinoQueue_->switchMode(kukadu::KukieControlQueue::KUKA_JNT_POS_MODE);
+	}
+	// Go to start position
+	robotinoQueue_->jointPtp({0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
 
 	// set up messages
 	it_ = new image_transport::ImageTransport(node_handle_);
@@ -155,16 +147,36 @@ ArmBaseCalibration::~ArmBaseCalibration()
 {
 	if (it_ != 0)
 		delete it_;
-	//if (endeff_state_current_!=0)
-		//delete endeff_state_current_;
+
+	robotinoQueue_->stopCurrentMode();
+	robotinoQueue_->stopQueue();
+	queueThread_->join();
 }
 
-/*void ArmBaseCalibration::endeffStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+std::vector<std::string> ArmBaseCalibration::strToVect(std::string sequence, const char delimiter)
 {
-	boost::mutex::scoped_lock lock(endeff_state_data_mutex_);
-	endeff_state_current_ = new sensor_msgs::JointState;
-	*endeff_state_current_ = *msg;
-}*/
+	std::vector<std::string> result;
+	std::string next;
+
+	for ( std::string::const_iterator it = sequence.begin(); it != sequence.end(); it++ )
+	{
+		if ( *it == delimiter )
+		{
+			if ( !next.empty() )
+			{
+				result.push_back(next);
+				next.clear();
+			}
+		}
+		else
+			next += *it;
+	}
+
+	if (!next.empty())
+		 result.push_back(next);
+
+	return result;
+}
 
 void ArmBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
 {
@@ -186,9 +198,6 @@ void ArmBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_i
 
 bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 {
-	// setup storage folder
-	//int return_value = system("mkdir -p robotino_calibration/camera_calibration");
-
 	// pre-cache images
 	if (load_images == false)
 	{

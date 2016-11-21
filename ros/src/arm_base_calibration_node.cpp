@@ -57,6 +57,9 @@ int main(int argc, char** argv)
 {
 	// Initialize ROS, specify name of node
 	ros::init(argc, argv, "arm_base_calibration");
+	sleep(1);
+	ros::AsyncSpinner spinner(10);
+	spinner.start();
 
 	// Create a handle for this node, initialize node
 	ros::NodeHandle nh("~");

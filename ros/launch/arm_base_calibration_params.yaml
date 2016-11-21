@@ -20,19 +20,19 @@ T_endeff_to_checkerboard_initial: [0, 0, 0, 0, 0, 0]
 # list of robot configurations for observing the checkerboard measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker (e.g. checkerboard)
 # includes 3 parameters per entry: end effector pose: x, y, z
 endeff_configurations: [-1.5, -0.17, 0,
-                       -1.5, -0.12, 0.03
-                       -1.5, -0.10, 0.06,
-                       -1.5, -0.05, 0.02,
-                       -1.5, -0.02, -0.01,
-                       -1.5, 0, -0.06,
+                        -1.5, -0.12, 0.03,
+                        -1.5, -0.10, 0.06,
+                        -1.5, -0.05, 0.02,
+                        -1.5, -0.02, -0.01,
+                        -1.5, 0, -0.06,
                         -1, 0.02, -1,
-                       -0.2, 0.05, -0.5,
-                       0, 0.1, -0.2,
-                       0.05, 0.13, 0.05,
-                       8, 0.17, 0.1,
-                       1, 0.17, 0.12,
-                       1.2, 0.17, 0.8,
-                       1.5, 0.17, 0]
+                        -0.2, 0.05, -0.5,
+                         0, 0.1, -0.2,
+                         0.05, 0.13, 0.05,
+                         8, 0.17, 0.1,
+                         1, 0.17, 0.12,
+                         1.2, 0.17, 0.8,
+                         1.5, 0.17, 0]
 
 
 # link names for the robot coordinate systems
@@ -41,10 +41,17 @@ endeff_configurations: [-1.5, -0.17, 0,
 base_frame: "base_link"
 
 # arm frame attached to robot base
+# string
 armbase_frame: "arm_base_link"
 
 # end effector frame attached to arm
+# string
 endeff_frame: "hand_base_link"
+
+# all links that define the arm starting from base
+# string
+arm_links: "base_jointx,base_jointy,base_jointz,arm_joint1,arm_joint2,arm_joint3,arm_joint4,arm_joint5"
+
 
 # storage folder that holds the calibration output
 # string

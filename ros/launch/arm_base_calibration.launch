@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+
+
+	<node ns="arm_base_calibration" name="arm_base_calibration" pkg="robotino_calibration" type="arm_base_calibration" output="screen">
+		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/arm_base_calibration_params.yaml"/>
+	</node>
+</launch>

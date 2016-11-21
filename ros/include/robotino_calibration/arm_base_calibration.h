@@ -62,12 +62,11 @@
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 
-// OpenCV
-#include <opencv/cv.h>
-
 // PCL
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+
+#include <kukadu/kukadu.hpp>
 
 // opencv
 #include <opencv/cv.h>
@@ -81,7 +80,6 @@
 #include <robotino_calibration/calibration_utilities.h>
 #include <robotino_calibration/robot_calibration.h>
 
-#include <kukadu/kukadu.hpp>
 
 
 class ArmBaseCalibration : public RobotCalibration
@@ -94,6 +92,7 @@ public:
 	bool saveCalibration();
 	bool loadCalibration();
 	void getCalibration(cv::Mat& T_base_to_armbase, cv::Mat& T_endeff_to_checkerboard);
+	std::vector<std::string> strToVect(std::string sequence, const char delimiter);
 
 
 protected:
@@ -120,15 +119,8 @@ protected:
 	// displays the calibration result in the urdf file's format and also stores the screen output to a file
 	void displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm_);
 
-	/*ros::Publisher base_controller_;
-	ros::Publisher tilt_controller_;
-	ros::Publisher pan_controller_;
-	ros::Subscriber pan_tilt_state_;
-
-	sensor_msgs::JointState* pan_tilt_joint_state_current_;
-	boost::mutex pan_tilt_joint_state_data_mutex_;	// secures read operations on pan tilt joint state data
-*/
-	KUKADU_SHARED_PTR<kukadu::KukieControlQueue> robotinoQueue_;
+	std::shared_ptr<kukadu::KukieControlQueue> robotinoQueue_;
+	std::shared_ptr<kukadu_thread> queueThread_;
 
 	//ros::Publisher endeff_position_controller_;
 	//ros::Subscriber endeff_state_;
@@ -139,6 +131,7 @@ protected:
 	std::string checkerboard_frame_;
 	std::string armbase_frame_;
 	std::string endeff_frame_;
+	std::string arm_links_;  // comma seperated list
 
 	cv::Mat T_base_to_armbase_;		// transformation to estimate from base to first link of arm
 	cv::Mat T_endeff_to_checkerboard_;
