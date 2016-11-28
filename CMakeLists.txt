@@ -106,7 +106,8 @@ target_link_libraries(arm_base_calibration
 	${OpenCV_LIBRARIES}
 	${PCL_LIBRARIES}
 )
-add_dependencies(arm_base_calibration	kukadu ${catkin_EXPORTED_TARGETS})
+#add_dependencies(arm_base_calibration	kukadu ${catkin_EXPORTED_TARGETS})
+add_dependencies(arm_base_calibration	${catkin_EXPORTED_TARGETS})
 
 
 #############

@@ -66,6 +66,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <kukadu/kukadu.hpp>
+
 // opencv
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -90,11 +92,12 @@ public:
 	bool saveCalibration();
 	bool loadCalibration();
 	void getCalibration(cv::Mat& T_base_to_armbase, cv::Mat& T_endeff_to_checkerboard);
+	std::vector<std::string> strToVect(std::string sequence, const char delimiter);
 
 
 protected:
 
-	bool moveArm(const calibration_utilities::ArmConfiguration& arm_configuration);
+	bool moveArm(const calibration_utilities::EndeffectorConfiguration& endeff_configuration);
 
 	void extrinsicCalibrationBaseToArm(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 			std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_endeff_vector);
@@ -102,7 +105,7 @@ protected:
 	void extrinsicCalibrationEndeffToCheckerboard(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 				std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_endeff_vector);
 
-	bool acquireCalibrationImages(const std::vector<calibration_utilities::ArmConfiguration>& arm_configurations,
+	bool acquireCalibrationImages(const std::vector<calibration_utilities::EndeffectorConfiguration>& endeff_configurations,
 			const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
 			std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_base_to_checkerboard_vector,
 			std::vector<cv::Mat>& T_armbase_to_endeff_vector);
@@ -111,27 +114,31 @@ protected:
 
 	void imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg);
 
-	void armStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+	void endeffStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
 	// displays the calibration result in the urdf file's format and also stores the screen output to a file
 	void displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm_);
 
-	ros::Publisher arm_joint_controller_;
-	ros::Subscriber arm_state_;
-	sensor_msgs::JointState* arm_state_current_;
-	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
+	std::shared_ptr<kukadu::KukieControlQueue> robotinoQueue_;
+	std::shared_ptr<kukadu_thread> queueThread_;
+
+	//ros::Publisher endeff_position_controller_;
+	//ros::Subscriber endeff_state_;
+	//sensor_msgs::JointState* endeff_state_current_;
+	//boost::mutex endeff_state_data_mutex_;	// secures read operations on pan tilt joint state data
 
 	//std::vector<std::string> arm_frames_; // list of all arms links
 	std::string checkerboard_frame_;
 	std::string armbase_frame_;
 	std::string endeff_frame_;
+	std::string arm_links_;  // comma seperated list
 
 	cv::Mat T_base_to_armbase_;		// transformation to estimate from base to first link of arm
 	cv::Mat T_endeff_to_checkerboard_;
 
 	// parameters
-	std::string arm_joint_controller_command_;
-	std::string arm_state_command_;
+	//std::string endeff_position_controller_command_;
+	//std::string endeff_state_command_;
 
 	image_transport::ImageTransport* it_;
 	image_transport::SubscriberFilter color_image_sub_; ///< Color camera image input topic
@@ -142,9 +149,8 @@ protected:
 
 	double chessboard_cell_size_;	// cell side length in [m]
 	cv::Size chessboard_pattern_size_;		// number of checkerboard corners in x and y direction
-	int link_Count_;
 
-	std::vector<calibration_utilities::ArmConfiguration> arm_configurations_;  // wished arm configurations used for calibration
+	std::vector<calibration_utilities::EndeffectorConfiguration> endeff_configurations_;  // wished end effekctor configurations used for calibration
 };
 
 

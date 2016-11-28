@@ -79,6 +79,13 @@ namespace calibration_utilities
 		EndeffectorConfiguration(const double pose_x, const double pose_y, const double pose_z);
 	};
 
+	struct ArmConfiguration
+	{
+		std::vector<double> angles_;
+
+		ArmConfiguration(const std::vector<double> angles);
+	};
+
 	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image);
 
 	// generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates

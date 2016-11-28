@@ -70,6 +70,12 @@ namespace calibration_utilities
 		pose_z_ = pose_z;
 	}
 
+	ArmConfiguration::ArmConfiguration(const std::vector<double> angles)
+	{
+		angles_.clear();
+		angles_.insert(angles_.end(), angles.begin(), angles.end());
+	}
+
 	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
 	{
 		try

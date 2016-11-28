@@ -49,15 +49,15 @@
  ****************************************************************/
 
 
-#include <robotino_calibration/arm_base_calibration.h>
+#include <robotino_calibration/arm_base_calibration_kukadu.h>
 #include <robotino_calibration/transformation_utilities.h>
-#include <std_msgs/Float64MultiArray.h>
+//#include <std_msgs/Float64MultiArray.h>
 #include <geometry_msgs/Point.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
 #include <sstream>
 #include <fstream>
-#include <numeric>
+#include <memory>
 
 
 //ToDo: Adjust displayAndSaveCalibrationResult() for new EndeffToChecker or remove the optimization for it.
@@ -79,14 +79,6 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	std::cout << "pattern: " << chessboard_pattern_size_ << std::endl;
 	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "checkerboard_frame");
 	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
-	node_handle_.param("link_Count", link_Count_, 5);
-	std::cout << "link_Count: " << link_Count_ << std::endl;
-
-	if ( link_Count_ < 1 )
-	{
-		std::cout << "Error: Invalid link_Count: " << link_Count_ << ". Setting link_Count to 1." << std::endl;
-		link_Count_ = 1;
-	}
 
 	// coordinate frame name parameters
 	node_handle_.param<std::string>("armbase_frame", armbase_frame_, "");
@@ -94,11 +86,8 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	node_handle_.param<std::string>("endeff_frame", endeff_frame_, "");
 	std::cout << "endeff_frame: " << endeff_frame_ << std::endl;
 
-	// move commands
-	node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
-	std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
-	node_handle_.param<std::string>("arm_state_command", arm_state_command_, "");
-	std::cout << "arm_state_command: " << arm_state_command_ << std::endl;
+	node_handle_.param<std::string>("arm_links", arm_links_, "base_jointx,base_jointy,base_jointz,arm_joint1,arm_joint2,arm_joint3,arm_joint4,arm_joint5");
+	std::cout << "arm_links: " << arm_links_ << std::endl;
 
 	// initial parameters
 	temp.clear();
@@ -117,31 +106,45 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 
 	// read out user-defined end effector configurations
 	temp.clear();
-	node_handle_.getParam("arm_configurations", temp);
-	const int number_configurations = temp.size()/link_Count_;
-
-	if (temp.size()%link_Count_ != 0 || temp.size() < 3*link_Count_)
+	node_handle_.getParam("endeff_configurations", temp);
+	const int number_configurations = temp.size()/3;
+	if (temp.size()%3 != 0 || temp.size() < 3*3)
 	{
-		ROS_ERROR("The arm_configurations vector should contain at least 3 configurations with %d values each.", link_Count_);
+		ROS_ERROR("The endeff_configurations vector should contain at least 3 configurations with 3 values each.");
 		return;
 	}
-	std::cout << "arm configurations:\n";
-	for ( int i=0; i<number_configurations; ++i )
+	std::cout << "End effector configurations:\n";
+	for (int i=0; i<number_configurations; ++i)
 	{
-		std::vector<double> angles;
-		for ( int j=0; j<link_Count_; ++j )
-		{
-			angles.push_back(temp[link_Count_*i + j]);
-			std::cout << angles[angles.size()-1] << "\t";
-		}
-		std::cout << std::endl;
-
-		arm_configurations_.push_back(calibration_utilities::ArmConfiguration(angles));
+		endeff_configurations_.push_back(calibration_utilities::EndeffectorConfiguration(temp[3*i], temp[3*i+1], temp[3*i+2]));
+		std::cout << temp[3*i] << "\t" << temp[3*i+1] << "\t" << temp[3*i+2] << std::endl;
 	}
 
 
-	arm_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_joint_controller_command_, 1, false);
-	arm_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_state_command_, 0, &ArmBaseCalibration::armStateCallback, this);
+	std::vector<std::string> controlledJoints = strToVect(arm_links_, ',');
+
+	for (int i=0; i<controlledJoints.size(); ++i)
+	{
+		std::cout << "Joint " << (i+1) << ": " << controlledJoints[i] << std::endl;
+	}
+
+
+std::cout << "STEP 1" << std::endl;
+	// Init movement queue
+	robotinoQueue_ = std::make_shared<kukadu::KukieControlQueue>("real", "robotino", nh);
+std::cout << "STEP 2" << std::endl;
+	queueThread_ = robotinoQueue_->startQueue();
+	//std::vector<std::string> controlledJoints = strToVect(arm_links_, ',');
+	std::shared_ptr<kukadu::MoveItKinematics> mvKin = std::make_shared<kukadu::MoveItKinematics>(robotinoQueue_, nh, "robotino", controlledJoints, "arm_link5");
+	robotinoQueue_->setKinematics(mvKin);
+	robotinoQueue_->setPathPlanner(mvKin);
+	if(robotinoQueue_->getCurrentMode() != kukadu::KukieControlQueue::KUKA_JNT_POS_MODE)
+	{
+		robotinoQueue_->stopCurrentMode();
+		robotinoQueue_->switchMode(kukadu::KukieControlQueue::KUKA_JNT_POS_MODE);
+	}
+	// Go to start position
+	robotinoQueue_->jointPtp({0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
 
 	// set up messages
 	it_ = new image_transport::ImageTransport(node_handle_);
@@ -155,13 +158,35 @@ ArmBaseCalibration::~ArmBaseCalibration()
 {
 	if (it_ != 0)
 		delete it_;
+
+	robotinoQueue_->stopCurrentMode();
+	robotinoQueue_->stopQueue();
+	queueThread_->join();
 }
 
-void ArmBaseCalibration::armStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+std::vector<std::string> ArmBaseCalibration::strToVect(std::string sequence, const char delimiter)
 {
-	boost::mutex::scoped_lock lock(arm_state_data_mutex_);
-	arm_state_current_ = new sensor_msgs::JointState;
-	*arm_state_current_ = *msg;
+	std::vector<std::string> result;
+	std::string next;
+
+	for ( std::string::const_iterator it = sequence.begin(); it != sequence.end(); it++ )
+	{
+		if ( *it == delimiter )
+		{
+			if ( !next.empty() )
+			{
+				result.push_back(next);
+				next.clear();
+			}
+		}
+		else
+			next += *it;
+	}
+
+	if (!next.empty())
+		 result.push_back(next);
+
+	return result;
 }
 
 void ArmBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
@@ -200,7 +225,7 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	std::vector< std::vector<cv::Point2f> > points_2d_per_image;
 	std::vector<cv::Mat> T_base_to_checkerboard_vector;
 	std::vector<cv::Mat> T_armbase_to_endeff_vector;
-	acquireCalibrationImages(arm_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_base_to_checkerboard_vector,
+	acquireCalibrationImages(endeff_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_base_to_checkerboard_vector,
 			T_armbase_to_endeff_vector);
 
 	// prepare chessboard 3d points
@@ -223,65 +248,48 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	return true;
 }
 
-bool ArmBaseCalibration::moveArm(const calibration_utilities::ArmConfiguration& arm_configuration)
+bool ArmBaseCalibration::moveArm(const calibration_utilities::EndeffectorConfiguration& endeff_configuration)
 {
-	std_msgs::Float64MultiArray new_joint_config;
-	new_joint_config.data.resize(arm_configuration.angles_.size());
+	//const double k_base = 0.25;
 
-	for ( int i=0; i<new_joint_config.data.size(); ++i )
-		new_joint_config.data[i] = arm_configuration.angles_[i];
+	geometry_msgs::Pose newPose;
+	newPose.position.x = endeff_configuration.pose_x_;
+	newPose.position.y = endeff_configuration.pose_y_;
+	newPose.position.z = endeff_configuration.pose_z_;
+	robotinoQueue_->cartesianPtp(newPose);
 
-	arm_joint_controller_.publish(new_joint_config);
+	std::cout << "Move To Pos:" << newPose << std::endl;
 
 	//Wait for arm to move
-	if ( arm_state_current_ != 0 )
+	int count = 0;
+	while (count++ < 100) //Max. 5 seconds to reach goal
 	{
-		int count = 0;
-		while (count++ < 100) //Max. 5 seconds to reach goal
-		{
-			boost::mutex::scoped_lock(arm_state_data_mutex_);
-			std::vector<double> cur_state = arm_state_current_->position; //Is this same length as new_joint_config.data?
-			std::vector<double> difference;
-			for (int i = 0; i<cur_state.size(); ++i)
-				difference.push_back(arm_configuration.angles_[i]-cur_state[i]);
+		//boost::mutex::scoped_lock(endeff_state_data_mutex_);
+		geometry_msgs::Point curPos = robotinoQueue_->getCurrentCartesianPose().position;
+		if (fabs(curPos.x-endeff_configuration.pose_x_)<0.001 && fabs(curPos.y-endeff_configuration.pose_y_)<0.001 && fabs(curPos.z-endeff_configuration.pose_z_)<0.001)
+			break;
 
-			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
-
-			if ( length < 0.01 ) //Close enough to goal configuration
-			{
-				std::cout << "Arm config reached in " << count << " steps, length: " << length << std::endl;
-				break;
-			}
-
-			ros::spinOnce();
-			ros::Duration(0.05).sleep();
-		}
-
-		if ( count >= 100 )
-		{
-			ROS_WARN("Could not reach following arm_configuration");
-			for (int i = 0; i<arm_configuration.angles_.size(); ++i)
-				std::cout << arm_configuration.angles_[i] << "\t";
-			std::cout << std::endl;
-		}
+		//ros::spinOnce();
+		ros::Duration(0.05).sleep();
 	}
-	else
-		ros::Duration(5).sleep();
+
+	if ( count >= 100 )
+		ROS_WARN("Could not reach arm configuration x:'%f' y:%f z:%f.", endeff_configuration.pose_x_, endeff_configuration.pose_y_, endeff_configuration.pose_z_);
 
 	return true;
 }
 
-bool ArmBaseCalibration::acquireCalibrationImages(const std::vector<calibration_utilities::ArmConfiguration>& arm_configurations,
+bool ArmBaseCalibration::acquireCalibrationImages(const std::vector<calibration_utilities::EndeffectorConfiguration>& endeff_configurations,
 		const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
 		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_base_to_checkerboard_vector,
 		std::vector<cv::Mat>& T_armbase_to_endeff_vector)
 {
 	// capture images from different perspectives
-	const int number_images_to_capture = (int)arm_configurations.size();
+	const int number_images_to_capture = (int)endeff_configurations.size();
 	for (int image_counter = 0; image_counter < number_images_to_capture; ++image_counter)
 	{
 		if (!load_images)
-			moveArm(arm_configurations[image_counter]);
+			moveArm(endeff_configurations[image_counter]);
 
 		// acquire image and extract checkerboard points
 		std::vector<cv::Point2f> checkerboard_points_2d;
