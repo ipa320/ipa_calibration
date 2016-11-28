@@ -207,7 +207,7 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	std::vector< std::vector<cv::Point3f> > pattern_points_3d;
 	calibration_utilities::computeCheckerboard3dPoints(pattern_points_3d, chessboard_pattern_size_, chessboard_cell_size_, points_2d_per_image.size());
 
-	// extrinsic calibration between base and torso_lower as well as torso_upper and camera
+	// extrinsic calibration between base and arm_base as well as end effector and checkerboard
 	for (int i=0; i<optimization_iterations_; ++i)
 	{
 		extrinsicCalibrationBaseToArm(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector /*, T_camera_to_checkerboard_vector*/);
@@ -239,34 +239,34 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::ArmConfiguration& 
 		int count = 0;
 		while (count++ < 100) //Max. 5 seconds to reach goal
 		{
+			ros::Duration(0.05).sleep();
+			ros::spinOnce();
+
 			boost::mutex::scoped_lock(arm_state_data_mutex_);
-			std::vector<double> cur_state = arm_state_current_->position; //Is this same length as new_joint_config.data?
+			std::vector<double> cur_state = arm_state_current_->position;
 			std::vector<double> difference;
 			for (int i = 0; i<cur_state.size(); ++i)
 				difference.push_back(arm_configuration.angles_[i]-cur_state[i]);
 
 			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
 
-			if ( length < 0.01 ) //Close enough to goal configuration
+			if ( length < 0.01 ) //Close enough to goal configuration (~0.5° deviation allowed)
 			{
-				std::cout << "Arm config reached in " << count << " steps, length: " << length << std::endl;
+				std::cout << "Arm configuration reached in " << count << " step(s), deviation: " << length << std::endl;
 				break;
 			}
-
-			ros::spinOnce();
-			ros::Duration(0.05).sleep();
 		}
 
 		if ( count >= 100 )
 		{
-			ROS_WARN("Could not reach following arm_configuration");
+			ROS_WARN("Could not reach following arm configuration:");
 			for (int i = 0; i<arm_configuration.angles_.size(); ++i)
 				std::cout << arm_configuration.angles_[i] << "\t";
 			std::cout << std::endl;
 		}
 	}
 	else
-		ros::Duration(5).sleep();
+		ros::Duration(2).sleep();
 
 	return true;
 }
@@ -393,6 +393,8 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 	cv::drawChessboardCorners(display, pattern_size, cv::Mat(checkerboard_points_2d), pattern_found);
 	cv::imshow("image", display);
 	cv::waitKey(50);
+
+	std::cout << "Detected checkerboard size: " << checkerboard_points_2d.size() << std::endl;
 
 	// collect 2d points
 	if (checkerboard_points_2d.size() == pattern_size.height*pattern_size.width)
