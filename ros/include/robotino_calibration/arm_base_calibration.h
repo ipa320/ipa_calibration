@@ -104,8 +104,8 @@ protected:
 
 	bool acquireCalibrationImages(const std::vector<calibration_utilities::ArmConfiguration>& arm_configurations,
 			const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
-			std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_base_to_checkerboard_vector,
-			std::vector<cv::Mat>& T_armbase_to_endeff_vector);
+			std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_armbase_to_endeff_vector,
+			std::vector<cv::Mat>& T_base_to_camera_optical_vector);
 	int acquireCalibrationImage(int& image_width, int& image_height,
 			std::vector<cv::Point2f>& checkerboard_points_2d, const cv::Size pattern_size, const bool load_images, int& image_counter);
 
@@ -115,6 +115,8 @@ protected:
 
 	// displays the calibration result in the urdf file's format and also stores the screen output to a file
 	void displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm_);
+
+	void intrinsicCalibration(const std::vector< std::vector<cv::Point3f> >& pattern_points, const std::vector< std::vector<cv::Point2f> >& camera_points_2d_per_image, const cv::Size& image_size, std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs);
 
 	ros::Publisher arm_joint_controller_;
 	ros::Subscriber arm_state_;
@@ -145,6 +147,11 @@ protected:
 	int link_Count_;
 
 	std::vector<calibration_utilities::ArmConfiguration> arm_configurations_;  // wished arm configurations used for calibration
+
+	cv::Mat K_;			// intrinsic matrix for camera
+	cv::Mat distortion_;	// distortion parameters for camera
+
+	std::string camera_optical_frame_;
 };
 
 

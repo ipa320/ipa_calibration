@@ -43,6 +43,9 @@ armbase_frame: "arm_base_link"
 # string
 endeff_frame: "hand_base_link"
 
+# this is the camera coordinate system which refers to the color image sensor [the transformations between camera_frame and camera_optical_frame should be available from tf]
+camera_optical_frame: "kinect_rgb_optical_frame"
+
 # Topic to control the arm joints.
 # string
 arm_joint_controller_command: "/arm_controller/joint_group_position_controller/command"

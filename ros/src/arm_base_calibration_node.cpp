@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 
 	// load parameters
 	bool load_images = false;
-	std::cout << "\n========== Relative Localization Parameters ==========\n";
+	std::cout << "\n========== Arm Base Calibration Node Parameters ==========\n";
 	nh.param("load_images", load_images, false);
 	std::cout << "load_images: " << load_images << std::endl;
 

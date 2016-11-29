@@ -93,6 +93,8 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	std::cout << "armbase_frame: " << armbase_frame_ << std::endl;
 	node_handle_.param<std::string>("endeff_frame", endeff_frame_, "");
 	std::cout << "endeff_frame: " << endeff_frame_ << std::endl;
+	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "kinect_rgb_optical_frame");
+	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
 
 	// move commands
 	node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
@@ -198,19 +200,31 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	// acquire images
 	int image_width=0, image_height=0;
 	std::vector< std::vector<cv::Point2f> > points_2d_per_image;
-	std::vector<cv::Mat> T_base_to_checkerboard_vector;
 	std::vector<cv::Mat> T_armbase_to_endeff_vector;
-	acquireCalibrationImages(arm_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_base_to_checkerboard_vector,
-			T_armbase_to_endeff_vector);
+	std::vector<cv::Mat> T_base_to_camera_optical_vector;
+	acquireCalibrationImages(arm_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_armbase_to_endeff_vector,
+			T_base_to_camera_optical_vector);
 
 	// prepare chessboard 3d points
 	std::vector< std::vector<cv::Point3f> > pattern_points_3d;
 	calibration_utilities::computeCheckerboard3dPoints(pattern_points_3d, chessboard_pattern_size_, chessboard_cell_size_, points_2d_per_image.size());
 
+	// intrinsic calibration for camera, get camera to checkerboard vector
+	std::vector<cv::Mat> rvecs, tvecs;
+	std::vector<cv::Mat> T_base_to_checkerboard_vector;
+	intrinsicCalibration(pattern_points_3d, points_2d_per_image, cv::Size(image_width, image_height), rvecs, tvecs);
+	for (size_t i=0; i<rvecs.size(); ++i)
+	{
+		cv::Mat R, t;
+		cv::Rodrigues(rvecs[i], R);
+		cv::Mat T_base_to_checkerboard = T_base_to_camera_optical_vector[i] * transform_utilities::makeTransform(R, tvecs[i]);
+		T_base_to_checkerboard_vector.push_back(T_base_to_checkerboard);
+	}
+
 	// extrinsic calibration between base and arm_base as well as end effector and checkerboard
 	for (int i=0; i<optimization_iterations_; ++i)
 	{
-		extrinsicCalibrationBaseToArm(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector /*, T_camera_to_checkerboard_vector*/);
+		extrinsicCalibrationBaseToArm(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector );
 		extrinsicCalibrationEndeffToCheckerboard(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector);
 	}
 
@@ -221,6 +235,15 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	saveCalibration();
 	calibrated_ = true;
 	return true;
+}
+
+void ArmBaseCalibration::intrinsicCalibration(const std::vector< std::vector<cv::Point3f> >& pattern_points, const std::vector< std::vector<cv::Point2f> >& camera_points_2d_per_image, const cv::Size& image_size, std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs)
+{
+	std::cout << "Intrinsic calibration started ..." << std::endl;
+	K_ = cv::Mat::eye(3, 3, CV_64F);
+	distortion_ = cv::Mat::zeros(8, 1, CV_64F);
+	cv::calibrateCamera(pattern_points, camera_points_2d_per_image, image_size, K_, distortion_, rvecs, tvecs);
+	std::cout << "Intrinsic calibration:\nK:\n" << K_ << "\ndistortion:\n" << distortion_ << std::endl;
 }
 
 bool ArmBaseCalibration::moveArm(const calibration_utilities::ArmConfiguration& arm_configuration)
@@ -273,8 +296,8 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::ArmConfiguration& 
 
 bool ArmBaseCalibration::acquireCalibrationImages(const std::vector<calibration_utilities::ArmConfiguration>& arm_configurations,
 		const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
-		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_base_to_checkerboard_vector,
-		std::vector<cv::Mat>& T_armbase_to_endeff_vector)
+		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_armbase_to_endeff_vector,
+		std::vector<cv::Mat>& T_base_to_camera_optical_vector)
 {
 	// capture images from different perspectives
 	const int number_images_to_capture = (int)arm_configurations.size();
@@ -290,7 +313,7 @@ bool ArmBaseCalibration::acquireCalibrationImages(const std::vector<calibration_
 			continue;
 
 		// retrieve transformations
-		cv::Mat T_base_to_checkerboard, T_armbase_to_endeff;
+		cv::Mat T_armbase_to_endeff, T_base_to_camera_optical;
 		std::stringstream path;
 		path << calibration_storage_path_ << image_counter << ".yml";
 		if (load_images)
@@ -298,8 +321,8 @@ bool ArmBaseCalibration::acquireCalibrationImages(const std::vector<calibration_
 			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
 			if (fs.isOpened())
 			{
-				fs["T_base_to_checkerboard"] >> T_base_to_checkerboard;
 				fs["T_armbase_to_endeff"] >> T_armbase_to_endeff;
+				fs["T_base_to_camera_optical"] >> T_base_to_camera_optical;
 			}
 			else
 			{
@@ -311,8 +334,8 @@ bool ArmBaseCalibration::acquireCalibrationImages(const std::vector<calibration_
 		else
 		{
 			bool result = true;
-			result &= transform_utilities::getTransform(transform_listener_, base_frame_, checkerboard_frame_, T_base_to_checkerboard);
 			result &= transform_utilities::getTransform(transform_listener_, armbase_frame_, endeff_frame_, T_armbase_to_endeff);
+			result &= transform_utilities::getTransform(transform_listener_, base_frame_, camera_optical_frame_, T_base_to_camera_optical);
 
 			if (result == false)
 				continue;
@@ -321,8 +344,8 @@ bool ArmBaseCalibration::acquireCalibrationImages(const std::vector<calibration_
 			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::WRITE);
 			if (fs.isOpened())
 			{
-				fs << "T_base_to_checkerboard" << T_base_to_checkerboard;
 				fs << "T_armbase_to_endeff" << T_armbase_to_endeff;
+				fs << "T_base_to_camera_optical" << T_base_to_camera_optical;
 			}
 			else
 			{
@@ -333,8 +356,8 @@ bool ArmBaseCalibration::acquireCalibrationImages(const std::vector<calibration_
 		}
 
 		points_2d_per_image.push_back(checkerboard_points_2d);
-		T_base_to_checkerboard_vector.push_back(T_base_to_checkerboard);
 		T_armbase_to_endeff_vector.push_back(T_armbase_to_endeff);
+		T_base_to_camera_optical_vector.push_back(T_base_to_camera_optical);
 		std::cout << "Captured perspectives: " << points_2d_per_image.size() << std::endl;
 	}
 
@@ -418,7 +441,7 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 }
 
 void ArmBaseCalibration::extrinsicCalibrationBaseToArm(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-		std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_endeff_vector /*, std::vector<cv::Mat>& T_camera_to_marker_vector*/)
+		std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_endeff_vector )
 {
 	// transform 3d chessboard points to respective coordinates systems (base and arm base)
 	std::vector<cv::Point3d> points_3d_base, points_3d_armbase;
