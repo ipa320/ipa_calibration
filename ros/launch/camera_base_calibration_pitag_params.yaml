@@ -81,6 +81,15 @@ base_frame: "base_link"
 marker_frame_base_name: "tag"
 
 
+# topic names for commanding the pan tilt unit
+# string
+# pan controller
+pan_controller_command: "/pan_controller/command"
+
+# tilt controller
+tilt_controller_command: "/tilt_controller/command"
+
+
 ### program sequence
 # loads calibration images and transforms from disk if set to true
 # bool

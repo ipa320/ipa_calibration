@@ -65,7 +65,6 @@
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 			node_handle_(nh), transform_listener_(nh), camera_calibration_path_("robotino_calibration/camera_calibration/"),
-			tilt_controller_command_("/pan_tilt_controller/tilt_joint_position_controller/command"), pan_controller_command_("/pan_tilt_controller/pan_joint_position_controller/command"),
 			calibrated_(false), counter(0), pan_tilt_joint_state_current_(0)
 {
 	// create data storage path if it does not yet exist
@@ -92,6 +91,11 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
 	node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
 	std::cout << "base_frame: " << base_frame_ << std::endl;
+	node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/pan_controller/command");
+	std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
+	node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/tilt_controller/command");
+	std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
+
 	// initial parameters
 	T_base_to_torso_lower_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
 	T_torso_upper_to_camera_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
