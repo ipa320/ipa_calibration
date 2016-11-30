@@ -90,7 +90,7 @@ void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const doub
 		// compute line equation from points: d = n0 * (x - x0)  (x0=point on line, n0=normalized normal on line, d=distance to line, d=0 -> line)
 		cv::Point2d x0 = points[index1];	// point on line
 		cv::Point2d n0(points[index2].y-points[index1].y, points[index1].x-points[index2].x);	// normal direction on line
-		const double n0_length = sqrt(n0.x*n0.x + n0.y*n0.y);
+		const double n0_length = sqrt(n0.x*n0.x + n0.y*n0.y);	// todo: division by 0 possible?
 		n0.x /= n0_length; n0.y /= n0_length;
 		const double c = -points[index1].x*n0.x - points[index1].y*n0.y;		// distance to line: d = n0*(x-x0) = n0.x*x + n0.y*y + c
 
@@ -121,7 +121,7 @@ void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const doub
 			inlier_set.push_back(cv::Point2f(points[i].x, points[i].y));
 	cv::Vec4f line_ls;
 	cv::fitLine(inlier_set, line_ls, CV_DIST_L2, 0, 0.01, 0.01);	// (vx, vy, x0, y0), where (vx, vy) is a normalized vector collinear to the line and (x0, y0) is a point on the line
-	const double length = sqrt(line_ls[0]*line_ls[0]+line_ls[1]*line_ls[1]);
+	const double length = sqrt(line_ls[0]*line_ls[0]+line_ls[1]*line_ls[1]);		// todo: division by 0 possible
 	line = cv::Vec4d(line_ls[2], line_ls[3], line_ls[1]/length, -line_ls[0]/length); // store optimized line and its normal vector
 
 #ifdef DEBUG_OUTPUT

@@ -89,7 +89,8 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 			scan_front.push_back(point);
 
 		// store all points in here. Use distant measure to front wall later on to extract side wall points
-		scan_all.push_back(point);
+		if (point.y > -2*wall_length_right_ && point.y < 2*wall_length_left_) // front wall points
+			scan_all.push_back(point);
 	}
 
 	// match line to scan_front
