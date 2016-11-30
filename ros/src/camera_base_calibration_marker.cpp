@@ -320,7 +320,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 	return true;
 }
 
-void CameraBaseCalibrationMarker::extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
+void CameraBaseCalibrationMarker::extrinsicCalibrationTorsoUpperToCamera(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 		std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 		std::vector<cv::Mat>& T_camera_to_marker_vector)
 {
@@ -350,7 +350,7 @@ void CameraBaseCalibrationMarker::extrinsicCalibrationBaseToTorsoLower(std::vect
 	T_torso_upper_to_camera_ = computeExtrinsicTransform(points_3d_torso_upper, points_3d_camera);
 }
 
-void CameraBaseCalibrationMarker::extrinsicCalibrationTorsoUpperToCamera(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
+void CameraBaseCalibrationMarker::extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 		std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 		std::vector<cv::Mat>& T_camera_to_marker_vector)
 {
