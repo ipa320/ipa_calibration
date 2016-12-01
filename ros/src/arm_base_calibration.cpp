@@ -77,8 +77,6 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	if (temp.size() == 2)
 		chessboard_pattern_size_ = cv::Size(temp[0], temp[1]);
 	std::cout << "pattern: " << chessboard_pattern_size_ << std::endl;
-	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "checkerboard_frame");
-	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
 	node_handle_.param("link_Count", link_Count_, 5);
 	std::cout << "link_Count: " << link_Count_ << std::endl;
 
@@ -417,8 +415,6 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 	cv::imshow("image", display);
 	cv::waitKey(50);
 
-	std::cout << "Detected checkerboard size: " << checkerboard_points_2d.size() << std::endl;
-
 	// collect 2d points
 	if (checkerboard_points_2d.size() == pattern_size.height*pattern_size.width)
 	{
@@ -471,11 +467,12 @@ void ArmBaseCalibration::extrinsicCalibrationBaseToArm(std::vector< std::vector<
 void ArmBaseCalibration::extrinsicCalibrationEndeffToCheckerboard(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 		std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_endeff_vector)
 {
-	cv::Mat T_endeff_to_checkerboard(4, 4, CV_32F);
-	T_endeff_to_checkerboard.zeros(4, 4, CV_32F);
+	cv::Mat T_endeff_to_checkerboard(4, 4, T_base_to_checkerboard_vector[0].type());
+	T_endeff_to_checkerboard.zeros(4, 4, T_base_to_checkerboard_vector[0].type());
 	for (size_t i=0; i<pattern_points_3d.size(); ++i)
 	{
 		T_endeff_to_checkerboard += T_armbase_to_endeff_vector[i].inv() * T_base_to_armbase_.inv() * T_base_to_checkerboard_vector[i];
+		break;
 	}
 
 	T_endeff_to_checkerboard_ = T_endeff_to_checkerboard / (double)pattern_points_3d.size();
@@ -571,7 +568,7 @@ void ArmBaseCalibration::displayAndSaveCalibrationResult(const cv::Mat& T_base_t
 	std::stringstream output;
 	output << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
 	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T_base_to_arm);
-	output << "  <!-- pan_tilt mount positions | handeye calibration | relative to base_link -->\n"
+	output << "  <!-- arm mount positions | handeye calibration | relative to base_link -->\n"
 			  << "  <property name=\"arm_base_x\" value=\"" << T_base_to_arm.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"arm_base_y\" value=\"" << T_base_to_arm.at<double>(1,3) << "\"/>\n"
 			  << "  <property name=\"arm_base_z\" value=\"" << T_base_to_arm.at<double>(2,3) << "\"/>\n"

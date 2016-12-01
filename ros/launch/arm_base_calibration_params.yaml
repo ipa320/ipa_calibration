@@ -21,18 +21,18 @@ T_base_to_armbase_initial: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 T_endeff_to_checkerboard_initial: [0, 0, 0, 0, 0, 0]
 
 ### checkerboard observation positions for capturing calibration images
-# list of robot link configurations (angles per link in [rad]) for observing the checkerboard measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker (e.g. checkerboard)
+# list of robot link configurations (angles per link in [rad]) for observing the checkerboard attachhed to robot's end effector
 # includes link_Count parameters per entry. 
 arm_configurations: [0.5, 0, 0, 0, 0,
                      0, 0.5, 0, 0, 0,
-                     0, 0, 0.5, 0, 0,
-                     0, 0, 0, 0.5, 0,
-                     0, 0, 0, 0, 0.5]
+                     0, 0, 0.5, 0, 0]
+                     #0, 0, 0, 0.5, 0,
+                     #0, 0, 0, 0, 0.5]
 
 
 # link names for the robot coordinate systems
 # string
-# the robot base frame [the transformation between laser scanner and base should be accomplished before, the transform from base_frame to torso_lower_frame will be calibrated by this program]
+# the robot base frame [the transformation between laser scanner and base should be accomplished before, the transform from base_frame to armbase_frame will be calibrated by this program]
 base_frame: "base_link"
 
 # arm frame attached to robot base
@@ -43,7 +43,7 @@ armbase_frame: "arm_base_link"
 # string
 endeff_frame: "hand_base_link"
 
-# this is the camera coordinate system which refers to the color image sensor [the transformations between camera_frame and camera_optical_frame should be available from tf]
+# this is the camera coordinate system which refers to the color image sensor [the transformations between base_frame and camera_optical_frame should be available from tf]
 camera_optical_frame: "kinect_rgb_optical_frame"
 
 # Topic to control the arm joints.

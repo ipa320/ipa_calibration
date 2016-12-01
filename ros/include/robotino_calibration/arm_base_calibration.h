@@ -123,8 +123,7 @@ protected:
 	sensor_msgs::JointState* arm_state_current_;
 	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
 
-	//std::vector<std::string> arm_frames_; // list of all arms links
-	std::string checkerboard_frame_;
+	// TF frames
 	std::string armbase_frame_;
 	std::string endeff_frame_;
 
