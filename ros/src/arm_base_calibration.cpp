@@ -467,12 +467,13 @@ void ArmBaseCalibration::extrinsicCalibrationBaseToArm(std::vector< std::vector<
 void ArmBaseCalibration::extrinsicCalibrationEndeffToCheckerboard(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 		std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_endeff_vector)
 {
-	cv::Mat T_endeff_to_checkerboard(4, 4, T_base_to_checkerboard_vector[0].type());
-	T_endeff_to_checkerboard.zeros(4, 4, T_base_to_checkerboard_vector[0].type());
+	cv::Mat T_endeff_to_checkerboard;
 	for (size_t i=0; i<pattern_points_3d.size(); ++i)
 	{
-		T_endeff_to_checkerboard += T_armbase_to_endeff_vector[i].inv() * T_base_to_armbase_.inv() * T_base_to_checkerboard_vector[i];
-		break;
+		if ( i == 0)
+			T_endeff_to_checkerboard = T_armbase_to_endeff_vector[i].inv() * T_base_to_armbase_.inv() * T_base_to_checkerboard_vector[i];
+		else
+			T_endeff_to_checkerboard += T_armbase_to_endeff_vector[i].inv() * T_base_to_armbase_.inv() * T_base_to_checkerboard_vector[i];
 	}
 
 	T_endeff_to_checkerboard_ = T_endeff_to_checkerboard / (double)pattern_points_3d.size();
