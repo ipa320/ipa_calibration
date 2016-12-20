@@ -223,8 +223,24 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	for (int i=0; i<optimization_iterations_; ++i)
 	{
 		extrinsicCalibrationBaseToArm(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector );
-		extrinsicCalibrationEndeffToCheckerboard(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector);
+		//extrinsicCalibrationEndeffToCheckerboard(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector);
+		break;
 	}
+
+
+	std::cout << "Endeff to checkerboard optimized:" << std::endl;
+	displayMatrix(T_endeff_to_checkerboard_);
+	cv::Mat RealTrafo;
+	transform_utilities::getTransform(transform_listener_, endeff_frame_, "hand_checker_link", RealTrafo);
+	std::cout << "Endeff to checkerboard real:" << std::endl;
+	displayMatrix(RealTrafo);
+
+	std::cout << "Base to armbase optimized:" << std::endl;
+	displayMatrix(T_base_to_armbase_);
+	transform_utilities::getTransform(transform_listener_, base_frame_, armbase_frame_, RealTrafo);
+	std::cout << "Base to armbase real:" << std::endl;
+	displayMatrix(RealTrafo);
+
 
 	// display calibration parameters
 	displayAndSaveCalibrationResult(T_base_to_armbase_);
@@ -563,7 +579,7 @@ void ArmBaseCalibration::getCalibration(cv::Mat& T_base_to_armbase, cv::Mat& T_e
 	T_endeff_to_checkerboard = T_endeff_to_checkerboard_.clone();
 }
 
-void ArmBaseCalibration::displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm) //ToDo: Change output format when properties are known!
+void ArmBaseCalibration::displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm)
 {
 	// display calibration parameters
 	std::stringstream output;
@@ -584,6 +600,20 @@ void ArmBaseCalibration::displayAndSaveCalibrationResult(const cv::Mat& T_base_t
 	if (file_output.is_open())
 		file_output << output.str();
 	file_output.close();
+}
+
+void ArmBaseCalibration::displayMatrix(const cv::Mat& Trafo)
+{
+	// display calibration parameters
+	std::stringstream output;
+	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(Trafo);
+	output 	  << "  x value=\"" << Trafo.at<double>(0,3) << "\"/>\n"
+			  << "  y value=\"" << Trafo.at<double>(1,3) << "\"/>\n"
+			  << "  z value=\"" << Trafo.at<double>(2,3) << "\"/>\n"
+			  << "  roll value=\"" << ypr.val[2] << "\"/>\n"
+			  << "  pitch value=\"" << ypr.val[1] << "\"/>\n"
+			  << "  yaw value=\"" << ypr.val[0] << "\"/>\n\n";
+	std::cout << output.str();
 }
 
 

@@ -18,16 +18,14 @@ T_base_to_armbase_initial: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 # insert the values as x, y, z, yaw (rot around z), pitch (rot around y'), roll (rot around x'')
 # transform from end effector to checkerboard
-T_endeff_to_checkerboard_initial: [0, 0, 0, 0, 0, 0]
+T_endeff_to_checkerboard_initial: [0.7, -0.45, -0.5, 0, -1.1, 0]
 
 ### checkerboard observation positions for capturing calibration images
 # list of robot link configurations (angles per link in [rad]) for observing the checkerboard attachhed to robot's end effector
 # includes link_Count parameters per entry. 
-arm_configurations: [0.5, 0, 0, 0, 0,
-                     0, 0.5, 0, 0, 0,
-                     0, 0, 0.5, 0, 0]
-                     #0, 0, 0, 0.5, 0,
-                     #0, 0, 0, 0, 0.5]
+arm_configurations: [0, 0, 0, 0, 0,
+                     0.2, 0, 0, 0, 0,
+                     -0.2, 0, 0, 0, 0]
 
 
 # link names for the robot coordinate systems

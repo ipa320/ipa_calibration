@@ -118,6 +118,8 @@ protected:
 
 	void intrinsicCalibration(const std::vector< std::vector<cv::Point3f> >& pattern_points, const std::vector< std::vector<cv::Point2f> >& camera_points_2d_per_image, const cv::Size& image_size, std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs);
 
+	void displayMatrix(const cv::Mat& Trafo); // ToDo: Remove this, debug only!
+
 	ros::Publisher arm_joint_controller_;
 	ros::Subscriber arm_state_;
 	sensor_msgs::JointState* arm_state_current_;
