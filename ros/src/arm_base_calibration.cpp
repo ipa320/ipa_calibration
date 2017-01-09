@@ -224,10 +224,10 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	{
 		extrinsicCalibrationBaseToArm(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector );
 		//extrinsicCalibrationEndeffToCheckerboard(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector);
-		break;
 	}
 
 
+	// Debug: ToDo - Remove me
 	std::cout << "Endeff to checkerboard optimized:" << std::endl;
 	displayMatrix(T_endeff_to_checkerboard_);
 	cv::Mat RealTrafo;
@@ -240,6 +240,7 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	transform_utilities::getTransform(transform_listener_, base_frame_, armbase_frame_, RealTrafo);
 	std::cout << "Base to armbase real:" << std::endl;
 	displayMatrix(RealTrafo);
+	// End Debug
 
 
 	// display calibration parameters
