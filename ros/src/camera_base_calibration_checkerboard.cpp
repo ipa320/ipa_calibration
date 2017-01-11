@@ -164,21 +164,6 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	// display calibration parameters
 	displayAndSaveCalibrationResult(T_base_to_torso_lower_, T_torso_upper_to_camera_);
 
-	// Debug: ToDo - Remove me
-	std::cout << "Base to lower torso optimized:" << std::endl;
-	displayMatrix(T_base_to_torso_lower_);
-	cv::Mat RealTrafo;
-	transform_utilities::getTransform(transform_listener_, base_frame_, torso_lower_frame_, RealTrafo);
-	std::cout << "Base to lower torso real:" << std::endl;
-	displayMatrix(RealTrafo);
-
-	std::cout << "Upper torso to camera optimized:" << std::endl;
-	displayMatrix(T_torso_upper_to_camera_);
-	transform_utilities::getTransform(transform_listener_, torso_lower_frame_, camera_optical_frame_, RealTrafo);
-	std::cout << "Upper torso to camera real:" << std::endl;
-	displayMatrix(RealTrafo);
-	// End Debug
-
 	// save calibration
 	saveCalibration();
 	calibrated_ = true;

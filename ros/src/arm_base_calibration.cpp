@@ -95,8 +95,8 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
 
 	// move commands
-	node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
-	std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
+	//node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, ""); // Moved to interface
+	//std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
 	node_handle_.param<std::string>("arm_state_command", arm_state_command_, "");
 	std::cout << "arm_state_command: " << arm_state_command_ << std::endl;
 
@@ -139,8 +139,8 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 		arm_configurations_.push_back(calibration_utilities::ArmConfiguration(angles));
 	}
 
-
-	arm_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_joint_controller_command_, 1, false);
+	arm_calibration_interface_ = CalibrationInterface(node_handle_, true);
+	//arm_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_joint_controller_command_, 1, false);
 	arm_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_state_command_, 0, &ArmBaseCalibration::armStateCallback, this);
 
 	// set up messages
@@ -155,6 +155,8 @@ ArmBaseCalibration::~ArmBaseCalibration()
 {
 	if (it_ != 0)
 		delete it_;
+	else if ( arm_state_current_ != 0 )
+		delete arm_state_current_;
 }
 
 void ArmBaseCalibration::armStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
@@ -269,7 +271,8 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::ArmConfiguration& 
 	for ( int i=0; i<new_joint_config.data.size(); ++i )
 		new_joint_config.data[i] = arm_configuration.angles_[i];
 
-	arm_joint_controller_.publish(new_joint_config);
+	//arm_joint_controller_.publish(new_joint_config);
+	arm_calibration_interface_.assignNewArmJoints(new_joint_config);
 
 	//Wait for arm to move
 	if ( arm_state_current_ != 0 )

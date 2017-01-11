@@ -77,7 +77,7 @@
 
 #include <robotino_calibration/calibration_utilities.h>
 #include <robotino_calibration/robot_calibration.h>
-
+#include <robotino_calibration/calibration_interface.h>
 
 
 class ArmBaseCalibration : public RobotCalibration
@@ -120,7 +120,8 @@ protected:
 
 	void displayMatrix(const cv::Mat& Trafo); // ToDo: Remove this, debug only!
 
-	ros::Publisher arm_joint_controller_;
+	CalibrationInterface arm_calibration_interface_;
+	//ros::Publisher arm_joint_controller_;
 	ros::Subscriber arm_state_;
 	sensor_msgs::JointState* arm_state_current_;
 	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
@@ -133,7 +134,7 @@ protected:
 	cv::Mat T_endeff_to_checkerboard_;
 
 	// parameters
-	std::string arm_joint_controller_command_;
+	//std::string arm_joint_controller_command_;
 	std::string arm_state_command_;
 
 	image_transport::ImageTransport* it_;
