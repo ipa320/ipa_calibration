@@ -62,7 +62,7 @@ CalibrationInterface::CalibrationInterface(ros::NodeHandle nh, bool bArmCalibrat
 {
 	std::cout << "\n========== CalibrationInterface Parameters ==========\n";
 
-	// Adjust here: Add all needed code in here to let robot move itself, its camera or arm.
+	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
 
 	if ( bArmCalibration )
 	{

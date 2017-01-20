@@ -146,7 +146,7 @@ protected:
 
 	double chessboard_cell_size_;	// cell side length in [m]
 	cv::Size chessboard_pattern_size_;		// number of checkerboard corners in x and y direction
-	int link_Count_;
+	int link_Count_;					// number of links the arm has
 
 	std::vector<calibration_utilities::ArmConfiguration> arm_configurations_;  // wished arm configurations used for calibration
 
