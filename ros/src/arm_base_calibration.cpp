@@ -285,9 +285,9 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::ArmConfiguration& 
 
 			boost::mutex::scoped_lock(arm_state_data_mutex_);
 			std::vector<double> cur_state = arm_state_current_->position;
-			std::vector<double> difference;
+			std::vector<double> difference(cur_state.size());
 			for (int i = 0; i<cur_state.size(); ++i)
-				difference.push_back(arm_configuration.angles_[i]-cur_state[i]);
+				difference[i] = arm_configuration.angles_[i]-cur_state[i];
 
 			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
 
