@@ -53,6 +53,7 @@
 */
 
 #include <robotino_calibration/calibration_interface.h>
+#include <trajectory_msgs/JointTrajectoryPoint.h>
 
 CalibrationInterface::CalibrationInterface()
 {
@@ -68,7 +69,8 @@ CalibrationInterface::CalibrationInterface(ros::NodeHandle nh, bool bArmCalibrat
 	{
 		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
 		std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
-		arm_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_joint_controller_command_, 1, false);
+		//arm_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_joint_controller_command_, 1, false); // Robotino
+		arm_joint_controller_ = node_handle_.advertise<trajectory_msgs::JointTrajectoryPoint>(arm_joint_controller_command_, 1, false);  // RAW3-1
 	}
 	else
 	{
@@ -105,7 +107,11 @@ void CalibrationInterface::assignNewCamaraTiltAngle(std_msgs::Float64 newTilt)
 void CalibrationInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig)
 {
 	// Adjust here: Assign new joints to your robot arm
-	arm_joint_controller_.publish(newJointConfig);
+	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
+	jointTrajPoint.positions = newJointConfig.data;
+
+	//arm_joint_controller_.publish(newJointConfig); // Robotino
+	arm_joint_controller_.publish(jointTrajPoint); // ROW3-1
 }
 // END
 
