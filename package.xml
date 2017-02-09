@@ -4,7 +4,7 @@
   <version>0.0.0</version>
   <description>This repository holds packages for calibrate the robot components</description>
 
-  <license>BSD</license>
+  <license>LGPL</license>
 
   <maintainer email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</maintainer>
   <author email="nhg@ipa.fhg.de">Nadia Hammoudeh Garcia</author>
