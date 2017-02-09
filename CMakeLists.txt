@@ -72,7 +72,7 @@ add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
 target_link_libraries(camera_base_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
-	${OpenCV_LIBRARIES}
+	${OpenCV_LIBS}
 	${PCL_LIBRARIES}
 )
 add_dependencies(camera_base_calibration	${catkin_EXPORTED_TARGETS})

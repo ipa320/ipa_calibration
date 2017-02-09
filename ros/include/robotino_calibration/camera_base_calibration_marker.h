@@ -63,16 +63,15 @@
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 
-// OpenCV
-#include <opencv/cv.h>
-
 // PCL
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
 // opencv
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+//#include <opencv/cv.h>
+//#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
+//#include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 
