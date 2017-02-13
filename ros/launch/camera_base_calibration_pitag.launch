@@ -36,6 +36,20 @@
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_79" output="screen" args="0.902 -0.233 0.0 0 0 0  landmark_reference_ground tag_79 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_ground" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 0  landmark_reference_nav landmark_reference_ground 100"/>
 
+	<!-- settings at UIBK -->
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_25" output="screen" args="0.34 0.758 0 0 0 0  landmark_reference_front tag_25 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_36" output="screen" args="0.481 0.65 0 0 0 0  landmark_reference_front tag_36 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_38" output="screen" args="0.34 0.533 0 0 0 0  landmark_reference_front tag_38 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_front" output="screen" args="0.0 0.0 0.0 3.14159265359 0 1.57079632679  landmark_reference_nav landmark_reference_front 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_48" output="screen" args="-0.612 0.765 0 0 0 0  landmark_reference_left tag_48 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_55" output="screen" args="-0.472 0.658 0 0 0 0  landmark_reference_left tag_55 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_64" output="screen" args="-0.612 0.539 0 0 0 0  landmark_reference_left tag_64 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_left" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 1.57079632679  landmark_reference_nav landmark_reference_left 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_69" output="screen" args="-0.293 -0.071 0 0 0 0  landmark_reference_ground tag_69 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_73" output="screen" args="-0.293 -0.21 0 0 0 0  landmark_reference_ground tag_73 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_79" output="screen" args="-0.293 -0.348 0 0 0 0  landmark_reference_ground tag_79 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_ground" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 0  landmark_reference_nav landmark_reference_ground 100"/>
+
 	
 	
 	<node ns="camera_base_calibration_pitag" name="camera_base_calibration" pkg="robotino_calibration" type="camera_base_calibration" output="screen">

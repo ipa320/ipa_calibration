@@ -15,11 +15,11 @@ use_range: true
 # ranges for the degrees of freedom of the robot
 # each parameter is set as [min_value, step, max_value]
 # double
-x_range: [-1.5, 0.25, -0.75]       # in [m]
-y_range: [-0.75, 0.25, -1.5]       # in [m]
+x_range: [-1.0, 0.2, -0.6]       # in [m]
+y_range: [0.6, 0.2, 1.0]       # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
-pan_range: [-0.7, 0.1, 1.5]     # in [rad]
-tilt_range: [-0.5, 0.1, 1.5]    # in [rad]
+pan_range: [-1.5, 0.1, 0.0]     # in [rad]
+tilt_range: [-0.1, 0.1, 1.2]    # in [rad]
 #pan_range: [-0.52, 0.02, 0.52]     # in [rad]
 #tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
 
