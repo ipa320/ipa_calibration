@@ -57,16 +57,25 @@
 
 #include <relative_localization/relative_localization_utilities.h>
 
+//#define DEBUG_OUTPUT
+
 namespace RelativeLocalizationUtilities
 {
 
 void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set)
 {
 	const int iterations = (int)(log(1.-success_probability)/log(1.-inlier_ratio*inlier_ratio));
+	const int samples = (int)points.size();
 #ifdef DEBUG_OUTPUT
 	std::cout << "fitLine: iterations: " << iterations << std::endl;
+	std::cout << "fitLine: samples: " << samples << std::endl;
 #endif
-	const int samples = (int)points.size();
+	
+	if (samples < 2)
+	{
+		std::cout << "fitLine: Warning: No point samples provided." << std::endl;
+		return;
+	}
 
 	// RANSAC iterations
 	int max_inliers = 0;

@@ -86,6 +86,8 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	// dynamic reconfigure
 	dynamic_reconfigure_server_.setCallback(boost::bind(&ReferenceLocalization::dynamicReconfigureCallback, this, _1, _2));
 	avg_translation_.setZero();
+
+	ROS_INFO("ReferenceLocalization: Initialized.");
 }
 
 ReferenceLocalization::~ReferenceLocalization()

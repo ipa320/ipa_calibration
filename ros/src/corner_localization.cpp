@@ -65,6 +65,8 @@ CornerLocalization::CornerLocalization(ros::NodeHandle& nh)
 	// load subclass parameters
 	node_handle_.param("max_wall_side_distance", max_wall_side_distance_, 0.5);
 	std::cout << "max_wall_side_distance: " << max_wall_side_distance_ << std::endl;
+
+	ROS_INFO("CornerLocalization: Initialized.");
 }
 
 CornerLocalization::~CornerLocalization()
@@ -75,7 +77,6 @@ CornerLocalization::~CornerLocalization()
 void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 {
 	// Retrieve points from side and front wall and put each of those in separate lists
-
 	std::vector<cv::Point2d> scan_front;
 	std::vector<cv::Point2d> scan_all;
 
@@ -117,6 +118,12 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 		const double d = RelativeLocalizationUtilities::distanceToLine(px_f, py_f, n0x_f, n0y_f, scan_all[i].x, scan_all[i].y);	// distance to front wall line
 		if (d > 2*inlier_distance)
 			scan_side.push_back(scan_all[i]);
+	}
+
+	if (scan_side.size() < 2)
+	{
+		ROS_WARN("CornerLocalization::callback: no points left for estimating side wall.");
+		return;
 	}
 
 	// search a side wall until one is found, which is not too distant and approximately perpendicular to the first
