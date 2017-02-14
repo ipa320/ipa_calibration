@@ -57,6 +57,7 @@
 #include <tf/transform_listener.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/JointState.h>
+#include <dynamixel_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
 
 // image transport
@@ -107,6 +108,8 @@ protected:
 	Timer elapsed_time_since_start_;
 
 	void panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+	void panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg);
+	void tiltJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg);
 
 	// moves the robot to a desired location and adjusts the torso joints
 	bool moveRobot(const RobotConfiguration& robot_configuration);
@@ -135,8 +138,12 @@ protected:
 	ros::Publisher tilt_controller_;
 	ros::Publisher pan_controller_;
 	ros::Subscriber pan_tilt_state_;
+	ros::Subscriber pan_state_;
+	ros::Subscriber tilt_state_;
 
-	sensor_msgs::JointState* pan_tilt_joint_state_current_;
+	//sensor_msgs::JointState* pan_tilt_joint_state_current_;
+	double* pan_joint_state_current_;
+	double* tilt_joint_state_current_;
 	boost::mutex pan_tilt_joint_state_data_mutex_;	// secures read operations on pan tilt joint state data
 
 	tf::TransformListener transform_listener_;
@@ -156,6 +163,9 @@ protected:
 	std::string camera_calibration_path_;	// path to data
 	std::string tilt_controller_command_;
 	std::string pan_controller_command_;
+	std::string tilt_joint_state_topic_;
+	std::string pan_joint_state_topic_;
+	std::string base_controller_topic_name_;
 
 	int optimization_iterations_;	// number of iterations for optimization
 

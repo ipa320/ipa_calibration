@@ -15,11 +15,11 @@ use_range: true
 # ranges for the degrees of freedom of the robot
 # each parameter is set as [min_value, step, max_value]
 # double
-x_range: [-1.0, 0.2, -0.6]       # in [m]
-y_range: [0.6, 0.2, 1.0]       # in [m], fixed y-coordinate
+x_range: [-1.1, 0.2, -0.7]       # in [m]
+y_range: [-1.0, 0.2, -0.6]       # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
-pan_range: [-1.5, 0.1, 0.0]     # in [rad]
-tilt_range: [-0.1, 0.1, 1.2]    # in [rad]
+pan_range: [-0.3, 0.1, 1.3]     # in [rad]
+tilt_range: [-0.3, 0.1, 1.5]    # in [rad]
 #pan_range: [-0.52, 0.02, 0.52]     # in [rad]
 #tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
 
@@ -60,6 +60,7 @@ robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
                        -0.85, -0.17, 0, -0.35, -0.1]
 
 
+### Robot link and topic names
 # link names for the robot coordinate systems
 # string
 # fixed frame at lower torso end (i.e. this coordinate system should not turn if different pan angles are commanded)
@@ -89,8 +90,20 @@ pan_controller_command: "/pan_controller/command"
 # tilt controller
 tilt_controller_command: "/tilt_controller/command"
 
+# topic names for reading the joint state of the pan tilt unit
+# string
+# pan state
+pan_joint_state: "/pan_controller/state"
 
-### program sequence
+# tilt state
+tilt_joint_state: "/tilt_controller/state"
+
+# topic name for the base controller
+# string
+base_controller_topic_name: "/cmd_vel"
+
+
+### Program sequence
 # loads calibration images and transforms from disk if set to true
 # bool
 load_images: false

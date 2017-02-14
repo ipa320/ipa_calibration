@@ -65,7 +65,7 @@
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 			node_handle_(nh), transform_listener_(nh), camera_calibration_path_("robotino_calibration/camera_calibration/"),
-			calibrated_(false), counter(0), pan_tilt_joint_state_current_(0)
+			calibrated_(false), counter(0), pan_joint_state_current_(0), tilt_joint_state_current_(0)
 {
 	// create data storage path if it does not yet exist
 	boost::filesystem::path storage_path(camera_calibration_path_);
@@ -95,6 +95,13 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
 	node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/tilt_controller/command");
 	std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
+	node_handle_.param<std::string>("pan_joint_state_topic", pan_joint_state_topic_, "/pan_controller/state");
+	std::cout << "pan_joint_state_topic: " << pan_joint_state_topic_ << std::endl;
+	node_handle_.param<std::string>("tilt_joint_state_topic", tilt_joint_state_topic_, "/tilt_controller/state");
+	std::cout << "tilt_joint_state_topic: " << tilt_joint_state_topic_ << std::endl;
+	node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "/cmd_vel");
+	std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
+
 
 	// initial parameters
 	T_base_to_torso_lower_ = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
@@ -150,6 +157,9 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 					for (double pan=pan_range[0]; pan<=pan_range[2]; pan+=pan_range[1])
 						for (double tilt=tilt_range[0]; tilt<=tilt_range[2]; tilt+=tilt_range[1])
 							robot_configurations_.push_back(RobotConfiguration(x, y, phi, pan, tilt));
+		std::cout << "Generated " << (int)robot_configurations_.size() << " robot configurations for calibration." << std::endl;
+		if ((int)robot_configurations_.size() == 0)
+			ROS_WARN("No robot configurations generated. Please check your ranges in the yaml file.");
 	}
 	else
 	{
@@ -171,16 +181,22 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	}
 
 	// topics
-	pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>("/pan_tilt_controller/joint_states", 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);
+	pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>("/pan_tilt_controller/joint_states", 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);	// this is the old-style format with the old controller - only left here for compatibility
+	pan_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(pan_joint_state_topic_, 0, &CameraBaseCalibrationMarker::panJointStateCallback, this);
+	tilt_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(tilt_joint_state_topic_, 0, &CameraBaseCalibrationMarker::tiltJointStateCallback, this);
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
 	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
-	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>("/cmd_vel", 1, false);
+	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
+
+	std::cout << "CameraBaseCalibrationMarker: init done." << std::endl;
 }
 
 CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 {
-	if (pan_tilt_joint_state_current_!=0)
-		delete pan_tilt_joint_state_current_;
+	if (pan_joint_state_current_!=0)
+		delete pan_joint_state_current_;
+	if (tilt_joint_state_current_!=0)
+		delete tilt_joint_state_current_;
 }
 
 void CameraBaseCalibrationMarker::setCalibrationStatus(bool calibrated)
@@ -188,11 +204,30 @@ void CameraBaseCalibrationMarker::setCalibrationStatus(bool calibrated)
 		calibrated_ = calibrated;
 }
 
+// old style controller
 void CameraBaseCalibrationMarker::panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
+	ROS_INFO("Old style controller state received.");
 	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
-	pan_tilt_joint_state_current_ = new sensor_msgs::JointState;
-	*pan_tilt_joint_state_current_ = *msg;
+	pan_joint_state_current_ = new double;
+	*pan_joint_state_current_ = msg->position[0];
+	tilt_joint_state_current_ = new double;
+	*tilt_joint_state_current_ = msg->position[1];
+}
+
+// new controller
+void CameraBaseCalibrationMarker::panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
+{
+	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
+	pan_joint_state_current_ = new double;
+	*pan_joint_state_current_ = msg->current_pos;
+}
+
+void CameraBaseCalibrationMarker::tiltJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
+{
+	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
+	tilt_joint_state_current_ = new double;
+	*tilt_joint_state_current_ = msg->current_pos;
 }
 
 bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_configuration)
@@ -234,7 +269,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 			if (!getTransform("landmark_reference_nav", "base_link", T))
 				return false;
 			cv::Vec3d ypr = robotino_calibration::YPRFromRotationMatrix(T);
-				double robot_yaw = ypr.val[0];
+			double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
 			error_phi = robot_configuration.pose_phi_ - robot_yaw;
 			while (error_phi < -CV_PI*0.5)
@@ -294,13 +329,14 @@ bool CameraBaseCalibrationMarker::moveRobot(const RobotConfiguration& robot_conf
 		base_controller_.publish(tw);
 	}
 	
-	// wait for pan tilt to arrive at goal position
-	if (pan_tilt_joint_state_current_!=0)
+	// wait for pan tilt to arrive at goal position (but proceed after 5s of waiting)
+	if (pan_joint_state_current_!=0 && tilt_joint_state_current_!=0)
 	{
-		while (true)
+		Timer timeout;
+		while (timeout.getElapsedTimeInSec()<5.0)
 		{
 			boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
-			if (fabs(pan_tilt_joint_state_current_->position[0]-robot_configuration.pan_angle_)<0.001 && fabs(pan_tilt_joint_state_current_->position[1]-robot_configuration.tilt_angle_)<0.001)
+			if (fabs(*pan_joint_state_current_-robot_configuration.pan_angle_)<0.01 && fabs(*tilt_joint_state_current_-robot_configuration.tilt_angle_)<0.01)
 				break;
 			ros::spinOnce();
 		}
