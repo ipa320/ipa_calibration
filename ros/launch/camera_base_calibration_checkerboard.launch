@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<!-- transform between checkerboard_frame coordinate system and landmark_reference coordinate system
+		checkerboard_frame: for a checkerboard - starts in upper left corner of checkerboard pattern, x goes horizontal to the right, y goes downwards to gravity direction, z goes into the plane
+		landmark_reference: similar definition as checkerboard_frame, but located at the height of the laser scanner on the left edge of the box in front of the wall or in the corner of two walls
+		transform between them: no rotation, just a x and y offset (ATTENTION: y offset depends on mounting height of the laser scanner) -->
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_checkerboard" output="screen" args="0.0 -0.8 0 0 0 0  landmark_reference checkerboard_frame 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 -1.57079632679  landmark_reference_nav landmark_reference 100"/>
+
+	<node ns="camera_base_calibration_checkerboard" name="camera_base_calibration" pkg="robotino_calibration" type="camera_base_calibration" output="screen">
+		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/camera_base_calibration_checkerboard_params.yaml"/>
+		<param name="marker_type" value="checkerboard" />
+		<remap from="~colorimage_in" to="/kinect/rgb/image_raw"/>
+	</node>
+</launch>

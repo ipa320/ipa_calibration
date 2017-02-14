@@ -48,39 +48,27 @@
  *
  ****************************************************************/
 
-#include <ros/ros.h>
-#include <robotino_calibration/camera_base_calibration_checkerboard.h>
-#include <robotino_calibration/camera_base_calibration_pitag.h>
+#ifndef CALIBRATION_UTILITIES_H
+#define CALIBRATION_UTILITIES_H
 
-//#######################
-//#### main programm ####
-int main(int argc, char** argv)
+
+// struct for the configuration (x,y location + base rotation, torso links) of the robot
+struct RobotConfiguration
 {
-	// Initialize ROS, specify name of node
-	ros::init(argc, argv, "camera_base_calibration");
+	double pose_x_;
+	double pose_y_;
+	double pose_phi_;
+	double pan_angle_;
+	double tilt_angle_;
 
-	// Create a handle for this node, initialize node
-	ros::NodeHandle nh("~");
-
-	// load parameters
-	std::string marker_type;
-	bool load_images = false;
-	std::cout << "\n========== Relative Localization Parameters ==========\n";
-	nh.param<std::string>("marker_type", marker_type, "");
-	std::cout << "marker_type: " << marker_type << std::endl;
-	nh.param("load_images", load_images, false);
-	std::cout << "load_images: " << load_images << std::endl;
-
-	if (marker_type.compare("checkerboard") == 0)
+	RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle)
 	{
-		CameraBaseCalibrationCheckerboard cb(nh);
-		cb.calibrateCameraToBase(load_images);
+		pose_x_ = pose_x;
+		pose_y_ = pose_y;
+		pose_phi_ = pose_phi;
+		pan_angle_ = pan_angle;
+		tilt_angle_ = tilt_angle;
 	}
-	else if (marker_type.compare("pitag") == 0)
-	{
-		CameraBaseCalibrationPiTag pt(nh);
-		pt.calibrateCameraToBase(load_images);
-	}
+};
 
-	return 0;
-}
+#endif	// CALIBRATION_UTILITIES_H

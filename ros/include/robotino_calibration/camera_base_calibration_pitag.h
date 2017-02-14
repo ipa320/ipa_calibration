@@ -15,7 +15,7 @@
  *
  * Author: Richard Bormann, email:richard.bormann@ipa.fhg.de
  *
- * Date of creation: December 2015
+ * Date of creation: August 2016
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -48,39 +48,40 @@
  *
  ****************************************************************/
 
-#include <ros/ros.h>
-#include <robotino_calibration/camera_base_calibration_checkerboard.h>
-#include <robotino_calibration/camera_base_calibration_pitag.h>
+#ifndef __CAMERA_BASE_CALIBRATION_PITAG_H__
+#define __CAMERA_BASE_CALIBRATION_PITAG_H__
 
-//#######################
-//#### main programm ####
-int main(int argc, char** argv)
+
+#include <robotino_calibration/camera_base_calibration_marker.h>
+
+
+class CameraBaseCalibrationPiTag : public CameraBaseCalibrationMarker
 {
-	// Initialize ROS, specify name of node
-	ros::init(argc, argv, "camera_base_calibration");
+public:
 
-	// Create a handle for this node, initialize node
-	ros::NodeHandle nh("~");
+	CameraBaseCalibrationPiTag(ros::NodeHandle nh);
+	~CameraBaseCalibrationPiTag();
 
-	// load parameters
-	std::string marker_type;
-	bool load_images = false;
-	std::cout << "\n========== Relative Localization Parameters ==========\n";
-	nh.param<std::string>("marker_type", marker_type, "");
-	std::cout << "marker_type: " << marker_type << std::endl;
-	nh.param("load_images", load_images, false);
-	std::cout << "load_images: " << load_images << std::endl;
+	// starts the calibration between camera and base including data acquisition
+	bool calibrateCameraToBase(const bool load_data);
 
-	if (marker_type.compare("checkerboard") == 0)
-	{
-		CameraBaseCalibrationCheckerboard cb(nh);
-		cb.calibrateCameraToBase(load_images);
-	}
-	else if (marker_type.compare("pitag") == 0)
-	{
-		CameraBaseCalibrationPiTag pt(nh);
-		pt.calibrateCameraToBase(load_images);
-	}
+	// load/save calibration data from/to file
+	bool saveCalibration();
+	bool loadCalibration();
+	void getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera);
 
-	return 0;
-}
+
+protected:
+
+	// acquires images automatically from all set up robot configurations and detects the checkerboard points
+	// @param load_images loads calibration images and transformations from hard disk if set to true (images and transformations are stored automatically during recording from a real camera)
+	// retrieves the image size, checkerboard points per image as well as all relevant transformations
+	bool acquireCalibrationData(const std::vector<RobotConfiguration>& robot_configurations, const bool load_data,
+			std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
+			std::vector<cv::Mat>& T_camera_to_marker_vector);
+
+	ros::ServiceClient pitag_client_;
+	std::string marker_frame_base_name_;
+};
+
+#endif // __CAMERA_BASE_CALIBRATION_PITAG_H__

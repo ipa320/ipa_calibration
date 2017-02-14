@@ -8,7 +8,7 @@
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
  * Project name: squirrel
- * ROS stack name: squirrel_calibration
+ * ROS stack name: squirrel_robotino
  * ROS package name: robotino_calibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -48,39 +48,54 @@
  *
  ****************************************************************/
 
-#include <ros/ros.h>
-#include <robotino_calibration/camera_base_calibration_checkerboard.h>
-#include <robotino_calibration/camera_base_calibration_pitag.h>
+#include <robotino_calibration/transformation_utilities.h>
 
-//#######################
-//#### main programm ####
-int main(int argc, char** argv)
+// Eigen
+#include <Eigen/Core>
+
+namespace robotino_calibration
 {
-	// Initialize ROS, specify name of node
-	ros::init(argc, argv, "camera_base_calibration");
 
-	// Create a handle for this node, initialize node
-	ros::NodeHandle nh("~");
+// compute rotation matrix from yaw, pitch, roll
+// (w, p, r) = (yaW, Pitch, Roll) with
+// 1. rotation = yaw around z
+// 2. rotation = pitch around y'
+// 3. rotation = roll around x''
+cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
+{
+	double sy = sin(yaw);
+	double cy = cos(yaw);
+	double sp = sin(pitch);
+	double cp = cos(pitch);
+	double sr = sin(roll);
+	double cr = cos(roll);
+	cv::Mat rotation = (cv::Mat_<double>(3,3) <<
+			cy*cp,		cy*sp*sr - sy*cr,		cy*sp*cr + sy*sr,
+			sy*cp,		sy*sp*sr + cy*cr,		sy*sp*cr - cy*sr,
+			-sp,		cp*sr,					cp*cr);
 
-	// load parameters
-	std::string marker_type;
-	bool load_images = false;
-	std::cout << "\n========== Relative Localization Parameters ==========\n";
-	nh.param<std::string>("marker_type", marker_type, "");
-	std::cout << "marker_type: " << marker_type << std::endl;
-	nh.param("load_images", load_images, false);
-	std::cout << "load_images: " << load_images << std::endl;
+	return rotation;
+}
 
-	if (marker_type.compare("checkerboard") == 0)
-	{
-		CameraBaseCalibrationCheckerboard cb(nh);
-		cb.calibrateCameraToBase(load_images);
-	}
-	else if (marker_type.compare("pitag") == 0)
-	{
-		CameraBaseCalibrationPiTag pt(nh);
-		pt.calibrateCameraToBase(load_images);
-	}
+// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
+cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot)
+{
+	Eigen::Matrix3f rot_eigen;
+	for (int i=0; i<3; ++i)
+		for (int j=0; j<3; ++j)
+			rot_eigen(i,j) = rot.at<double>(i,j);
+	Eigen::Vector3f euler_angles = rot_eigen.eulerAngles(2,1,0);
+	return cv::Vec3d(euler_angles(0), euler_angles(1), euler_angles(2));
+}
 
-	return 0;
+cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
+{
+	cv::Mat T = (cv::Mat_<double>(4,4) <<
+			R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
+			R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
+			R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
+			0., 0., 0., 1);
+	return T;
+}
+
 }

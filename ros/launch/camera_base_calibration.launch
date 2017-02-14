@@ -2,10 +2,9 @@
 
 <launch>
 
-	<include file="$(find robotino_calibration)/ros/launch/checkerboard_localisation.launch"/>
-	
-	<node name="camera_base_calibration" pkg="robotino_calibration" type="camera_base_calibration" output="screen">
-		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/camera_base_calibration_params.yaml"/>
-		<remap from="~colorimage_in" to="/kinect/rgb/image_raw"/>
-	</node>
+	<arg name="reference" default="corner"/>	<!-- box or corner -->
+	<arg name="marker" default="pitag"/>	<!-- checkerboard or pitag -->
+
+	<include file="$(find relative_localization)/ros/launch/$(arg reference)_localization.launch"/>
+	<include file="$(find robotino_calibration)/ros/launch/camera_base_calibration_$(arg marker).launch"/>
 </launch>
