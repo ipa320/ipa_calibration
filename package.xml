@@ -14,7 +14,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>relative_localization</run_depend>
   <run_depend>robotino_calibration</run_depend>
-  <run_depend>robotino_calibration_sim</run_depend>
 
   <export>
     <metapackage/>
