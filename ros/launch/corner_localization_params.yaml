@@ -12,11 +12,11 @@ reference_coordinate_system_at_ground: true
 
 # the (minimum) length of the frontal wall segment left of the laser scanner's origin (assuming the robot faces the frontal wall), in [m]
 # double
-wall_length_left: 0.75
+wall_length_left: 2.5
 
 # the (minimum) length of the frontal wall segment right of the laser scanner's origin (assuming the robot faces the frontal wall), in [m]
 # double
-wall_length_right: 0.75
+wall_length_right: 2.5
 
 # the maximum distance of the side wall to the laser scanner, in [m]
 # double
