@@ -20,4 +20,4 @@ wall_length_right: 0.5
 
 # the maximum distance of the side wall to the laser scanner, in [m]
 # double
-max_wall_side_distance: 3.0
+max_wall_side_distance: 1.2
