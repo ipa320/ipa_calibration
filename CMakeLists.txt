@@ -24,8 +24,6 @@ set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is 
 	roslib
 	sensor_msgs
 	tf
-	kukadu
-	uibk_robot_driver
 )
 
 set(catkin_BUILD_PACKAGES 
@@ -107,7 +105,6 @@ target_link_libraries(arm_base_calibration
 	${OpenCV_LIBRARIES}
 	${PCL_LIBRARIES}
 )
-#add_dependencies(arm_base_calibration	kukadu ${catkin_EXPORTED_TARGETS})
 add_dependencies(arm_base_calibration	${catkin_EXPORTED_TARGETS})
 
 
