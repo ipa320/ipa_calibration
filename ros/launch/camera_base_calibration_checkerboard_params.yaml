@@ -10,7 +10,7 @@ chessboard_pattern_size: [9,6]
 ### initial values for transformation estimates
 # insert the values as x, y, z, yaw (rot around z), pitch (rot around y'), roll (rot around x'')
 # the transform from base_frame to torso_lower_frame
-T_base_to_torso_lower_initial: [0.25, 0, 0.5, 0.0, 0.0, 0.0]
+T_base_to_torso_lower_initial: [0.25, 0, 0.61, 0.0, 0.0, 0.0]
 
 # the transform from torso_upper_frame to camera_frame
 T_torso_upper_to_camera_initial: [0.0, 0.065, 0.0, 0.0, 0.0, -1.57]
@@ -37,35 +37,35 @@ robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
                        -1.5, -0.17, 0, 0.0, 0.3,
                        -1.5, -0.17, 0, -0.15, 0.3,
                        -1.5, -0.17, 0, -0.3, 0.3,
-                       -1.5, -0.17, 0, -0.5, 0.3,
+                       -1.5, -0.17, 0, 0.3, 0.3,
                        -1.5, -0.17, 0, 0.15, 0.05,
                        -1.5, -0.17, 0, 0.0, 0.05,
                        -1.5, -0.17, 0, -0.15, 0.05,
                        -1.5, -0.17, 0, -0.3, 0.05,
-                       -1.5, -0.17, 0, -0.5, 0.05,
-                       -1.5, -0.17, 0, 0.15, -0.2,
+                       -1.5, -0.17, 0, 0.3, 0.05,
+                       -1.5, -0.17, 0, 0.15, -0.15,
                        -1.5, -0.17, 0, 0.0, -0.2,
                        -1.5, -0.17, 0, -0.15, -0.2,
-                       -1.5, -0.17, 0, -0.35, -0.2,
-                       -1.5, -0.17, 0, -0.5, -0.2,
+                       -1.5, -0.17, 0, -0.35, -0.15,
+                       -1.5, -0.17, 0, -0.5, -0.15,
                        -1.0, -0.17, 0, 0.0, 0.2,
                        -1.0, -0.17, 0, -0.2, 0.2,
-                       -1.0, -0.17, 0, -0.45, 0.2,
+                       -1.0, -0.17, 0, 0.2, 0.2,
                        -1.0, -0.17, 0, 0.0, 0.05,
                        -1.0, -0.17, 0, -0.2, 0.05,
-                       -1.0, -0.17, 0, -0.45, 0.05,
+                       -1.0, -0.17, 0, 0.2, 0.05,
                        -1.0, -0.17, 0, 0.0, -0.15,
                        -1.0, -0.17, 0, -0.2, -0.15,
-                       -1.0, -0.17, 0, -0.45, -0.15,
+                       -1.0, -0.17, 0, 0.15, -0.15,
                        -0.85, -0.17, 0, 0.0, 0.15,
                        -0.85, -0.17, 0, -0.15, 0.15,
-                       -0.85, -0.17, 0, -0.35, 0.2,
+                       -0.85, -0.17, 0, 0.15, 0.2,
                        -0.85, -0.17, 0, 0.0, 0.05,
                        -0.85, -0.17, 0, -0.15, 0.05,
-                       -0.85, -0.17, 0, -0.35, 0.05,
+                       -0.85, -0.17, 0, 0.15, 0.05,
                        -0.85, -0.17, 0, 0.0, -0.1,
                        -0.85, -0.17, 0, -0.15, -0.1,
-                       -0.85, -0.17, 0, -0.35, -0.1]
+                       -0.85, -0.17, 0, 0.15, -0.1]
 
 
 # link names for the robot coordinate systems
@@ -98,6 +98,15 @@ velocity_command: "/cmd_vel"
 # storage folder that holds the calibration output
 # string
 calibration_storage_path: "~/.ros/robotino_calibration/calibration"
+
+# topic names for commanding the pan tilt unit
+# string
+# pan controller
+pan_controller_command: "/pan_controller/command"
+
+# tilt controller
+tilt_controller_command: "/tilt_controller/command"
+
 
 ### program sequence
 # loads calibration images and transforms from disk if set to true

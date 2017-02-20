@@ -57,6 +57,7 @@
 #include <tf/transform_listener.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/JointState.h>
+#include <dynamixel_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
 
 // image transport

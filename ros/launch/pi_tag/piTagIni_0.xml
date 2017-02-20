@@ -2,7 +2,7 @@
         <PI>
                 <ID value="25" />
                 <!-- Tag size in [m] -->
-                <LineWidthHeight value="0.15" />
+                <LineWidthHeight value="0.1" />
                 
                 <!-- Cross ratios line 0 and 1-->
                 <!-- Measurements in % relative to the tag size-->
@@ -19,7 +19,7 @@
         <PI>
                 <ID value="36" />
                 <!-- Tag size in [m] -->
-                <LineWidthHeight value="0.15" />
+                <LineWidthHeight value="0.1" />
                 
                 <!-- Cross ratios line 0 and 1-->
                 <!-- Measurements in % relative to the tag size-->
@@ -36,7 +36,7 @@
         <PI>
                 <ID value="38" />
                 <!-- Tag size in [m] -->
-                <LineWidthHeight value="0.15" />
+                <LineWidthHeight value="0.1" />
                 
                 <!-- Cross ratios line 0 and 1-->
                 <!-- Measurements in % relative to the tag size-->
@@ -53,7 +53,7 @@
         <PI>
                 <ID value="48" />
                 <!-- Tag size in [m] -->
-                <LineWidthHeight value="0.15" />
+                <LineWidthHeight value="0.1" />
                 
                 <!-- Cross ratios line 0 and 1-->
                 <!-- Measurements in % relative to the tag size-->
@@ -70,7 +70,7 @@
         <PI>
                 <ID value="55" />
                 <!-- Tag size in [m] -->
-                <LineWidthHeight value="0.15" />
+                <LineWidthHeight value="0.1" />
                 
                 <!-- Cross ratios line 0 and 1-->
                 <!-- Measurements in % relative to the tag size-->
@@ -87,7 +87,7 @@
         <PI>
                 <ID value="64" />
                 <!-- Tag size in [m] -->
-                <LineWidthHeight value="0.15" />
+                <LineWidthHeight value="0.1" />
                 
                 <!-- Cross ratios line 0 and 1-->
                 <!-- Measurements in % relative to the tag size-->
@@ -104,7 +104,7 @@
         <PI>
                 <ID value="69" />
                 <!-- Tag size in [m] -->
-                <LineWidthHeight value="0.15" />
+                <LineWidthHeight value="0.1" />
                 
                 <!-- Cross ratios line 0 and 1-->
                 <!-- Measurements in % relative to the tag size -->
@@ -121,7 +121,7 @@
         <PI>
                 <ID value="73" />
                 <!-- Tag size in [m] -->
-                <LineWidthHeight value="0.15" />
+                <LineWidthHeight value="0.1" />
                 
                 <!-- Cross ratios line 0 and 1-->
                 <!-- Measurements in % relative to the tag size -->
@@ -138,7 +138,7 @@
         <PI>
                 <ID value="79" />
                 <!-- Tag size in [m] -->
-                <LineWidthHeight value="0.15" />
+                <LineWidthHeight value="0.1" />
                 
                 <!-- Cross ratios line 0 and 1-->
                 <!-- Measurements in % relative to the tag size-->

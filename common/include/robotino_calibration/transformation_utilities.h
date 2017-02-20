@@ -52,7 +52,9 @@
 #define _TRANSFORMATION_UTILITIES_H_
 
 // OpenCV
-#include <opencv/cv.h>
+//#include <opencv/cv.h>
+#include <opencv2/opencv.hpp>
+//#include <opencv2/highgui/highgui.hpp>
 
 #include <tf/transform_listener.h>
 

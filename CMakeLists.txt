@@ -18,6 +18,7 @@ set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is 
 	cv_bridge
 	cob_fiducials
 	cob_object_detection_msgs
+	dynamixel_msgs
 	geometry_msgs
 	image_transport
 	roscpp
@@ -87,7 +88,7 @@ add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
 target_link_libraries(camera_base_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
-	${OpenCV_LIBRARIES}
+	${OpenCV_LIBS}
 	${PCL_LIBRARIES}
 )
 add_dependencies(camera_base_calibration	${catkin_EXPORTED_TARGETS})

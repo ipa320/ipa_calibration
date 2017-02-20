@@ -135,6 +135,9 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 					for (double pan=pan_range[0]; pan<=pan_range[2]; pan+=pan_range[1])
 						for (double tilt=tilt_range[0]; tilt<=tilt_range[2]; tilt+=tilt_range[1])
 							robot_configurations_.push_back(calibration_utilities::RobotConfiguration(x, y, phi, pan, tilt));
+		std::cout << "Generated " << (int)robot_configurations_.size() << " robot configurations for calibration." << std::endl;
+		if ((int)robot_configurations_.size() == 0)
+			ROS_WARN("No robot configurations generated. Please check your ranges in the yaml file.");
 	}
 	else
 	{
@@ -170,6 +173,7 @@ CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 
 void CameraBaseCalibrationMarker::panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
+	ROS_INFO("Old style controller state received.");
 	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
 	pan_tilt_joint_state_current_ = new sensor_msgs::JointState;
 	*pan_tilt_joint_state_current_ = *msg;
