@@ -208,7 +208,7 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 
 		// some testing code for checking the influence of different error sources on the calibration results
 		// set sim=true for using this verification method
-		bool sim = false;
+		/*bool sim = false;
 		if (sim==true)
 		{
 			std::cout << "=============================== using simulated data ==================================" << std::endl;
@@ -220,8 +220,8 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 			const double laser_scanner_pitch_err = 0.04;
 
 			const double laser_scanner_height = 0.15;
-			cv::Mat T_base_to_laser = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(0.2, 0., laser_scanner_height)));
-			cv::Mat T_base_to_laser_err = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(laser_scanner_yaw_err, laser_scanner_pitch_err, 0.), cv::Mat(cv::Vec3d(0.2, 0., laser_scanner_height)));
+			cv::Mat T_base_to_laser = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(0.2, 0., laser_scanner_height)));
+			cv::Mat T_base_to_laser_err = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(laser_scanner_yaw_err, laser_scanner_pitch_err, 0.), cv::Mat(cv::Vec3d(0.2, 0., laser_scanner_height)));
 			cv::Mat points_3d_in_corner = (cv::Mat_<double>(9,3) << -0.34, 0., 0.758,
 																	-0.481, 0., 0.65,
 																	-0.34, 0., 0.533,
@@ -241,8 +241,8 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 					max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), 0.,
 					max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), 0.,
 					max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), 0.);
-			cv::Mat T_base_to_torsolower = T_base_to_torso_lower_; //robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(0.3, 0., 0.69)));
-			cv::Mat T_torsoupper_to_camera = T_torso_upper_to_camera_; //robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0., 0., -1.57), cv::Mat(cv::Vec3d(0.015, 0.065, 0.)));
+			cv::Mat T_base_to_torsolower = T_base_to_torso_lower_; //transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(0.3, 0., 0.69)));
+			cv::Mat T_torsoupper_to_camera = T_torso_upper_to_camera_; //transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., -1.57), cv::Mat(cv::Vec3d(0.015, 0.065, 0.)));
 
 
 			const int number_images_to_capture = (int)robot_configurations.size();
@@ -251,8 +251,8 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 //				if (image_counter>0 && robot_configurations[image_counter-1].pose_x_==robot_configurations[image_counter].pose_x_ && robot_configurations[image_counter-1].pose_y_==robot_configurations[image_counter].pose_y_)
 //					continue;
 
-				cv::Mat T_laser_to_corner = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(robot_configurations[image_counter].pose_x_, robot_configurations[image_counter].pose_y_, -laser_scanner_height)));
-				cv::Mat T_laser_to_corner_err = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(robot_configurations[image_counter].pose_x_+0.005*(-1.+2.*(double)rand()/(double)RAND_MAX), robot_configurations[image_counter].pose_y_+0.005*(-1.+2.*(double)rand()/(double)RAND_MAX), -laser_scanner_height)));
+				cv::Mat T_laser_to_corner = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(robot_configurations[image_counter].pose_x_, robot_configurations[image_counter].pose_y_, -laser_scanner_height)));
+				cv::Mat T_laser_to_corner_err = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(robot_configurations[image_counter].pose_x_+0.005*(-1.+2.*(double)rand()/(double)RAND_MAX), robot_configurations[image_counter].pose_y_+0.005*(-1.+2.*(double)rand()/(double)RAND_MAX), -laser_scanner_height)));
 				for (int marker_index=0; marker_index<points_3d_in_corner.rows; ++marker_index)
 				{
 					// simulate ratio of found markers
@@ -260,28 +260,28 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 						continue;
 
 					// base to marker
-					cv::Mat T_corner_to_marker = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0., 0., 0.),
+					cv::Mat T_corner_to_marker = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.),
 							cv::Mat(cv::Vec3d(points_3d_in_corner.at<double>(marker_index,0), points_3d_in_corner.at<double>(marker_index,1), points_3d_in_corner.at<double>(marker_index,2))));
-					cv::Mat T_corner_to_marker_err = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0., 0., 0.),
+					cv::Mat T_corner_to_marker_err = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.),
 							cv::Mat(cv::Vec3d(points_3d_in_corner.at<double>(marker_index,0)+points_3d_in_corner_err.at<double>(marker_index,0), points_3d_in_corner.at<double>(marker_index,1)+points_3d_in_corner_err.at<double>(marker_index,1), points_3d_in_corner.at<double>(marker_index,2)+points_3d_in_corner_err.at<double>(marker_index,2))));
 					cv::Mat T_base_to_marker = T_base_to_laser * T_laser_to_corner * T_corner_to_marker;
 					cv::Mat T_base_to_marker_err = T_base_to_laser_err * T_laser_to_corner_err * T_corner_to_marker_err;
 
 					// torso_lower to torso_upper
-					cv::Mat T_torsolower_to_pan = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(robot_configurations[image_counter].pan_angle_, 0., 0.), cv::Mat(cv::Vec3d(0., 0., 0.)));
-					cv::Mat T_pan_to_tilt1 = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0., 0., 1.57), cv::Mat(cv::Vec3d(0., 0., 0.)));
-					cv::Mat T_tilt1_to_tilt = robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(-robot_configurations[image_counter].tilt_angle_, 0., 0.), cv::Mat(cv::Vec3d(0., 0., 0.)));
+					cv::Mat T_torsolower_to_pan = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(robot_configurations[image_counter].pan_angle_, 0., 0.), cv::Mat(cv::Vec3d(0., 0., 0.)));
+					cv::Mat T_pan_to_tilt1 = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 1.57), cv::Mat(cv::Vec3d(0., 0., 0.)));
+					cv::Mat T_tilt1_to_tilt = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(-robot_configurations[image_counter].tilt_angle_, 0., 0.), cv::Mat(cv::Vec3d(0., 0., 0.)));
 					cv::Mat T_torso_lower_to_torso_upper = T_torsolower_to_pan * T_pan_to_tilt1 * T_tilt1_to_tilt;
 
 					// camera to marker
 					cv::Mat T_base_to_camera = T_base_to_torsolower * T_torso_lower_to_torso_upper * T_torsoupper_to_camera;
 					cv::Mat T_camera_to_marker = T_base_to_camera.inv() * T_base_to_marker;
 					cv::Mat T_base_to_camera_err = T_base_to_torsolower * T_torso_lower_to_torso_upper
-							* robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0., -0.07, 0.), cv::Mat(cv::Vec3d(0., 0., 0.)))
+							* transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., -0.07, 0.), cv::Mat(cv::Vec3d(0., 0., 0.)))
 							* T_torsoupper_to_camera;
 					const double marker_detection_max_offset = 0.02;
 					cv::Mat T_camera_to_marker_err = T_base_to_camera_err.inv() * T_base_to_marker
-							* robotino_calibration::makeTransform(robotino_calibration::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(marker_detection_max_offset*(-1.+2.*(double)rand()/(double)RAND_MAX), marker_detection_max_offset*(-1.+2.*(double)rand()/(double)RAND_MAX), marker_detection_max_offset*(-1.+2.*(double)rand()/(double)RAND_MAX))));
+							* transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(marker_detection_max_offset*(-1.+2.*(double)rand()/(double)RAND_MAX), marker_detection_max_offset*(-1.+2.*(double)rand()/(double)RAND_MAX), marker_detection_max_offset*(-1.+2.*(double)rand()/(double)RAND_MAX))));
 
 					// attach data to array
 					T_base_to_marker_vector.push_back(T_base_to_marker_err);
@@ -289,7 +289,7 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 					T_camera_to_marker_vector.push_back(T_camera_to_marker_err);
 				}
 			}
-		}
+		}*/
 	}
 
 	std::cout << "Captured markers: " << T_camera_to_marker_vector.size() << std::endl;
