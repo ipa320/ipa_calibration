@@ -65,6 +65,8 @@ CornerLocalization::CornerLocalization(ros::NodeHandle& nh)
 	// load subclass parameters
 	node_handle_.param("max_wall_side_distance", max_wall_side_distance_, 0.5);
 	std::cout << "max_wall_side_distance: " << max_wall_side_distance_ << std::endl;
+
+	ROS_INFO("CornerLocalization: Initialized.");
 }
 
 CornerLocalization::~CornerLocalization()
@@ -106,7 +108,10 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	cv::Vec4d line_front;
 	RelativeLocalizationUtilities::fitLine(scan_front, line_front, 0.1, 0.99999, inlier_distance, false);
 	if (line_front.val[0] != line_front.val[0] || line_front.val[1] != line_front.val[1] || line_front.val[2] != line_front.val[2] || line_front.val[3] != line_front.val[3])
+	{
+		ROS_WARN("CornerLocalization::callback: frontal wall could not be estimated.");
 		return;
+	}
 
 	const double px_f = line_front.val[0];	// coordinates of a point on front the wall
 	const double py_f = line_front.val[1];
@@ -131,7 +136,10 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 		// match line to scan_side
 		RelativeLocalizationUtilities::fitLine(scan_side, line_side, 0.1, 0.99999, inlier_distance, false);
 		if (line_side.val[0] != line_side.val[0] || line_side.val[1] != line_side.val[1] || line_side.val[2] != line_side.val[2] || line_side.val[3] != line_side.val[3])
-			return;
+		{
+			ROS_WARN("CornerLocalization::callback: side wall could not be estimated in trial %i. Trying next.", i);
+			continue;
+		}
 
 		// check if line is good enough
 		const double wall_distance_to_base = RelativeLocalizationUtilities::distanceToLine(line_side.val[0], line_side.val[1], line_side.val[2], line_side.val[3], 0., 0.);

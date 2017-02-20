@@ -78,7 +78,9 @@
 #include <relative_localization/RelativeLocalizationConfig.h>
 
 // OpenCV
-#include <opencv/cv.h>
+//#include <opencv/cv.h>
+#include <opencv2/opencv.hpp>
+//#include <opencv2/highgui/highgui.hpp>
 
 class ReferenceLocalization
 {

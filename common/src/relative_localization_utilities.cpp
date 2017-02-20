@@ -57,6 +57,8 @@
 
 #include <relative_localization/relative_localization_utilities.h>
 
+//#define DEBUG_OUTPUT
+
 namespace RelativeLocalizationUtilities
 {
 	void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set)
@@ -69,7 +71,7 @@ namespace RelativeLocalizationUtilities
 
 		if ( samples < 2 )
 		{
-			std::cout << "ERROR: Not enough points to fit a line!" << std::endl;
+			std::cout << "fitLine - Warning: Not enough points to fit a line!" << std::endl;
 			return;
 		}
 

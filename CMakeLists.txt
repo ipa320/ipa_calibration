@@ -82,7 +82,7 @@ add_dependencies(relative_localization_node ${catkin_EXPORTED_TARGETS} ${${PROJE
 target_link_libraries(relative_localization_node
 	${catkin_LIBRARIES}
 	${Boost_LIBRARIES}
-	${OpenCV_LIBRARIES}
+	${OpenCV_LIBS}
 )
 
 
