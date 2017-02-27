@@ -90,10 +90,14 @@ checkerboard_frame: "checkerboard_frame"
 
 # commands needed to move the robot and camera
 # string
-tilt_controller_command: "/pan_tilt_controller/tilt_joint_position_controller/command"
-pan_controller_command: "/pan_tilt_controller/pan_joint_position_controller/command"
-joint_state_command: "/pan_tilt_controller/joint_states"
-velocity_command: "/cmd_vel"
+tilt_controller_command: "/tilt_controller/command" #"/pan_tilt_controller/tilt_joint_position_controller/command"
+pan_controller_command: "/pan_controller/command" #"/pan_tilt_controller/pan_joint_position_controller/command"
+tilt_joint_state_topic: "/tilt_controller/state"
+pan_joint_state_topic: "/pan_controller/state"
+base_controller_topic_name: "/cmd_vel"
+
+#deprecated
+joint_state_topic: "/pan_tilt_controller/joint_states"
 
 # storage folder that holds the calibration output
 # string

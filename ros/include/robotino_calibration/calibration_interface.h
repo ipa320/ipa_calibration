@@ -55,7 +55,6 @@
 #include <ros/ros.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Float64.h>
-#include <sensor_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
 
 class CalibrationInterface
