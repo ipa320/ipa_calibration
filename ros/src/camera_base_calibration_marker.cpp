@@ -60,8 +60,8 @@
 #include <sstream>
 #include <fstream>
 
-#include <robotino_calibration/robotino_interface.h>
-#include <robotino_calibration/raw_interface.h>
+//#include <robotino_calibration/robotino_interface.h>
+//#include <robotino_calibration/raw_interface.h>
 
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
@@ -168,15 +168,6 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	}
 
 	// topics
-
-	/*bool bFallback = false;
-	if ( bFallback ) // this is the old-style format with the old controller - only left here for compatibility
-		pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>(joint_state_topic_, 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);
-	 */
-
-	//pan_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(pan_joint_state_topic_, 0, &CameraBaseCalibrationMarker::panJointStateCallback, this);
-	//tilt_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(tilt_joint_state_topic_, 0, &CameraBaseCalibrationMarker::tiltJointStateCallback, this);
-	calibration_interface_ = new RobotinoInterface(node_handle_, false); //Switch-Case which interface to instantiate
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
 	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
 	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);

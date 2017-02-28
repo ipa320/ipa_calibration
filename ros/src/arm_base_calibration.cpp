@@ -59,8 +59,8 @@
 #include <fstream>
 #include <numeric>
 
-#include <robotino_calibration/robotino_interface.h>
-#include <robotino_calibration/raw_interface.h>
+//#include <robotino_calibration/robotino_interface.h>
+//#include <robotino_calibration/raw_interface.h>
 
 
 //ToDo: Adjust displayAndSaveCalibrationResult() for new EndeffToChecker or remove the optimization for it.
@@ -142,7 +142,8 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 		arm_configurations_.push_back(calibration_utilities::ArmConfiguration(angles));
 	}
 
-	calibration_interface_ = new RobotinoInterface(node_handle_, true); //Switch-Case which interface to instantiate
+	//calibration_interface_ = new RobotinoInterface(node_handle_, true); //Switch-Case which interface to instantiate
+	//calibration_interface_ = new RobotinoInterface(node_handle_, true);
 	//arm_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_joint_controller_command_, 1, false);
 	arm_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_state_command_, 0, &ArmBaseCalibration::armStateCallback, this);
 

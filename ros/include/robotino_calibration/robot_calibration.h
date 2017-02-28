@@ -73,6 +73,7 @@ protected:
 
 	void createStorageFolder();
 
+	int calibration_ID_;		// ID for identifying which calibration interface to use.
 	bool calibrated_;
 	int optimization_iterations_;	// number of iterations for optimization
 	tf::TransformListener transform_listener_;

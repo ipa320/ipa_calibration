@@ -120,3 +120,7 @@ load_images: false
 # number of optimization iterations
 # int
 optimization_iterations: 100
+
+# calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW
+# int
+calibration_ID: 0

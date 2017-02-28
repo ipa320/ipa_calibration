@@ -53,7 +53,7 @@
 #include <trajectory_msgs/JointTrajectory.h>
 
 RAWInterface::RAWInterface(ros::NodeHandle nh, bool bArmCalibration) :
-				CalibrationInterface(nh, bArmCalibration), pan_joint_state_current_(0), tilt_joint_state_current_(0)
+				CalibrationInterface(nh), pan_joint_state_current_(0), tilt_joint_state_current_(0)
 {
 	std::cout << "\n========== RAWInterface Parameters ==========\n";
 
@@ -61,13 +61,13 @@ RAWInterface::RAWInterface(ros::NodeHandle nh, bool bArmCalibration) :
 
 	if ( bArmCalibration )
 	{
-		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
+		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "/arm/joint_trajectory_controller/command");
 		std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
 		arm_joint_controller_ = node_handle_.advertise<trajectory_msgs::JointTrajectory>(arm_joint_controller_command_, 1, false);
 	}
 	else
 	{
-		node_handle_.param<std::string>("joint_state_topic", joint_state_topic_, "/pan_tilt_controller/joint_states");
+		node_handle_.param<std::string>("joint_state_topic", joint_state_topic_, "/arm/joint_states");
 		std::cout << "joint_state_topic: " << joint_state_topic_ << std::endl;
 		pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>(joint_state_topic_, 0, &RAWInterface::panTiltJointStateCallback, this);
 	}
@@ -128,6 +128,8 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig
 	// Adjust here: Assign new joints to your robot arm
 	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
 	trajectory_msgs::JointTrajectory jointTraj;
+
+	jointTraj.joint_names = {"arm_upper_arm_link", "arm_forearm_link", "arm_wrist_1_link", "arm_wrist_2_link", "arm_wrist_3_link"};
 
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newJointConfig.data.begin(), newJointConfig.data.end());
 	jointTraj.points.push_back(jointTrajPoint);

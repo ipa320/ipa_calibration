@@ -64,6 +64,10 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh) :
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
 	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
 	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
+	node_handle_.param("calibration_ID", calibration_ID_, 0);
+	std::cout << "calibration_ID: " << calibration_ID_ << std::endl;
+
+	calibration_interface_ = CalibrationInterface::CreateInterfaceByID(calibration_ID_,node_handle_,true);
 
 	createStorageFolder();
 }

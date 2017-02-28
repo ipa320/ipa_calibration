@@ -53,18 +53,35 @@
 */
 
 #include <robotino_calibration/calibration_interface.h>
+#include <robotino_calibration/robotino_interface.h>
+#include <robotino_calibration/raw_interface.h>
 
 CalibrationInterface::CalibrationInterface()
 {
 }
 
-CalibrationInterface::CalibrationInterface(ros::NodeHandle nh, bool bArmCalibration) :
+CalibrationInterface::CalibrationInterface(ros::NodeHandle nh) :
 				node_handle_(nh)
 {
 }
 
 CalibrationInterface::~CalibrationInterface()
 {
+}
+
+CalibrationInterface* CalibrationInterface::CreateInterfaceByID(int ID, ros::NodeHandle nh, bool bArmCalibration)
+{
+	switch(ID)
+	{
+		case 0:
+				return (new RobotinoInterface(nh, bArmCalibration));
+				break;
+		case 1:
+				return (new RAWInterface(nh, bArmCalibration));
+				break;
+		default:
+				return 0;
+	}
 }
 
 

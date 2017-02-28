@@ -51,7 +51,7 @@
 #include <robotino_calibration/robotino_interface.h>
 
 RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool bArmCalibration) :
-				CalibrationInterface(nh, bArmCalibration), pan_joint_state_current_(0), tilt_joint_state_current_(0)
+				CalibrationInterface(nh), pan_joint_state_current_(0), tilt_joint_state_current_(0)
 {
 	std::cout << "\n========== RobotinoInterface Parameters ==========\n";
 
