@@ -67,8 +67,9 @@
 #include <pcl/point_types.h>
 
 // opencv
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+//#include <opencv/cv.h>
+//#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 
@@ -77,7 +78,6 @@
 
 #include <robotino_calibration/calibration_utilities.h>
 #include <robotino_calibration/robot_calibration.h>
-#include <robotino_calibration/calibration_interface.h>
 
 
 class ArmBaseCalibration : public RobotCalibration
@@ -120,7 +120,6 @@ protected:
 
 	void displayMatrix(const cv::Mat& Trafo); // ToDo: Remove this, debug only!
 
-	CalibrationInterface arm_calibration_interface_;
 	//ros::Publisher arm_joint_controller_;
 	ros::Subscriber arm_state_;
 	sensor_msgs::JointState* arm_state_current_;

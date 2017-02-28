@@ -55,6 +55,7 @@
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include <robotino_calibration/calibration_utilities.h>
+#include <robotino_calibration/calibration_interface.h>
 
 
 class RobotCalibration
@@ -78,6 +79,7 @@ protected:
 	ros::NodeHandle node_handle_;
 	std::string base_frame_;
 	std::string calibration_storage_path_;  // path to data
+	CalibrationInterface *calibration_interface_;
 };
 
 

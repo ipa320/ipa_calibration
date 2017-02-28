@@ -53,71 +53,19 @@
 */
 
 #include <robotino_calibration/calibration_interface.h>
-#include <trajectory_msgs/JointTrajectoryPoint.h>
-#include <trajectory_msgs/JointTrajectory.h>
 
 CalibrationInterface::CalibrationInterface()
 {
 }
 
-CalibrationInterface::CalibrationInterface(ros::NodeHandle nh, bool bArmCalibration) : node_handle_(nh)
+CalibrationInterface::CalibrationInterface(ros::NodeHandle nh, bool bArmCalibration) :
+				node_handle_(nh)
 {
-	std::cout << "\n========== CalibrationInterface Parameters ==========\n";
-
-	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
-
-	if ( bArmCalibration )
-	{
-		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
-		std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
-		//arm_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_joint_controller_command_, 1, false); // Robotino
-		arm_joint_controller_ = node_handle_.advertise<trajectory_msgs::JointTrajectory>(arm_joint_controller_command_, 1, false);  // RAW3-1
-	}
-	else
-	{
-
-	}
-
-	ROS_INFO("CalibrationInterface initialized.");
 }
 
 CalibrationInterface::~CalibrationInterface()
 {
 }
-
-
-// CAMERA CALIBRATION INTERFACE
-void CalibrationInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity)
-{
-	// Adjust here: Assign new robot velocity here
-}
-
-void CalibrationInterface::assignNewCamaraPanAngle(std_msgs::Float64 newPan)
-{
-	// Adjust here: Assign new camera pan angle here
-}
-
-void CalibrationInterface::assignNewCamaraTiltAngle(std_msgs::Float64 newTilt)
-{
-	// Adjust here: Assign new camera tilt angle here
-}
-// END
-
-
-// ARM CALIBRATION INTERFACE
-void CalibrationInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig)
-{
-	// Adjust here: Assign new joints to your robot arm
-	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
-	trajectory_msgs::JointTrajectory jointTraj;
-
-	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newJointConfig.data.begin(), newJointConfig.data.end());
-	jointTraj.points.push_back(jointTrajPoint);
-
-	//arm_joint_controller_.publish(newJointConfig); // Robotino
-	arm_joint_controller_.publish(jointTraj); // ROW3-1
-}
-// END
 
 
 

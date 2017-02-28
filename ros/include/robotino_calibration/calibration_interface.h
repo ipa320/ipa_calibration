@@ -61,22 +61,21 @@ class CalibrationInterface
 {
 protected:
 	ros::NodeHandle node_handle_;
-	ros::Publisher arm_joint_controller_;
-	std::string arm_joint_controller_command_;
-
 
 public:
 	CalibrationInterface();
 	CalibrationInterface(ros::NodeHandle nh, bool bArmCalibration);
-	~CalibrationInterface();
+	virtual ~CalibrationInterface();
 
 	// camera calibration interface
-	void assignNewRobotVelocity(geometry_msgs::Twist newVelocity);
-	void assignNewCamaraPanAngle(std_msgs::Float64 newPan);
-	void assignNewCamaraTiltAngle(std_msgs::Float64 newTilt);
+	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;
+	virtual void assignNewCamaraPanAngle(std_msgs::Float64 newPan) = 0;
+	virtual void assignNewCamaraTiltAngle(std_msgs::Float64 newTilt) = 0;
+	virtual double getCurrentCameraTiltAngle() = 0;
+	virtual double getCurrentCameraPanAngle() = 0;
 
 	// arm calibration interface
-	void assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig);
+	virtual void assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig) = 0;
 
 };
 

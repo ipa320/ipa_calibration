@@ -60,9 +60,12 @@
 #include <sstream>
 #include <fstream>
 
+#include <robotino_calibration/robotino_interface.h>
+#include <robotino_calibration/raw_interface.h>
+
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
-			RobotCalibration(nh), counter(0), pan_joint_state_current_(0), tilt_joint_state_current_(0)
+			RobotCalibration(nh), counter(0)
 {
 	// load parameters
 	std::cout << "\n========== CameraBaseCalibrationMarker Parameters ==========\n";
@@ -79,16 +82,16 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
 	node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/tilt_controller/command");
 	std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
-	node_handle_.param<std::string>("pan_joint_state_topic", pan_joint_state_topic_, "/pan_controller/state");
-	std::cout << "pan_joint_state_topic: " << pan_joint_state_topic_ << std::endl;
-	node_handle_.param<std::string>("tilt_joint_state_topic", tilt_joint_state_topic_, "/tilt_controller/state");
-	std::cout << "tilt_joint_state_topic: " << tilt_joint_state_topic_ << std::endl;
+	//node_handle_.param<std::string>("pan_joint_state_topic", pan_joint_state_topic_, "/pan_controller/state");
+	//std::cout << "pan_joint_state_topic: " << pan_joint_state_topic_ << std::endl;
+	//node_handle_.param<std::string>("tilt_joint_state_topic", tilt_joint_state_topic_, "/tilt_controller/state");
+	//std::cout << "tilt_joint_state_topic: " << tilt_joint_state_topic_ << std::endl;
 	node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "/cmd_vel");
 	std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
 
 	// deprecated
-	node_handle_.param<std::string>("joint_state_topic", joint_state_topic_, "/pan_tilt_controller/joint_states");
-	std::cout << "joint_state_topic: " << joint_state_topic_ << std::endl;
+	//node_handle_.param<std::string>("joint_state_topic", joint_state_topic_, "/pan_tilt_controller/joint_states");
+	//std::cout << "joint_state_topic: " << joint_state_topic_ << std::endl;
 
 	// initial parameters
 	T_base_to_torso_lower_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
@@ -171,8 +174,9 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 		pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>(joint_state_topic_, 0, &CameraBaseCalibrationMarker::panTiltJointStateCallback, this);
 	 */
 
-	pan_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(pan_joint_state_topic_, 0, &CameraBaseCalibrationMarker::panJointStateCallback, this);
-	tilt_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(tilt_joint_state_topic_, 0, &CameraBaseCalibrationMarker::tiltJointStateCallback, this);
+	//pan_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(pan_joint_state_topic_, 0, &CameraBaseCalibrationMarker::panJointStateCallback, this);
+	//tilt_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(tilt_joint_state_topic_, 0, &CameraBaseCalibrationMarker::tiltJointStateCallback, this);
+	calibration_interface_ = new RobotinoInterface(node_handle_, false); //Switch-Case which interface to instantiate
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
 	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
 	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
@@ -182,12 +186,14 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 
 CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 {
+	if ( calibration_interface_ != 0 )
+		delete calibration_interface_;
 	//if (pan_tilt_joint_state_current_!=0)
 		//delete pan_tilt_joint_state_current_;
-	if (pan_joint_state_current_!=0)
-		delete pan_joint_state_current_;
-	if (tilt_joint_state_current_!=0)
-		delete tilt_joint_state_current_;
+	//if (pan_joint_state_current_!=0)
+	//	delete pan_joint_state_current_;
+	//if (tilt_joint_state_current_!=0)
+	//	delete tilt_joint_state_current_;
 }
 
 // old style controller
@@ -202,7 +208,7 @@ CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 }*/
 
 // new controller
-void CameraBaseCalibrationMarker::panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
+/*void CameraBaseCalibrationMarker::panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
 {
 	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
 	pan_joint_state_current_ = new double;
@@ -214,7 +220,7 @@ void CameraBaseCalibrationMarker::tiltJointStateCallback(const dynamixel_msgs::J
 	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
 	tilt_joint_state_current_ = new double;
 	*tilt_joint_state_current_ = msg->current_pos;
-}
+}*/
 
 bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotConfiguration& robot_configuration)
 {
@@ -316,13 +322,15 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	}
 	
 	// wait for pan tilt to arrive at goal position
-	if (pan_joint_state_current_!=0 && tilt_joint_state_current_!=0)
+	double pan_joint_state_current = calibration_interface_->getCurrentCameraPanAngle();
+	double tilt_joint_state_current = calibration_interface_->getCurrentCameraTiltAngle();
+	if (pan_joint_state_current!=0 && tilt_joint_state_current!=0)
 	{
 		Timer timeout;
 		while (timeout.getElapsedTimeInSec()<5.0)
 		{
 			boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
-			if (fabs(*pan_joint_state_current_-robot_configuration.pan_angle_)<0.01 && fabs(*tilt_joint_state_current_-robot_configuration.tilt_angle_)<0.01)
+			if (fabs(pan_joint_state_current-robot_configuration.pan_angle_)<0.01 && fabs(tilt_joint_state_current-robot_configuration.tilt_angle_)<0.01)
 				break;
 			ros::spinOnce();
 		}
