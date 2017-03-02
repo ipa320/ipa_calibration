@@ -49,8 +49,10 @@
  ****************************************************************/
 
 
+#include <ros/ros.h>
 #include <robotino_calibration/robot_calibration.h>
 #include <boost/filesystem.hpp>
+#include <exception>
 
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
@@ -67,8 +69,14 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 	node_handle_.param("calibration_ID", calibration_ID_, 0);
 	std::cout << "calibration_ID: " << calibration_ID_ << std::endl;
 
-	calibration_interface_ = CalibrationInterface::CreateInterfaceByID(calibration_ID_,node_handle_,bArmCalibration);
+	calibration_interface_ = CalibrationInterface::createInterfaceByID(calibration_ID_,node_handle_,bArmCalibration);
 	createStorageFolder();
+
+	if ( calibration_interface_ == 0 ) // Throw exception, as we need an calibration interface in order to function properly!
+	{
+		ROS_FATAL("Could not create a calibration interface for calibration_ID: %d", calibration_ID_);
+		throw std::exception();
+	}
 }
 
 RobotCalibration::~RobotCalibration()

@@ -69,14 +69,15 @@ CalibrationInterface::~CalibrationInterface()
 {
 }
 
-CalibrationInterface* CalibrationInterface::CreateInterfaceByID(int ID, ros::NodeHandle nh, bool bArmCalibration)
+// You can add more interfaces for further robots in here.
+CalibrationInterface* CalibrationInterface::createInterfaceByID(int ID, ros::NodeHandle nh, bool bArmCalibration)
 {
 	switch(ID)
 	{
-		case 0:
+		case 0: // Robotino
 				return (new RobotinoInterface(nh, bArmCalibration));
 				break;
-		case 1:
+		case 1: // Rob@Work
 				return (new RAWInterface(nh, bArmCalibration));
 				break;
 		default:

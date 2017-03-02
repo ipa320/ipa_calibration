@@ -70,8 +70,15 @@ int main(int argc, char** argv)
 	nh.param("load_images", load_images, false);
 	std::cout << "load_images: " << load_images << std::endl;
 
-	ArmBaseCalibration armCal(nh);
-	armCal.calibrateArmToBase(load_images);
+	try
+	{
+		ArmBaseCalibration armCal(nh);
+		armCal.calibrateArmToBase(load_images);
+	}
+	catch ( std::exception &e )
+	{
+		return -1;
+	}
 
 	return 0;
 }

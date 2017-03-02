@@ -71,15 +71,22 @@ int main(int argc, char** argv)
 	nh.param("load_images", load_images, false);
 	std::cout << "load_images: " << load_images << std::endl;
 
-	if (marker_type.compare("checkerboard") == 0)
+	try
 	{
-		CameraBaseCalibrationCheckerboard cb(nh);
-		cb.calibrateCameraToBase(load_images);
+		if (marker_type.compare("checkerboard") == 0)
+		{
+			CameraBaseCalibrationCheckerboard cb(nh);
+			cb.calibrateCameraToBase(load_images);
+		}
+		else if (marker_type.compare("pitag") == 0)
+		{
+			CameraBaseCalibrationPiTag pt(nh);
+			pt.calibrateCameraToBase(load_images);
+		}
 	}
-	else if (marker_type.compare("pitag") == 0)
+	catch ( std::exception &e )
 	{
-		CameraBaseCalibrationPiTag pt(nh);
-		pt.calibrateCameraToBase(load_images);
+		return -1;
 	}
 
 	return 0;
