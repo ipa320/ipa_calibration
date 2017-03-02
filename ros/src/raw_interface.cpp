@@ -129,12 +129,14 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig
 	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
 	trajectory_msgs::JointTrajectory jointTraj;
 
-	jointTraj.joint_names = {"arm_upper_arm_link", "arm_forearm_link", "arm_wrist_1_link", "arm_wrist_2_link", "arm_wrist_3_link"};
+	jointTraj.joint_names = {"arm_elbow_joint", "arm_shoulder_lift_joint", "arm_shoulder_pan_joint", "arm_wrist_1_joint", "arm_wrist_2_joint", "arm_wrist_3_joint"};
+	jointTraj.header.stamp = ros::Time::now();
+	jointTraj.header.stamp += ros::Duration(1);
 
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newJointConfig.data.begin(), newJointConfig.data.end());
 	jointTraj.points.push_back(jointTrajPoint);
 
-	arm_joint_controller_.publish(jointTraj); // ROW3-1
+	arm_joint_controller_.publish(jointTraj); // RAW3-1
 }
 // END
 

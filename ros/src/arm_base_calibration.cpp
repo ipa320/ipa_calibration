@@ -59,14 +59,11 @@
 #include <fstream>
 #include <numeric>
 
-//#include <robotino_calibration/robotino_interface.h>
-//#include <robotino_calibration/raw_interface.h>
-
 
 //ToDo: Adjust displayAndSaveCalibrationResult() for new EndeffToChecker or remove the optimization for it.
 
 ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
-		RobotCalibration(nh)
+		RobotCalibration(nh, true)
 {
 	// load parameters
 	std::cout << "\n========== ArmBaseCalibration Parameters ==========\n";
@@ -161,8 +158,6 @@ ArmBaseCalibration::~ArmBaseCalibration()
 		delete it_;
 	else if ( arm_state_current_ != 0 )
 		delete arm_state_current_;
-	else if ( calibration_interface_ != 0 )
-		delete calibration_interface_;
 }
 
 void ArmBaseCalibration::armStateCallback(const sensor_msgs::JointState::ConstPtr& msg)

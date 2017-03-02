@@ -62,7 +62,7 @@ class RobotCalibration
 {
 public:
 
-	RobotCalibration(ros::NodeHandle nh);
+	RobotCalibration(ros::NodeHandle nh, bool bArmCalibration);
 	virtual ~RobotCalibration();
 	virtual bool saveCalibration() = 0;
 	virtual bool loadCalibration() = 0;

@@ -60,12 +60,9 @@
 #include <sstream>
 #include <fstream>
 
-//#include <robotino_calibration/robotino_interface.h>
-//#include <robotino_calibration/raw_interface.h>
-
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
-			RobotCalibration(nh), counter(0)
+			RobotCalibration(nh, false), counter(0)
 {
 	// load parameters
 	std::cout << "\n========== CameraBaseCalibrationMarker Parameters ==========\n";
@@ -177,8 +174,6 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 
 CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 {
-	if ( calibration_interface_ != 0 )
-		delete calibration_interface_;
 	//if (pan_tilt_joint_state_current_!=0)
 		//delete pan_tilt_joint_state_current_;
 	//if (pan_joint_state_current_!=0)

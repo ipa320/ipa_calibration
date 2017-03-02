@@ -5,8 +5,7 @@ chessboard_cell_size: 0.018
 
 # number of arm links
 # int
-#link_Count: 5 # Robotino
-link_Count: 6 # ROW3-1
+link_Count: 5 # Robotino
 
 # number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
 # chessboard_pattern_size: [6,4]
@@ -25,32 +24,25 @@ T_endeff_to_checkerboard_initial: [0.7, -0.45, -0.5, 0, -1.1, 0]
 # list of robot link configurations (angles per link in [rad]) for observing the checkerboard attachhed to robot's end effector
 # includes link_Count parameters per entry.
 # Robotino
-#arm_configurations: [0, 0, 0, 0, 0,
-#                     0.1, 0, 0, 0, 0,
-#                     -0.1, 0, 0, 0, 0,
-#                     0.2, 0, 0, 0, 0,
-#                     -0.2, 0, 0, 0, 0,
-#                     0.3, 0, 0, 0, 0,
-#                     -0.3, 0, 0, 0, 0,
-#                     0, 0, 0, 0.2, 0,
-#                     0, 0, 0, -0.2, 0,
-#                     0, 0, 0, 0.35, 0,
-#                     0, 0, 0, -0.35, 0,
-#                     0, 0, 0, 0.45, 0,
-#                     0, 0, 0, -0.45, 0,
-#                     0, 0, 0, 0, 0.1,
-#                     0, 0, 0, 0, -0.1,
-#                     0, 0, 0, 0, 0.2,
-#                     0, 0, 0, 0, -0.2,
-#                     0, 0, 0, 0, 0.3,
-#                     0, 0, 0, 0, -0.3]
-
-# ROW3-1
-arm_configurations: [0, 0, 0, 0, 0, 0,
-                     0.1, 0, 0, 0, 0, 0,
-                     -0.1, 0, 0, 0, 0, 0,
-                     0.2, 0, 0, 0, 0, 0,
-                     -0.2, 0, 0, 0, 0, 0]
+arm_configurations: [0, 0, 0, 0, 0,
+                     0.1, 0, 0, 0, 0,
+                     -0.1, 0, 0, 0, 0,
+                     0.2, 0, 0, 0, 0,
+                     -0.2, 0, 0, 0, 0,
+                     0.3, 0, 0, 0, 0,
+                     -0.3, 0, 0, 0, 0,
+                     0, 0, 0, 0.2, 0,
+                     0, 0, 0, -0.2, 0,
+                     0, 0, 0, 0.35, 0,
+                     0, 0, 0, -0.35, 0,
+                     0, 0, 0, 0.45, 0,
+                     0, 0, 0, -0.45, 0,
+                     0, 0, 0, 0, 0.1,
+                     0, 0, 0, 0, -0.1,
+                     0, 0, 0, 0, 0.2,
+                     0, 0, 0, 0, -0.2,
+                     0, 0, 0, 0, 0.3,
+                     0, 0, 0, 0, -0.3]
 
 
 # link names for the robot coordinate systems
@@ -65,21 +57,18 @@ armbase_frame: "arm_base_link"
 
 # end effector frame attached to arm
 # string
-#endeff_frame: "hand_base_link" # Robotino
-endeff_frame: "arm_gripper_frame"
+endeff_frame: "hand_base_link"
 
 # this is the camera coordinate system which refers to the color image sensor [the transformations between base_frame and camera_optical_frame should be available from tf]
 camera_optical_frame: "kinect_rgb_optical_frame"
 
 # Topic to control the arm joints.
 # string
-#arm_joint_controller_command: "/arm_controller/joint_group_position_controller/command" # Robotino
-arm_joint_controller_command: "/arm/joint_trajectory_controller/command" # RAW3-1
+arm_joint_controller_command: "/arm_controller/joint_group_position_controller/command" # Robotino
 
 # Topic to retrieve the current arm state
 # string
-#arm_state_command: "/arm_controller/joint_states" # Robotino
-arm_state_command: "/arm/joint_states" # RAW3-1
+arm_state_command: "/arm_controller/joint_states" # Robotino
 
 # storage folder that holds the calibration output
 # string
@@ -97,4 +86,4 @@ optimization_iterations: 100
 
 # calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW
 # int
-calibration_ID: 1
+calibration_ID: 0

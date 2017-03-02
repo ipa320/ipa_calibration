@@ -53,7 +53,7 @@
 #include <boost/filesystem.hpp>
 
 
-RobotCalibration::RobotCalibration(ros::NodeHandle nh) :
+RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 		node_handle_(nh), transform_listener_(nh), calibrated_(false)
 {
 	// load parameters
@@ -67,13 +67,14 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh) :
 	node_handle_.param("calibration_ID", calibration_ID_, 0);
 	std::cout << "calibration_ID: " << calibration_ID_ << std::endl;
 
-	calibration_interface_ = CalibrationInterface::CreateInterfaceByID(calibration_ID_,node_handle_,true);
-
+	calibration_interface_ = CalibrationInterface::CreateInterfaceByID(calibration_ID_,node_handle_,bArmCalibration);
 	createStorageFolder();
 }
 
 RobotCalibration::~RobotCalibration()
 {
+	if ( calibration_interface_ != 0 )
+		delete calibration_interface_;
 }
 
 // create data storage path if it does not yet exist
