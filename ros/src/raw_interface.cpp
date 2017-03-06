@@ -133,7 +133,7 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newJointConfig.data.begin(), newJointConfig.data.end());
 	jointTrajPoint.time_from_start = ros::Duration(1);
 	jointTraj.points.push_back(jointTrajPoint);
-	jointTraj.header.stamp = ros::Time::now() + ros::Duration(1);
+	jointTraj.header.stamp = ros::Time::now();// + ros::Duration(1);
 
 	arm_joint_controller_.publish(jointTraj); // RAW3-1
 }

@@ -142,6 +142,7 @@ protected:
 	cv::Mat camera_image_;		// stores the latest camera image
 	ros::Time latest_image_time_;	// stores time stamp of latest image
 	bool capture_image_;
+	std::string camera_image_topic_;
 
 	double chessboard_cell_size_;	// cell side length in [m]
 	cv::Size chessboard_pattern_size_;		// number of checkerboard corners in x and y direction

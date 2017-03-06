@@ -93,6 +93,8 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	std::cout << "endeff_frame: " << endeff_frame_ << std::endl;
 	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "kinect_rgb_optical_frame");
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
+	node_handle_.param<std::string>("camera_image_topic", camera_image_topic_, "/kinect/rgb/image_raw");
+	std::cout << "camera_image_topic: " << camera_image_topic_ << std::endl;
 
 	// move commands
 	//node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, ""); // Moved to interface
@@ -146,7 +148,7 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 
 	// set up messages
 	it_ = new image_transport::ImageTransport(node_handle_);
-	color_image_sub_.subscribe(*it_, "colorimage_in", 1);
+	color_image_sub_.subscribe(*it_, camera_image_topic_, 1);
 	color_image_sub_.registerCallback(boost::bind(&ArmBaseCalibration::imageCallback, this, _1));
 
 	ROS_INFO("ArmBaseCalibration initialized.");
@@ -180,7 +182,6 @@ void ArmBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_i
 			return;
 
 		latest_image_time_ = color_image_msg->header.stamp;
-
 		capture_image_ = false;
 	}
 }
@@ -205,6 +206,12 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	std::vector<cv::Mat> T_base_to_camera_optical_vector;
 	acquireCalibrationImages(arm_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_armbase_to_endeff_vector,
 			T_base_to_camera_optical_vector);
+
+	if ( points_2d_per_image.size() == 0 )
+	{
+		ROS_WARN("Skipping calibration, as no calibration images are available.");
+		return false;
+	}
 
 	// prepare chessboard 3d points
 	std::vector< std::vector<cv::Point3f> > pattern_points_3d;
