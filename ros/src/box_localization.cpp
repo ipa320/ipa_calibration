@@ -79,7 +79,7 @@ BoxLocalization::BoxLocalization(ros::NodeHandle& nh)
 	for (int i=0; i<num_points; ++i)
 	{
 		box_search_polygon_.push_back(cv::Point2f(temp[2*i], temp[2*i+1]));
-		std::cout << temp[5*i] << "\t" << temp[5*i+1] << std::endl;
+		std::cout << temp[2*i] << "\t" << temp[2*i+1] << std::endl;
 	}
 }
 
