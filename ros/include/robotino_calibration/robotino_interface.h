@@ -62,6 +62,10 @@ protected:
 	std::string arm_joint_controller_command_;
 	ros::Subscriber pan_state_;
 	ros::Subscriber tilt_state_;
+	ros::Publisher tilt_controller_;
+	ros::Publisher pan_controller_;
+	std::string tilt_controller_command_;
+	std::string pan_controller_command_;
 
 	double pan_joint_state_current_;
 	double tilt_joint_state_current_;

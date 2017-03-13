@@ -75,10 +75,10 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	std::cout << "camera_frame: " << camera_frame_ << std::endl;
 	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "kinect_rgb_optical_frame");
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
-	node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/pan_controller/command");
-	std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
-	node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/tilt_controller/command");
-	std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
+	//node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/pan_controller/command");
+	//std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
+	//node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/tilt_controller/command");
+	//std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
 	//node_handle_.param<std::string>("pan_joint_state_topic", pan_joint_state_topic_, "/pan_controller/state");
 	//std::cout << "pan_joint_state_topic: " << pan_joint_state_topic_ << std::endl;
 	//node_handle_.param<std::string>("tilt_joint_state_topic", tilt_joint_state_topic_, "/tilt_controller/state");
@@ -165,8 +165,8 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	}
 
 	// topics
-	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
-	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
+	//tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
+	//pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
 	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
 
 	std::cout << "CameraBaseCalibrationMarker: init done." << std::endl;
@@ -216,9 +216,11 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	// move pan-tilt unit
 	std_msgs::Float64 msg;
 	msg.data = robot_configuration.pan_angle_;
-	pan_controller_.publish(msg);
+	calibration_interface_->assignNewCamaraPanAngle(msg);
+	//pan_controller_.publish(msg);
 	msg.data = robot_configuration.tilt_angle_;
-	tilt_controller_.publish(msg);
+	//tilt_controller_.publish(msg);
+	calibration_interface_->assignNewCamaraTiltAngle(msg);
 	
 	// do not move if close to goal
 	double error_phi = 10;
@@ -257,7 +259,8 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
 			tw.angular.z = std::min(0.05, k_phi*error_phi);
-			base_controller_.publish(tw);
+			//base_controller_.publish(tw);
+			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
 		}
 

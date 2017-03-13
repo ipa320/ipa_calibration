@@ -56,6 +56,10 @@
 #include <robotino_calibration/robotino_interface.h>
 #include <robotino_calibration/raw_interface.h>
 
+// Robot types
+#define Robotino	0
+#define RobAtWork	1
+
 CalibrationInterface::CalibrationInterface()
 {
 }
@@ -74,16 +78,13 @@ CalibrationInterface* CalibrationInterface::createInterfaceByID(int ID, ros::Nod
 {
 	switch(ID)
 	{
-		case 0: // Robotino
+		case Robotino:
 				return (new RobotinoInterface(nh, bArmCalibration));
 				break;
-		case 1: // Rob@Work
+		case RobAtWork:
 				return (new RAWInterface(nh, bArmCalibration));
 				break;
 		default:
 				return 0;
 	}
 }
-
-
-

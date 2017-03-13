@@ -121,8 +121,9 @@ protected:
 
 
 	ros::Publisher base_controller_;
-	ros::Publisher tilt_controller_;
-	ros::Publisher pan_controller_;
+	//ros::Publisher tilt_controller_;
+	//ros::Publisher pan_controller_;
+
 	//ros::Subscriber pan_tilt_state_;
 	//ros::Subscriber pan_state_;
 	//ros::Subscriber tilt_state_;
@@ -141,8 +142,8 @@ protected:
 	cv::Mat T_torso_upper_to_camera_;		// transformation to estimate from torso_upper to camera
 
 	// parameters
-	std::string tilt_controller_command_;
-	std::string pan_controller_command_;
+	//std::string tilt_controller_command_;
+	//std::string pan_controller_command_;
 	//std::string joint_state_topic_;
 	//std::string tilt_joint_state_topic_;
 	//std::string pan_joint_state_topic_;

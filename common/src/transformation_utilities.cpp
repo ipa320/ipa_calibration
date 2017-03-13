@@ -58,7 +58,6 @@
 
 namespace transform_utilities
 {
-
 	// compute rotation matrix from yaw, pitch, roll
 	// (w, p, r) = (yaW, Pitch, Roll) with
 	// 1. rotation = yaw around z

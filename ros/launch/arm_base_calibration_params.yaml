@@ -21,7 +21,7 @@ T_base_to_armbase_initial: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 T_endeff_to_checkerboard_initial: [0.7, -0.45, -0.5, 0, -1.1, 0]
 
 ### checkerboard observation positions for capturing calibration images
-# list of robot link configurations (angles per link in [rad]) for observing the checkerboard attachhed to robot's end effector
+# list of robot link configurations (angles per link in [rad]) for observing the checkerboard attached to robot's end effector
 # includes link_Count parameters per entry.
 # ROW3-1
 arm_configurations: [0, 0, 0, 0, 0, 0,

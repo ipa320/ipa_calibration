@@ -56,7 +56,6 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool bArmCalibration) :
 	std::cout << "\n========== RobotinoInterface Parameters ==========\n";
 
 	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
-
 	if ( bArmCalibration )
 	{
 		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
@@ -65,6 +64,13 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool bArmCalibration) :
 	}
 	else
 	{
+		node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/pan_controller/command");
+		std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
+		node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/tilt_controller/command");
+		std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
+		tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
+		pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
+
 		node_handle_.param<std::string>("pan_joint_state_topic", pan_joint_state_topic_, "/pan_controller/state");
 		std::cout << "pan_joint_state_topic: " << pan_joint_state_topic_ << std::endl;
 		node_handle_.param<std::string>("tilt_joint_state_topic", tilt_joint_state_topic_, "/tilt_controller/state");
@@ -105,11 +111,13 @@ void RobotinoInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity)
 void RobotinoInterface::assignNewCamaraPanAngle(std_msgs::Float64 newPan)
 {
 	// Adjust here: Assign new camera pan angle here
+	pan_controller_.publish(newPan);
 }
 
 void RobotinoInterface::assignNewCamaraTiltAngle(std_msgs::Float64 newTilt)
 {
 	// Adjust here: Assign new camera tilt angle here
+	tilt_controller_.publish(newTilt);
 }
 
 double RobotinoInterface::getCurrentCameraTiltAngle()
