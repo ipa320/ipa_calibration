@@ -70,7 +70,7 @@ namespace RelativeLocalizationUtilities
 
 // success_propability = probability for drawing two inliers at once
 // inlier_ratio = the ratio of line inliers in the point set
-void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set);
+bool fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set);
 
 double distanceToLine(const double npx, const double npy, const double n0x, const double n0y, const double pointx, const double pointy);
 

@@ -106,8 +106,8 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	// match line to scan_front
 	const double inlier_distance = 0.01;
 	cv::Vec4d line_front;
-	RelativeLocalizationUtilities::fitLine(scan_front, line_front, 0.1, 0.99999, inlier_distance, false);
-	if (line_front.val[0] != line_front.val[0] || line_front.val[1] != line_front.val[1] || line_front.val[2] != line_front.val[2] || line_front.val[3] != line_front.val[3])
+	bool result = RelativeLocalizationUtilities::fitLine(scan_front, line_front, 0.1, 0.99999, inlier_distance, false);
+	if ( !result || line_front.val[0] != line_front.val[0] || line_front.val[1] != line_front.val[1] || line_front.val[2] != line_front.val[2] || line_front.val[3] != line_front.val[3])
 	{
 		ROS_WARN("CornerLocalization::callback: frontal wall could not be estimated.");
 		return;
@@ -134,8 +134,8 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	for (int i=0; i<10; ++i)
 	{
 		// match line to scan_side
-		RelativeLocalizationUtilities::fitLine(scan_side, line_side, 0.1, 0.99999, inlier_distance, false);
-		if (line_side.val[0] != line_side.val[0] || line_side.val[1] != line_side.val[1] || line_side.val[2] != line_side.val[2] || line_side.val[3] != line_side.val[3])
+		result = RelativeLocalizationUtilities::fitLine(scan_side, line_side, 0.1, 0.99999, inlier_distance, false);
+		if ( !result || line_side.val[0] != line_side.val[0] || line_side.val[1] != line_side.val[1] || line_side.val[2] != line_side.val[2] || line_side.val[3] != line_side.val[3])
 		{
 			ROS_WARN("CornerLocalization::callback: side wall could not be estimated in trial %i. Trying next.", i);
 			continue;

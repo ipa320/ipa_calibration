@@ -65,8 +65,9 @@
 #include "ros/ros.h"
 
 // messages
-#include "sensor_msgs/LaserScan.h"
-#include "visualization_msgs/Marker.h"
+#include <sensor_msgs/LaserScan.h>
+#include <visualization_msgs/Marker.h>
+#include <std_msgs/Bool.h>
 
 // tf
 #include <tf/tf.h>
@@ -82,6 +83,10 @@
 #include <opencv2/opencv.hpp>
 //#include <opencv2/highgui/highgui.hpp>
 
+// Service
+//#include <relative_localization/GetFrameState.h>
+
+
 class ReferenceLocalization
 {
 public:
@@ -91,6 +96,7 @@ public:
 
 	// only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis
 	void ShiftReferenceFrameToGround(tf::StampedTransform& reference_frame);
+	//bool GetFrameStateSrv(relative_localization::GetFrameState::Response &req, relative_localization::GetFrameState::Response &res);
 
 
 protected:
@@ -102,6 +108,8 @@ protected:
 	ros::NodeHandle node_handle_;
 	ros::Subscriber laser_scan_sub_;
 	ros::Publisher marker_pub_;
+
+	ros::ServiceServer get_frame_state_;
 
 	tf::TransformBroadcaster transform_broadcaster_;
 	tf::TransformListener transform_listener_;
@@ -119,6 +127,7 @@ protected:
 	std::string laser_scanner_command_;
 	std::string child_frame_name_;
 	bool reference_coordinate_system_at_ground_;	// if the laser scanner is mounted parallel to the ground plane and this flag is activated, the reference coordinate system child_frame_name will be established at ground height (instead of laser scanner mounting height)
+	bool ref_frame_init_; // whether the reference frame has been initialized yet.
 	//double wall_length_left_;		// the length of the wall segment left of the checkerboard's origin, in[m]
 	//double wall_length_right_;		// the length of the wall segment right of the checkerboard's origin, in[m]
 	std::vector<cv::Point2f> front_wall_polygon_;

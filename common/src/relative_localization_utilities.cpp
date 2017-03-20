@@ -61,7 +61,7 @@
 
 namespace RelativeLocalizationUtilities
 {
-	void fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set)
+	bool fitLine(const std::vector<cv::Point2d>& points, cv::Vec4d& line, const double inlier_ratio, const double success_probability, const double max_inlier_distance, bool draw_from_both_halves_of_point_set)
 	{
 		const int iterations = (int)(log(1.-success_probability)/log(1.-inlier_ratio*inlier_ratio));
 	#ifdef DEBUG_OUTPUT
@@ -72,7 +72,7 @@ namespace RelativeLocalizationUtilities
 		if ( samples < 2 )
 		{
 			std::cout << "fitLine - Warning: Not enough points to fit a line!" << std::endl;
-			return;
+			return false;
 		}
 
 		// RANSAC iterations
@@ -134,6 +134,8 @@ namespace RelativeLocalizationUtilities
 	#ifdef DEBUG_OUTPUT
 		std::cout << "Optimized line: " << line << std::endl;
 	#endif
+
+		return true;
 	}
 
 	// (npx, npy) = a point on the line

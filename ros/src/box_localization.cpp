@@ -117,9 +117,12 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 
 	// match line to scan
 	cv::Vec4d line;
-	RelativeLocalizationUtilities::fitLine(scan, line, 0.1, 0.9999, 0.01, true);
-	if (line.val[0] != line.val[0] || line.val[1] != line.val[1] || line.val[2] != line.val[2] || line.val[3] != line.val[3]) // check for NaN
+	bool result = RelativeLocalizationUtilities::fitLine(scan, line, 0.1, 0.9999, 0.01, true);
+	if (!result ||  line.val[0] != line.val[0] || line.val[1] != line.val[1] || line.val[2] != line.val[2] || line.val[3] != line.val[3]) // check for NaN
+	{
+		ROS_WARN("CornerLocalization::callback: frontal wall could not be estimated.");
 		return;
+	}
 
 	// display line
 	const double px = line.val[0];	// coordinates of a point on the wall

@@ -9,6 +9,7 @@ set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is 
 	sensor_msgs
 	tf
 	visualization_msgs
+	message_generation
 )
 
 set(catkin_BUILD_PACKAGES 
@@ -34,6 +35,12 @@ find_package(OpenCV REQUIRED)	# name identical to FindOpenCV.cmake in cmake_modu
 generate_dynamic_reconfigure_options(
 	cfg/RelativeLocalization.cfg
 )
+
+## Generate services in the 'srv' folder
+ add_service_files(
+   FILES
+   GetFrameState.srv
+ )
 
 ###################################
 ## catkin specific configuration ##
