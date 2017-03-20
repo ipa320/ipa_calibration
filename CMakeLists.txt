@@ -44,10 +44,10 @@ find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(OpenCV REQUIRED)	# name identical to FindOpenCV.cmake in cmake_modules
 find_package(PCL REQUIRED)
 
-
 ###################################
 ## catkin specific configuration ##
 ###################################
+
 catkin_package(
 INCLUDE_DIRS
 	common/include

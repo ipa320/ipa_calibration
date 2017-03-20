@@ -213,6 +213,8 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	const double k_base = 0.25;
 	const double k_phi = 0.25;
 	
+	//Avoid that robot moves, when there is an error with detecting the wall!
+
 	// move pan-tilt unit
 	std_msgs::Float64 msg;
 	msg.data = robot_configuration.pan_angle_;
