@@ -67,6 +67,7 @@ CornerLocalization::CornerLocalization(ros::NodeHandle& nh)
 	std::cout << "max_wall_side_distance: " << max_wall_side_distance_ << std::endl;
 
 	ROS_INFO("CornerLocalization: Initialized.");
+	initialized_ = true;
 }
 
 CornerLocalization::~CornerLocalization()
@@ -76,6 +77,9 @@ CornerLocalization::~CornerLocalization()
 //#define DEBUG_OUTPUT
 void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 {
+	if (initialized_ == false)
+		return;
+
 	// Retrieve points from side and front wall and put each of those in separate lists
 	std::vector<cv::Point2d> scan_front;
 	std::vector<cv::Point2d> scan_all;
@@ -237,5 +241,5 @@ void CornerLocalization::dynamicReconfigureCallback(robotino_calibration::Relati
 {
 	ReferenceLocalization::dynamicReconfigureCallback(config, level);
 	max_wall_side_distance_ = config.max_wall_side_distance;
-	std::cout << "max_wall_side_distance_=" << max_wall_side_distance_ << "\n";
+	std::cout << " max_wall_side_distance_=" << max_wall_side_distance_ << "\n";
 }

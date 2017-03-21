@@ -100,6 +100,8 @@ protected:
 	virtual void callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg) = 0;
 	virtual void dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig& config, uint32_t level);
 
+	bool initialized_;
+
 	ros::NodeHandle node_handle_;
 	ros::Subscriber laser_scan_sub_;
 	ros::Publisher marker_pub_;
