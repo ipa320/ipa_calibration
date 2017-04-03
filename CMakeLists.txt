@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(robotino_calibration)
 
+## C++11
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
@@ -13,6 +14,7 @@ elseif(COMPILER_SUPPORTS_CXX0X)
 else()
         message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
+## End C++11
 
 set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is system dependency --> sudo apt-get install)
 	cv_bridge

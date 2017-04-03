@@ -53,7 +53,7 @@
 #include <robotino_calibration/robot_calibration.h>
 #include <boost/filesystem.hpp>
 #include <exception>
-//#include <relative_localization/GetFrameState.h>
+#include <relative_localization/GetFrameState.h>
 #include <robotino_calibration/timer.h>
 
 
@@ -82,14 +82,13 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 
 	// Check whether relative_localization has initialized the reference frame yet.
 	// Do not let the robot start driving when the reference frame has not been set up properly! Bad things could happen!
-	/*ros::ServiceClient client = node_handle_.serviceClient<relative_localization::GetFrameState>("get_frame_state", true);
+	std::cout << "RobotCalibration::RobotCalibration - Waiting for reference frame state service to respond." << std::endl;
+	ros::ServiceClient client = node_handle_.serviceClient<relative_localization::GetFrameState>("/corner_localization/relative_localization/get_frame_state", true);
 	relative_localization::GetFrameState srv;
 
-	//ros::service::waitForService("get_frame_state");
 	Timer timeout;
 	while ( timeout.getElapsedTimeInSec()<10.f )
 	{
-		//if ( ros::service::call("get_frame_state", srv) )
 		if ( client.call(srv) )
 		{
 			if ( (bool)srv.response.state ) // Everything is fine, return.
@@ -100,14 +99,17 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 			}
 		}
 		else
-			std::cout << "CANNOT CALL SERVICE" << std::endl;
+		{
+			if ( ros::ok() )
+				std::cout << "CANNOT CALL SERVICE" << std::endl;
+		}
 
 		ros::Duration(0.3).sleep();
 	}
 
 	ROS_FATAL("RobotCalibration::RobotCalibration: Reference frame has not been set up for 10 seconds.");
 	client.shutdown();
-	throw std::exception();*/
+	throw std::exception();
 }
 
 RobotCalibration::~RobotCalibration()
