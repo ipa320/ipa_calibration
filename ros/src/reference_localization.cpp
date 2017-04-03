@@ -62,7 +62,7 @@
 
 
 ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
-		: node_handle_(nh), transform_listener_(nh), ref_frame_init_(false)//, laser_scanner_mounting_height_(0.), laser_scanner_mounting_height_received_(false)
+		: node_handle_(nh), transform_listener_(nh)//, ref_frame_init_(false)//, laser_scanner_mounting_height_(0.), laser_scanner_mounting_height_received_(false)
 {
 	// load parameters
 	std::cout << "\n========== Reference Localization Parameters ==========\n";
@@ -103,7 +103,7 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	marker_pub_ = node_handle_.advertise<visualization_msgs::Marker>("wall_marker", 1);
 
 	// services
-	//get_frame_state_ = node_handle_.advertiseService("get_frame_state", &ReferenceLocalization::GetFrameStateSrv, this);
+	get_frame_state_ = node_handle_.advertiseService("get_frame_state", &StateGetter::GetFrameStateSrv, &frame_state_srv_);
 
 	// subscribers
 	laser_scan_sub_ = node_handle_.subscribe(laser_scanner_command_, 0, &ReferenceLocalization::callback, this);
@@ -118,14 +118,6 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 ReferenceLocalization::~ReferenceLocalization()
 {
 }
-
-// Service to get whether the reference frame has sucessfully been set up now
-/*bool ReferenceLocalization::GetFrameStateSrv(relative_localization::GetFrameState::Response &req, relative_localization::GetFrameState::Response &res)
-{
-	res.state = ref_frame_init_;
-	std::cout << "REQUESTING FRAME INIT FLAG: " << ref_frame_init_ << std::endl;
-	return true;
-}*/
 
 void ReferenceLocalization::dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig &config, uint32_t level)
 {
@@ -210,5 +202,5 @@ void ReferenceLocalization::ComputeChildFrame(const cv::Vec4d& line, const cv::P
 		transform_broadcaster_.sendTransform(tf_msg);
 	}
 
-	ref_frame_init_ = true; // ComputeChildFrame will be called when the reference frame has sucessfully been detected. A good place to also set this flag.
+	frame_state_srv_.frame_state_ = true; // ComputeChildFrame will be called when the reference frame has sucessfully been detected. A good place to also set this flag.
 }
