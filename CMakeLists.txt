@@ -9,7 +9,6 @@ set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is 
 	sensor_msgs
 	tf
 	visualization_msgs
-	message_runtime
 )
 
 set(catkin_BUILD_PACKAGES 
@@ -22,7 +21,6 @@ set(catkin_BUILD_PACKAGES
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED
 	${catkin_BUILD_PACKAGES}		# this makes ${catkin_LIBRARIES} include all libraries of ${catkin_BUILD_PACKAGES}
-	COMPONENTS message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -38,12 +36,11 @@ generate_dynamic_reconfigure_options(
 )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-   FILES
-   GetFrameState.srv
-)
+#add_service_files(
+#   FILES
+#)
 
-generate_messages()
+#generate_messages()
 
 ###################################
 ## catkin specific configuration ##
@@ -86,7 +83,6 @@ add_executable(relative_localization_node
 						ros/src/reference_localization.cpp
 						ros/src/box_localization.cpp
 						ros/src/corner_localization.cpp
-						ros/src/state_getter.cpp
 						common/src/relative_localization_utilities.cpp
 )
 add_dependencies(relative_localization_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)

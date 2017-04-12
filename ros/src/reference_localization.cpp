@@ -102,9 +102,6 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	// publishers
 	marker_pub_ = node_handle_.advertise<visualization_msgs::Marker>("wall_marker", 1);
 
-	// services
-	get_frame_state_ = node_handle_.advertiseService("get_frame_state", &StateGetter::GetFrameStateSrv, &frame_state_srv_);
-
 	// subscribers
 	laser_scan_sub_ = node_handle_.subscribe(laser_scanner_command_, 0, &ReferenceLocalization::callback, this);
 
@@ -202,5 +199,4 @@ void ReferenceLocalization::ComputeChildFrame(const cv::Vec4d& line, const cv::P
 		transform_broadcaster_.sendTransform(tf_msg);
 	}
 
-	frame_state_srv_.frame_state_ = true; // ComputeChildFrame will be called when the reference frame has sucessfully been detected. A good place to also set this flag.
 }

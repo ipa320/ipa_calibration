@@ -83,10 +83,6 @@
 #include <opencv2/opencv.hpp>
 //#include <opencv2/highgui/highgui.hpp>
 
-// Service
-//#include <relative_localization/GetFrameState.h>
-#include <relative_localization/state_getter.h>
-
 
 class ReferenceLocalization
 {
@@ -97,7 +93,6 @@ public:
 
 	// only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis
 	void ShiftReferenceFrameToGround(tf::StampedTransform& reference_frame);
-	//bool GetFrameStateSrv(relative_localization::GetFrameState::Response &req, relative_localization::GetFrameState::Response &res);
 
 
 protected:
@@ -109,9 +104,6 @@ protected:
 	ros::NodeHandle node_handle_;
 	ros::Subscriber laser_scan_sub_;
 	ros::Publisher marker_pub_;
-
-	ros::ServiceServer get_frame_state_;
-	StateGetter frame_state_srv_;
 
 	tf::TransformBroadcaster transform_broadcaster_;
 	tf::TransformListener transform_listener_;
