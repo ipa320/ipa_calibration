@@ -91,15 +91,23 @@ public:
 	ReferenceLocalization(ros::NodeHandle& nh);
 	virtual ~ReferenceLocalization();
 
-	// only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis
-	void ShiftReferenceFrameToGround(tf::StampedTransform& reference_frame);
-
-
 protected:
 
 	virtual void callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg) = 0;
 	virtual void dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig& config, uint32_t level);
-	void ComputeChildFrame(const cv::Vec4d& line, const cv::Point2d& corner_point, const std_msgs::Header::_stamp_type& time_stamp);
+
+	// search for front wall until a suitable estimate is found, i.e. when scalar product of line normal and robot's x-axis do not differ by more than 45deg angle
+	// scan_front the laser scan which contains all relevant points of the front wall (and possibly more points), this vector will be modified within the function
+	bool estimateFrontWall(std::vector<cv::Point2d>& scan_front, cv::Vec4d& line_front, const double inlier_ratio=0.1, const double success_probability=0.99999,
+			const double inlier_distance=0.01, const int repetitions=10);
+
+	void computeAndPublishChildFrame(const cv::Vec4d& line, const cv::Point2d& corner_point, const std_msgs::Header::_stamp_type& time_stamp);
+
+	// only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis
+	void shiftReferenceFrameToGround(tf::StampedTransform& reference_frame);
+
+
+	bool initialized_;
 
 	ros::NodeHandle node_handle_;
 	ros::Subscriber laser_scan_sub_;
@@ -112,17 +120,12 @@ protected:
 	tf::Vector3 avg_translation_;
 	tf::Quaternion avg_orientation_;
 	double base_height_;
-	//double laser_scanner_mounting_height_;
-	//bool laser_scanner_mounting_height_received_;
 
 	// parameters
 	double update_rate_;
 	std::string base_frame_;
-	std::string laser_scanner_command_;
+	std::string laser_scanner_topic_in_;
 	std::string child_frame_name_;
-	bool reference_coordinate_system_at_ground_;	// if the laser scanner is mounted parallel to the ground plane and this flag is activated, the reference coordinate system child_frame_name will be established at ground height (instead of laser scanner mounting height)
-	//double wall_length_left_;		// the length of the wall segment left of the checkerboard's origin, in[m]
-	//double wall_length_right_;		// the length of the wall segment right of the checkerboard's origin, in[m]
 	std::vector<cv::Point2f> front_wall_polygon_;
 };
 

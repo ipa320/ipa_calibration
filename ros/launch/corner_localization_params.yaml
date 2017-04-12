@@ -6,10 +6,6 @@ update_rate: 0.25
 # string
 child_frame_name: "/landmark_reference_nav"
 
-# If the laser scanner is mounted parallel to the ground plane and this flag is activated, the reference coordinate system child_frame_name will be established at ground height (instead of laser scanner mounting height)
-# bool
-reference_coordinate_system_at_ground: true
-
 # the (minimum) length of the frontal wall segment left of the laser scanner's origin (assuming the robot faces the frontal wall), in [m]
 # double, deprecated
 # wall_length_left: 2.5
@@ -32,7 +28,7 @@ base_frame: "base_link"
 
 # laser scanner topic
 # string
-laser_scanner_command: "/scan" #"/laser_scanner_in"
+laser_scanner_topic_in: "/scan"
 
 # Polygon points that define the area which is used to find the front wall inside.
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points.
