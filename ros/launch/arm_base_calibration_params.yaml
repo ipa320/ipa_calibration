@@ -3,9 +3,13 @@
 # chessboard_cell_size: 0.05
 chessboard_cell_size: 0.018
 
+# The name of the computed child frame (reference frame). Has to match the entry found in the relative_localization yaml files.
+# string
+child_frame_name: "/landmark_reference_nav"
+
 # number of arm links
 # int
-link_Count: 6 # ROW3-1
+link_Count: 6 # RAW3-1
 
 # number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
 # chessboard_pattern_size: [6,4]

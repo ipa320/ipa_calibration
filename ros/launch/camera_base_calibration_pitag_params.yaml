@@ -1,3 +1,7 @@
+# The name of the computed child frame (reference frame). Has to match the entry found in the relative_localization yaml files.
+# string
+child_frame_name: "/landmark_reference_nav"
+
 ### initial values for transformation estimates
 # insert the values as x, y, z, yaw (rot around z), pitch (rot around y), roll (rot around x)
 # the transform from base_frame to torso_lower_frame

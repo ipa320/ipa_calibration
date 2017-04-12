@@ -53,8 +53,10 @@
 #include <robotino_calibration/robot_calibration.h>
 #include <boost/filesystem.hpp>
 #include <exception>
-#include <relative_localization/GetFrameState.h>
 #include <robotino_calibration/timer.h>
+
+//Exception
+#include <tf/exceptions.h>
 
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
@@ -70,6 +72,9 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
 	node_handle_.param("calibration_ID", calibration_ID_, 0);
 	std::cout << "calibration_ID: " << calibration_ID_ << std::endl;
+	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "/landmark_reference_nav");
+	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
+
 
 	calibration_interface_ = CalibrationInterface::createInterfaceByID(calibration_ID_,node_handle_,bArmCalibration);
 	createStorageFolder();
@@ -82,34 +87,31 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 
 	// Check whether relative_localization has initialized the reference frame yet.
 	// Do not let the robot start driving when the reference frame has not been set up properly! Bad things could happen!
-	std::cout << "RobotCalibration::RobotCalibration - Waiting for reference frame state service to respond." << std::endl;
-	ros::ServiceClient client = node_handle_.serviceClient<relative_localization::GetFrameState>("/corner_localization/relative_localization/get_frame_state", true);
-	relative_localization::GetFrameState srv;
-
-	Timer timeout;
-	while ( timeout.getElapsedTimeInSec()<10.f )
+	if ( !bArmCalibration ) //During arm calibration the robot does not drive and there is no child frame available.
 	{
-		if ( client.call(srv) )
+		Timer timeout;
+		while ( timeout.getElapsedTimeInSec() < 10.f )
 		{
-			if ( (bool)srv.response.state ) // Everything is fine, return.
+			try
 			{
-				ROS_INFO("RobotCalibration::RobotCalibration: Reference frame has successfully been initialized.");
-				client.shutdown();
-				return;
+				bool bResult = transform_listener_.waitForTransform(base_frame_, child_frame_name_, ros::Time::now(), ros::Duration(1.f));
+
+				if ( bResult ) // Everything is fine, return
+					return;
 			}
-		}
-		else
-		{
-			if ( ros::ok() )
-				std::cout << "CANNOT CALL SERVICE" << std::endl;
+			catch (tf::TransformException& ex)
+			{
+				ROS_WARN("%s", ex.what());
+				// Continue with loop and try again
+			}
+
+			ros::Duration(0.1f).sleep(); //Wait for child_frame transform to register properly
 		}
 
-		ros::Duration(0.3).sleep();
+		//Failed to set up child frame, exit
+		ROS_FATAL("RobotCalibration::RobotCalibration: Reference frame has not been set up for 10 seconds.");
+		throw std::exception();
 	}
-
-	ROS_FATAL("RobotCalibration::RobotCalibration: Reference frame has not been set up for 10 seconds.");
-	client.shutdown();
-	throw std::exception();
 }
 
 RobotCalibration::~RobotCalibration()

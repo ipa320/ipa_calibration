@@ -80,6 +80,7 @@ protected:
 	ros::NodeHandle node_handle_;
 	std::string base_frame_;
 	std::string calibration_storage_path_;  // path to data
+	std::string child_frame_name_;  // name of reference frame
 	CalibrationInterface *calibration_interface_;
 };
 
