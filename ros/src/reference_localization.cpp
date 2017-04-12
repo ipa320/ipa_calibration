@@ -76,7 +76,7 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	node_handle_.param("base_height", base_height_, 0.0);
 	std::cout << "base_height: " << base_height_ << std::endl;
 
-	// read out user-defined polygon that defines the area of laser scanner points being taken into account for wall detection
+	// read out user-defined polygon that defines the area of laser scanner points being taken into account for front wall detection
 	std::vector<double> temp;
 	node_handle_.getParam("front_wall_polygon", temp);
 	const int num_points = temp.size()/2;

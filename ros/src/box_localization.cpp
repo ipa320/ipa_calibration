@@ -94,8 +94,8 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 
 	if (marker_pub_.getNumSubscribers() > 0)
 	{
-		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "wall_polygon", front_wall_polygon_, 0, marker_pub_);
-		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "box_polygon", box_search_polygon_, 0, marker_pub_);
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "front_wall_polygon", front_wall_polygon_, 0, marker_pub_);
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "box_polygon", box_search_polygon_, 0, marker_pub_, 1.0, 0.5, 0.0);
 	}
 
 	// ---------- 1. data preparation ----------

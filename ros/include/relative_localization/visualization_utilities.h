@@ -138,7 +138,8 @@ public:
 		marker_pub.publish(marker);
 	}
 
-	static void publishDetectionPolygon(const std_msgs::Header& header, const std::string& name_space, const std::vector<cv::Point2f>& points, const float height, const ros::Publisher& marker_pub)
+	static void publishDetectionPolygon(const std_msgs::Header& header, const std::string& name_space, const std::vector<cv::Point2f>& points, const float height,
+			const ros::Publisher& marker_pub, const double red=1.0, const double green=0.0, const double blue=0.0)
 	{
 		visualization_msgs::Marker marker;
 		//marker.header = header;
@@ -154,9 +155,9 @@ public:
 		marker.pose.orientation.y = 0.0;
 		marker.pose.orientation.z = 0.0;
 		marker.pose.orientation.w = 1.0;
-		marker.color.r = 1.0;
-		marker.color.g = 0.0;
-		marker.color.b = 0.0;
+		marker.color.r = red;
+		marker.color.g = green;
+		marker.color.b = blue;
 		marker.color.a = 1.0;
 		marker.scale.x = 0.025;
 		for (size_t i=0; i<points.size(); ++i)

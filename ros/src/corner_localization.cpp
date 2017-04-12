@@ -63,8 +63,21 @@ CornerLocalization::CornerLocalization(ros::NodeHandle& nh)
 		: ReferenceLocalization(nh)
 {
 	// load subclass parameters
-	node_handle_.param("max_wall_side_distance", max_wall_side_distance_, 0.5);
-	std::cout << "max_wall_side_distance: " << max_wall_side_distance_ << std::endl;
+	// read out user-defined polygon that defines the area of laser scanner points being taken into account for side wall detection
+	std::vector<double> temp;
+	node_handle_.getParam("side_wall_polygon", temp);
+	const int num_points = temp.size()/2;
+	if (temp.size()%2 != 0 || temp.size() < 3*2)
+	{
+		ROS_ERROR("The side_wall_polygon vector should contain at least 3 points with 2 values (x,y) each.");
+		return;
+	}
+	std::cout << "Side wall polygon points:\n";
+	for (int i=0; i<num_points; ++i)
+	{
+		side_wall_polygon_.push_back(cv::Point2f(temp[2*i], temp[2*i+1]));
+		std::cout << temp[2*i] << "\t" << temp[2*i+1] << std::endl;
+	}
 
 	ROS_INFO("CornerLocalization: Initialized.");
 	initialized_ = true;
@@ -80,8 +93,11 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	if (initialized_ == false)
 		return;
 
-	if (marker_pub_.getNumSubscribers() > 0) // Display wall detection polygon
-		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "wall_polygon", front_wall_polygon_, 0, marker_pub_);
+	if (marker_pub_.getNumSubscribers() > 0) // Display wall detection polygons
+	{
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "front_wall_polygon", front_wall_polygon_, 0, marker_pub_);
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "side_wall_polygon", side_wall_polygon_, 0, marker_pub_, 1.0, 0.5, 0.0);
+	}
 
 	// ---------- 1. data preparation ----------
 	// retrieve transform from laser scanner to base
@@ -106,13 +122,13 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 		cv::Mat point_base_mat = T*point_laser;
 		cv::Point2f point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
 
-		// check if point is inside polygon and push to scan_front if that's the case
+		// check if point is inside front wall polygon and push to scan_front if that's the case
 		if (cv::pointPolygonTest(front_wall_polygon_, point_2d_base, false) >= 0.f) // front wall points
 			scan_front.push_back(point_2d_base);
 
 		// store all points from the side polygon in here, use distance measure to front wall later to exclude front wall points
-		// todo: and check if side wall points are inside side wall polygon
-		scan_side_all.push_back(point_2d_base);
+		if (cv::pointPolygonTest(side_wall_polygon_, point_2d_base, false) >= 0.f) // side wall points
+			scan_side_all.push_back(point_2d_base);
 	}
 
 	// ---------- 2. front wall estimation ----------
@@ -162,9 +178,8 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 		}
 
 		// check if line is good enough
-		const double wall_distance_to_base = RelativeLocalizationUtilities::distanceToLine(line_side.val[0], line_side.val[1], line_side.val[2], line_side.val[3], 0., 0.);
 		const double scalar_product = n0x_f*line_side.val[2] + n0y_f*line_side.val[3];
-		if (wall_distance_to_base < max_wall_side_distance_ && fabs(scalar_product) < 0.05)
+		if (fabs(scalar_product) < 0.05)
 		{
 			found_side_line = true;
 			break;
@@ -225,6 +240,6 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 void CornerLocalization::dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig &config, uint32_t level)
 {
 	ReferenceLocalization::dynamicReconfigureCallback(config, level);
-	max_wall_side_distance_ = config.max_wall_side_distance;
-	std::cout << " max_wall_side_distance_=" << max_wall_side_distance_ << "\n";
+//	max_wall_side_distance_ = config.max_wall_side_distance;
+//	std::cout << " max_wall_side_distance_=" << max_wall_side_distance_ << "\n";
 }
