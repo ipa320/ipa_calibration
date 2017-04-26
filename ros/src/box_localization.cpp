@@ -113,8 +113,8 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 	std::vector<cv::Point2d> scan_all;
 	for (unsigned int i = 0; i < laser_scan_msg->ranges.size(); ++i)
 	{
-		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; //[rad]
-		double dist = laser_scan_msg->ranges[i];
+		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; // [rad]
+		double dist = laser_scan_msg->ranges[i]; // [m]
 
 		// transform laser scanner points to base frame
 		cv::Mat point_laser(cv::Vec4d(dist*cos(angle), dist*sin(angle), 0, 1.0));

@@ -29,11 +29,11 @@ laser_scanner_topic_in: "/scan"
 # Polygon points that define the area which is used to find the front wall inside.
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points. Do not forget to repeat the first point at the end.
 # vector<Point2f>
-front_wall_polygon: [0, 0.75,
+front_wall_polygon: [0.3, 0.75,
                      3, 0.75,
                      3, -0.75,
-                     0, -0.75,
-                     0, 0.75]
+                     0.3, -0.75,
+                     0.3, 0.75]
 
 # Polygon points that define the area which is used to find the side wall inside.
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points. Do not forget to repeat the first point at the end.
