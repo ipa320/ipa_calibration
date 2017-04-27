@@ -100,7 +100,7 @@ void RAWInterface::panTiltJointStateCallback(const sensor_msgs::JointState::Cons
 }
 // End Callbacks
 
-void RAWInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity)
+void RAWInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity) // Spin and move velocities
 {
 	// Adjust here: Assign new robot velocity here
 	base_controller_.publish(newVelocity);
@@ -143,7 +143,7 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newJointConfig.data.begin(), newJointConfig.data.end());
 	jointTrajPoint.time_from_start = ros::Duration(1);
 	jointTraj.points.push_back(jointTrajPoint);
-	jointTraj.header.stamp = ros::Time::now();// + ros::Duration(1);
+	jointTraj.header.stamp = ros::Time::now();
 
 	arm_joint_controller_.publish(jointTraj); // RAW3-1
 }

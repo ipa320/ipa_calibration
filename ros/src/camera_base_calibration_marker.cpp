@@ -230,7 +230,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	double error_x = 10;
 	double error_y = 10;
 	cv::Mat T;
-	if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", base_frame_, T))
+	if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
 		return false;
 	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 	double robot_yaw = ypr.val[0];
@@ -249,7 +249,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		// control robot angle
 		while(true)
 		{
-			if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", base_frame_, T))
+			if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
 				return false;
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 				double robot_yaw = ypr.val[0];
@@ -270,7 +270,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		// control position
 		while(true)
 		{
-			if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", base_frame_, T))
+			if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
 				return false;
 			geometry_msgs::Twist tw;
 			error_x = robot_configuration.pose_x_ - T.at<double>(0,3);
@@ -289,7 +289,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		// control robot angle
 		while (true)
 		{
-			if (!transform_utilities::getTransform(transform_listener_, "landmark_reference_nav", base_frame_, T))
+			if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
 				return false;
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 				double robot_yaw = ypr.val[0];
