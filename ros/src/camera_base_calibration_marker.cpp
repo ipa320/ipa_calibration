@@ -53,6 +53,7 @@
 #include <robotino_calibration/transformation_utilities.h>
 
 #include <std_msgs/Float64.h>
+#include <geometry_msgs/Twist.h>
 
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
@@ -83,8 +84,8 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	//std::cout << "pan_joint_state_topic: " << pan_joint_state_topic_ << std::endl;
 	//node_handle_.param<std::string>("tilt_joint_state_topic", tilt_joint_state_topic_, "/tilt_controller/state");
 	//std::cout << "tilt_joint_state_topic: " << tilt_joint_state_topic_ << std::endl;
-	node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "/cmd_vel");
-	std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
+	//node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "/cmd_vel");
+	//std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
 
 	// deprecated
 	//node_handle_.param<std::string>("joint_state_topic", joint_state_topic_, "/pan_tilt_controller/joint_states");
@@ -167,7 +168,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	// topics
 	//tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
 	//pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
-	base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
+	//base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
 
 	std::cout << "CameraBaseCalibrationMarker: init done." << std::endl;
 }
@@ -280,7 +281,8 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 //			std::cout << "error_y: " << error_y << std::endl;
 			tw.linear.x = std::min(0.05, k_base*error_x);
 			tw.linear.y = std::min(0.05, k_base*error_y);
-			base_controller_.publish(tw);
+			//base_controller_.publish(tw);
+			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
 		}
 
@@ -300,7 +302,8 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
 			tw.angular.z = std::min(0.05, k_phi*error_phi);
-			base_controller_.publish(tw);
+			//base_controller_.publish(tw);
+			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
 		}
 
@@ -309,7 +312,8 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		tw.linear.x = 0;
 		tw.linear.y = 0;
 		tw.angular.z = 0;
-		base_controller_.publish(tw);
+		//base_controller_.publish(tw);
+		calibration_interface_->assignNewRobotVelocity(tw);
 	}
 	
 	// wait for pan tilt to arrive at goal position

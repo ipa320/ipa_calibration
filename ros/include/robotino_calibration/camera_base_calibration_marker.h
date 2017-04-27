@@ -58,7 +58,7 @@
 #include <sensor_msgs/Image.h>
 //#include <sensor_msgs/JointState.h>  //deprecated
 //#include <dynamixel_msgs/JointState.h>
-#include <geometry_msgs/Twist.h>
+//#include <geometry_msgs/Twist.h>
 
 // image transport
 #include <image_transport/image_transport.h>
@@ -120,7 +120,7 @@ protected:
 	void displayAndSaveCalibrationResult(const cv::Mat& T_base_to_torso_lower_, const cv::Mat& T_torso_upper_to_camera_);
 
 
-	ros::Publisher base_controller_;
+	//ros::Publisher base_controller_;
 	//ros::Publisher tilt_controller_;
 	//ros::Publisher pan_controller_;
 
@@ -147,7 +147,7 @@ protected:
 	//std::string joint_state_topic_;
 	//std::string tilt_joint_state_topic_;
 	//std::string pan_joint_state_topic_;
-	std::string base_controller_topic_name_;
+	//std::string base_controller_topic_name_;
 
 	std::vector<calibration_utilities::RobotConfiguration> robot_configurations_;  // wished robot configurations used for calibration
 };

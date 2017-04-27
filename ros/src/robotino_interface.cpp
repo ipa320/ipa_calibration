@@ -75,8 +75,12 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool bArmCalibration) :
 		std::cout << "pan_joint_state_topic: " << pan_joint_state_topic_ << std::endl;
 		node_handle_.param<std::string>("tilt_joint_state_topic", tilt_joint_state_topic_, "/tilt_controller/state");
 		std::cout << "tilt_joint_state_topic: " << tilt_joint_state_topic_ << std::endl;
+		node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "/cmd_vel");
+		std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
+
 		pan_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(pan_joint_state_topic_, 0, &RobotinoInterface::panJointStateCallback, this);
 		tilt_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(tilt_joint_state_topic_, 0, &RobotinoInterface::tiltJointStateCallback, this);
+		base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
 	}
 
 	ROS_INFO("RobotinoInterface initialized.");
@@ -103,9 +107,10 @@ void RobotinoInterface::tiltJointStateCallback(const dynamixel_msgs::JointState:
 }
 // End Callbacks
 
-void RobotinoInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity)
+void RobotinoInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity) // Spin and move velocities
 {
 	// Adjust here: Assign new robot velocity here
+	base_controller_.publish(newVelocity);
 }
 
 void RobotinoInterface::assignNewCamaraPanAngle(std_msgs::Float64 newPan)

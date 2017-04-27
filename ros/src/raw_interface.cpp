@@ -103,6 +103,7 @@ void RAWInterface::panTiltJointStateCallback(const sensor_msgs::JointState::Cons
 void RAWInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity)
 {
 	// Adjust here: Assign new robot velocity here
+	base_controller_.publish(newVelocity);
 }
 
 void RAWInterface::assignNewCamaraPanAngle(std_msgs::Float64 newPan)

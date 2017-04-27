@@ -66,6 +66,8 @@ protected:
 	ros::Publisher pan_controller_;
 	std::string tilt_controller_command_;
 	std::string pan_controller_command_;
+	std::string base_controller_topic_name_;
+	ros::Publisher base_controller_;
 
 	double pan_joint_state_current_;
 	double tilt_joint_state_current_;
