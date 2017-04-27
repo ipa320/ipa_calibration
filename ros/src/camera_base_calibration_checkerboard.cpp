@@ -74,10 +74,12 @@ CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHa
 	std::cout << "pattern: " << chessboard_pattern_size_ << std::endl;
 	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "checkerboard_frame");
 	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
+	node_handle_.param<std::string>("camera_image_topic", camera_image_topic_, "/kinect/rgb/image_raw");
+	std::cout << "camera_image_topic: " << camera_image_topic_ << std::endl;
 
 	// set up messages
 	it_ = new image_transport::ImageTransport(node_handle_);
-	color_image_sub_.subscribe(*it_, "colorimage_in", 1);
+	color_image_sub_.subscribe(*it_, camera_image_topic_, 1);
 	color_image_sub_.registerCallback(boost::bind(&CameraBaseCalibrationCheckerboard::imageCallback, this, _1));
 
 	ROS_INFO("CameraBaseCalibrationCheckerboard initialized.");
@@ -180,6 +182,9 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 	const int number_images_to_capture = (int)robot_configurations.size();
 	for (int image_counter = 0; image_counter < number_images_to_capture; ++image_counter)
 	{
+		if ( !ros::ok() )
+			return false;
+
 		if (!load_images)
 			moveRobot(robot_configurations[image_counter]);
 
@@ -239,6 +244,7 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 		T_base_to_checkerboard_vector.push_back(T_base_to_checkerboard);
 		T_torso_lower_to_torso_upper_vector.push_back(T_torso_lower_to_torso_upper);
 		T_camera_to_camera_optical_vector.push_back(T_camera_to_camera_optical);
+
 		std::cout << "Captured perspectives: " << points_2d_per_image.size() << std::endl;
 	}
 
@@ -263,7 +269,8 @@ int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width,
 		{
 			boost::mutex::scoped_lock lock(camera_data_mutex_);
 
-			std::cout << "Time diff: " << (ros::Time::now() - latest_image_time_).toSec() << std::endl;
+			if ( ros::ok() )
+				std::cout << "Time diff: " << (ros::Time::now() - latest_image_time_).toSec() << std::endl;
 
 			if ((ros::Time::now() - latest_image_time_).toSec() < 20.0)
 			{

@@ -99,6 +99,7 @@ pan_controller_command: "/pan_controller/command" #"/pan_tilt_controller/pan_joi
 tilt_joint_state_topic: "/tilt_controller/state"
 pan_joint_state_topic: "/pan_controller/state"
 base_controller_topic_name: "/cmd_vel"
+camera_image_topic: "/kinect/rgb/image_raw"
 
 #deprecated
 joint_state_topic: "/pan_tilt_controller/joint_states"

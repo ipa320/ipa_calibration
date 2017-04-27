@@ -55,6 +55,6 @@
 	<node ns="camera_base_calibration_pitag" name="camera_base_calibration" pkg="robotino_calibration" type="camera_base_calibration" output="screen">
 		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/camera_base_calibration_pitag_params.yaml"/>
 		<param name="marker_type" value="pitag" />
-		<remap from="~get_fiducials" to="/fiducials/get_fiducials"/>
+		<!--<remap from="~get_fiducials" to="/fiducials/get_fiducials"/>-->
 	</node>
 </launch>

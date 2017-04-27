@@ -95,6 +95,7 @@ protected:
 
 	std::string checkerboard_frame_;
 
+	std::string camera_image_topic_;
 	image_transport::ImageTransport* it_;
 	image_transport::SubscriberFilter color_image_sub_; ///< Color camera image input topic
 	boost::mutex camera_data_mutex_;	// secures read and write operations on camera data

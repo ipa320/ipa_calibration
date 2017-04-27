@@ -82,6 +82,7 @@ protected:
 
 	ros::ServiceClient pitag_client_;
 	std::string marker_frame_base_name_;
+	std::string get_fiducials_topic_;
 };
 
 #endif // __CAMERA_BASE_CALIBRATION_PITAG_H__
