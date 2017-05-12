@@ -52,7 +52,8 @@
 #include <robotino_calibration/camera_base_calibration_marker.h>
 #include <robotino_calibration/transformation_utilities.h>
 
-#include <std_msgs/Float64.h>
+//#include <std_msgs/Float64.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <geometry_msgs/Twist.h>
 
 #include <pcl/point_types.h>
@@ -217,14 +218,21 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	//Avoid that robot moves, when there is an error with detecting the wall!
 
 	// move pan-tilt unit
-	std_msgs::Float64 msg;
+	/*std_msgs::Float64 msg;
 	msg.data = robot_configuration.pan_angle_;
 	calibration_interface_->assignNewCamaraPanAngle(msg);
 	//pan_controller_.publish(msg);
 	msg.data = robot_configuration.tilt_angle_;
 	//tilt_controller_.publish(msg);
-	calibration_interface_->assignNewCamaraTiltAngle(msg);
+	calibration_interface_->assignNewCamaraTiltAngle(msg);*/
+	std_msgs::Float64MultiArray angles;
 	
+	angles.data.resize(2);
+	angles.data[0] = robot_configuration.pan_angle_;
+	angles.data[1] = robot_configuration.tilt_angle_;
+
+	calibration_interface_->assignNewCameraAngles(angles);
+
 	// do not move if close to goal
 	double error_phi = 10;
 	double error_x = 10;
@@ -317,16 +325,18 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	}
 	
 	// wait for pan tilt to arrive at goal position
-	double pan_joint_state_current = calibration_interface_->getCurrentCameraPanAngle();
-	double tilt_joint_state_current = calibration_interface_->getCurrentCameraTiltAngle();
-	if (pan_joint_state_current!=0 && tilt_joint_state_current!=0)
+	if (calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
 	{
 		Timer timeout;
 		while (timeout.getElapsedTimeInSec()<5.0)
 		{
 			boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
+			double pan_joint_state_current = calibration_interface_->getCurrentCameraPanAngle();
+			double tilt_joint_state_current = calibration_interface_->getCurrentCameraTiltAngle();
+
 			if (fabs(pan_joint_state_current-robot_configuration.pan_angle_)<0.01 && fabs(tilt_joint_state_current-robot_configuration.tilt_angle_)<0.01)
 				break;
+
 			ros::spinOnce();
 		}
 	}

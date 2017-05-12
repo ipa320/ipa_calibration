@@ -70,21 +70,29 @@ namespace calibration_utilities
 	};
 
 	// struct for the end effector configurations
-	struct EndeffectorConfiguration
+	/*struct EndeffectorConfiguration
 	{
 		double pose_x_;
 		double pose_y_;
 		double pose_z_;
 
 		EndeffectorConfiguration(const double pose_x, const double pose_y, const double pose_z);
-	};
+	};*/
 
-	struct ArmConfiguration
+	struct AngleConfiguration
 	{
 		std::vector<double> angles_;
 
-		ArmConfiguration(const std::vector<double> angles);
+		AngleConfiguration(const std::vector<double> angles);
 	};
+
+	/*struct CameraConfiguration
+	{
+		double pan_angle_;
+		double tilt_angle_;
+
+		CameraConfiguration(const double pan_angle, const double tilt_angle);
+	};*/
 
 	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image);
 

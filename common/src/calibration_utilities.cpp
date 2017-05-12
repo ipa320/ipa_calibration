@@ -63,18 +63,24 @@ namespace calibration_utilities
 		tilt_angle_ = tilt_angle;
 	}
 
-	EndeffectorConfiguration::EndeffectorConfiguration(const double pose_x, const double pose_y, const double pose_z)
+	/*EndeffectorConfiguration::EndeffectorConfiguration(const double pose_x, const double pose_y, const double pose_z)
 	{
 		pose_x_ = pose_x;
 		pose_y_ = pose_y;
 		pose_z_ = pose_z;
-	}
+	}*/
 
-	ArmConfiguration::ArmConfiguration(const std::vector<double> angles)
+	AngleConfiguration::AngleConfiguration(const std::vector<double> angles)
 	{
 		angles_.clear();
 		angles_.insert(angles_.end(), angles.begin(), angles.end());
 	}
+
+	/*CameraConfiguration::CameraConfiguration(const double pan_angle, const double tilt_angle)
+	{
+		pan_angle_ = pan_angle;
+		tilt_angle_ = tilt_angle;
+	}*/
 
 	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
 	{

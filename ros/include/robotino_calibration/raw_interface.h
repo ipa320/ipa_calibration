@@ -60,11 +60,8 @@ class RAWInterface : public CalibrationInterface
 protected:
 	ros::Publisher arm_joint_controller_;
 	std::string arm_joint_controller_command_;
-	ros::Subscriber pan_tilt_state_;
-	ros::Publisher tilt_controller_;
-	ros::Publisher pan_controller_;
-	std::string tilt_controller_command_;
-	std::string pan_controller_command_;
+	ros::Publisher camera_joint_controller_;
+	std::string camera_joint_controller_command_;
 	std::string base_controller_topic_name_;
 	ros::Publisher base_controller_;
 
@@ -73,22 +70,33 @@ protected:
 	boost::mutex pan_tilt_joint_state_data_mutex_;	// secures read operations on pan tilt joint state data
 	std::string joint_state_topic_;
 
+	std::string camera_state_command_;
+	ros::Subscriber camera_state_;
+
+	std::string arm_state_command_;
+	ros::Subscriber arm_state_;
+	sensor_msgs::JointState* arm_state_current_;
+	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
+
 public:
 	RAWInterface(ros::NodeHandle nh, bool bArmCalibration);
 	~RAWInterface();
 
 	// camera calibration interface
 	void assignNewRobotVelocity(geometry_msgs::Twist newVelocity);
+	void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles);
 	void assignNewCamaraPanAngle(std_msgs::Float64 newPan);
 	void assignNewCamaraTiltAngle(std_msgs::Float64 newTilt);
 	double getCurrentCameraTiltAngle();
 	double getCurrentCameraPanAngle();
 
 	// callbacks
-	void panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+	void cameraStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+	void armStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
 	// arm calibration interface
 	void assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig);
+	std::vector<double>* getCurrentArmState();
 };
 
 

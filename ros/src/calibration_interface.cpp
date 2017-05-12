@@ -60,6 +60,15 @@
 #define Robotino	0
 #define RobAtWork	1
 
+//ToDo: Instead of getCurrentPan/TiltAngle -> more flexible with differing camera dof
+/*std::vector<double>* RAWInterface::getCurrentCameraAngles()
+{
+
+}*/
+//ToDo: Change arm_calibration::moveCamera to sth. similar to moveArm -> calculate length in angles space instead of taking the abs one by one! Do the same with camera_base_calib::moveRobot
+//ToDo: Generalize robot_configuration as well, so that it only uses PositionConfiguration and AngleConfiguration -> more flexible
+//ToDo: Remove assignCameraPan/TiltAngle
+
 CalibrationInterface::CalibrationInterface()
 {
 }

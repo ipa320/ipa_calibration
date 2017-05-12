@@ -7,9 +7,13 @@ chessboard_cell_size: 0.018
 # string
 child_frame_name: "/landmark_reference_nav"
 
-# number of arm links
+# Degrees of freedom of arm
 # int
-link_Count: 6 # RAW3-1
+arm_dof: 6
+
+# Degrees of freedom of camera
+# int
+camera_dof: 2
 
 # number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
 # chessboard_pattern_size: [6,4]
@@ -34,6 +38,11 @@ arm_configurations: [0, 0, 0, 0, 0, 0,
                      0.2, 0, 0, 0, 0, 0,
                      -0.2, 0, 0, 0, 0, 0]
 
+camera_configurations: [0, 0.2,
+                       0, 0.4,
+                       0.2, 0,
+                       0.4, 0,
+                       0, 0]
 
 # link names for the robot coordinate systems
 # string
@@ -55,7 +64,6 @@ camera_optical_frame: "head_color_camera_r_frame"
 # Image topic
 # string
 camera_image_topic: /cam3d/rgb/image_raw
-#camera_image_topic: /kinect/rgb/image_raw # Robotino
 
 # Topic to control the arm joints.
 # string

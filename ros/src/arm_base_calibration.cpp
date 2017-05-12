@@ -52,18 +52,20 @@
 #include <robotino_calibration/arm_base_calibration.h>
 #include <robotino_calibration/transformation_utilities.h>
 #include <std_msgs/Float64MultiArray.h>
+//#include <std_msgs/Float64.h>
 #include <geometry_msgs/Point.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
 #include <sstream>
 #include <fstream>
 #include <numeric>
+#include <robotino_calibration/timer.h>
 
 
 //ToDo: Adjust displayAndSaveCalibrationResult() for new EndeffToChecker or remove the optimization for it.
 
 ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
-		RobotCalibration(nh, true)
+		RobotCalibration(nh, true), camera_dof_(2)
 {
 	// load parameters
 	std::cout << "\n========== ArmBaseCalibration Parameters ==========\n";
@@ -77,13 +79,22 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	if (temp.size() == 2)
 		chessboard_pattern_size_ = cv::Size(temp[0], temp[1]);
 	std::cout << "pattern: " << chessboard_pattern_size_ << std::endl;
-	node_handle_.param("link_Count", link_Count_, 5);
-	std::cout << "link_Count: " << link_Count_ << std::endl;
+	node_handle_.param("arm_dof", arm_dof_, 5);
+	std::cout << "arm_dof: " << arm_dof_ << std::endl;
 
-	if ( link_Count_ < 1 )
+	if ( arm_dof_ < 1 )
 	{
-		std::cout << "Error: Invalid link_Count: " << link_Count_ << ". Setting link_Count to 1." << std::endl;
-		link_Count_ = 1;
+		std::cout << "Error: Invalid arm_dof: " << arm_dof_ << ". Setting arm_dof to 1." << std::endl;
+		arm_dof_ = 1;
+	}
+
+	node_handle_.param("camera_dof", camera_dof_, 5); // Not supported so far, fixed camera_dof of 2 for now.
+	std::cout << "camera_dof: " << camera_dof_ << std::endl;
+
+	if ( camera_dof_ < 1 )
+	{
+		std::cout << "Error: Invalid camera_dof: " << camera_dof_ << ". Setting camera_dof to 1." << std::endl;
+		camera_dof_ = 1;
 	}
 
 	// coordinate frame name parameters
@@ -99,8 +110,8 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	// move commands
 	//node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, ""); // Moved to interface
 	//std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
-	node_handle_.param<std::string>("arm_state_command", arm_state_command_, "");
-	std::cout << "arm_state_command: " << arm_state_command_ << std::endl;
+	//node_handle_.param<std::string>("arm_state_command", arm_state_command_, "");
+	//std::cout << "arm_state_command: " << arm_state_command_ << std::endl;
 
 	// initial parameters
 	temp.clear();
@@ -120,31 +131,53 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	// read out user-defined end effector configurations
 	temp.clear();
 	node_handle_.getParam("arm_configurations", temp);
-	const int number_configurations = temp.size()/link_Count_;
+	const int number_configurations = temp.size()/arm_dof_;
 
-	if (temp.size()%link_Count_ != 0 || temp.size() < 3*link_Count_)
+	if (temp.size()%arm_dof_ != 0 || temp.size() < 3*arm_dof_)
 	{
-		ROS_ERROR("The arm_configurations vector should contain at least 3 configurations with %d values each.", link_Count_);
+		ROS_ERROR("The arm_configurations vector should contain at least 3 configurations with %d values each.", arm_dof_);
 		return;
 	}
 	std::cout << "arm configurations:\n";
 	for ( int i=0; i<number_configurations; ++i )
 	{
 		std::vector<double> angles;
-		for ( int j=0; j<link_Count_; ++j )
+		for ( int j=0; j<arm_dof_; ++j )
 		{
-			angles.push_back(temp[link_Count_*i + j]);
+			angles.push_back(temp[arm_dof_*i + j]);
 			std::cout << angles[angles.size()-1] << "\t";
 		}
 		std::cout << std::endl;
 
-		arm_configurations_.push_back(calibration_utilities::ArmConfiguration(angles));
+		arm_configurations_.push_back(calibration_utilities::AngleConfiguration(angles));
+	}
+
+	temp.clear();
+	node_handle_.getParam("camera_configurations", temp);
+	double cam_configs = temp.size()/camera_dof_;
+	if ( cam_configs != number_configurations )
+	{
+		ROS_ERROR("The camera_configurations vector must hold as many configurations as the arm_configurations vector.");
+		return;
+	}
+	std::cout << "camera configurations:\n";
+	for ( int i=0; i<cam_configs; ++i )
+	{
+		std::vector<double> angles;
+		for ( int j=0; j<camera_dof_; ++j )
+		{
+			angles.push_back(temp[camera_dof_*i + j]);
+			std::cout << angles[angles.size()-1] << "\t";
+		}
+		std::cout << std::endl;
+
+		camera_configurations_.push_back(calibration_utilities::AngleConfiguration(angles));
 	}
 
 	//calibration_interface_ = new RobotinoInterface(node_handle_, true); //Switch-Case which interface to instantiate
 	//calibration_interface_ = new RobotinoInterface(node_handle_, true);
 	//arm_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_joint_controller_command_, 1, false);
-	arm_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_state_command_, 0, &ArmBaseCalibration::armStateCallback, this);
+	//arm_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_state_command_, 0, &ArmBaseCalibration::armStateCallback, this);
 
 	// set up messages
 	it_ = new image_transport::ImageTransport(node_handle_);
@@ -158,16 +191,16 @@ ArmBaseCalibration::~ArmBaseCalibration()
 {
 	if (it_ != 0)
 		delete it_;
-	else if ( arm_state_current_ != 0 )
-		delete arm_state_current_;
+	//if ( arm_state_current_ != 0 )
+		//delete arm_state_current_;
 }
 
-void ArmBaseCalibration::armStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+/*void ArmBaseCalibration::armStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
 	boost::mutex::scoped_lock lock(arm_state_data_mutex_);
 	arm_state_current_ = new sensor_msgs::JointState;
 	*arm_state_current_ = *msg;
-}
+}*/
 
 void ArmBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
 {
@@ -204,7 +237,7 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	std::vector< std::vector<cv::Point2f> > points_2d_per_image;
 	std::vector<cv::Mat> T_armbase_to_endeff_vector;
 	std::vector<cv::Mat> T_base_to_camera_optical_vector;
-	acquireCalibrationImages(arm_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_armbase_to_endeff_vector,
+	acquireCalibrationImages(chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_armbase_to_endeff_vector,
 			T_base_to_camera_optical_vector);
 
 	if ( points_2d_per_image.size() == 0 )
@@ -271,7 +304,7 @@ void ArmBaseCalibration::intrinsicCalibration(const std::vector< std::vector<cv:
 	std::cout << "Intrinsic calibration:\nK:\n" << K_ << "\ndistortion:\n" << distortion_ << std::endl;
 }
 
-bool ArmBaseCalibration::moveArm(const calibration_utilities::ArmConfiguration& arm_configuration)
+bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration& arm_configuration)
 {
 	std_msgs::Float64MultiArray new_joint_config;
 	new_joint_config.data.resize(arm_configuration.angles_.size());
@@ -283,7 +316,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::ArmConfiguration& 
 	calibration_interface_->assignNewArmJoints(new_joint_config);
 
 	//Wait for arm to move
-	if ( arm_state_current_ != 0 )
+	if ( (*calibration_interface_->getCurrentArmState()).size() > 0 )
 	{
 		int count = 0;
 		while (count++ < 100) //Max. 5 seconds to reach goal
@@ -292,7 +325,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::ArmConfiguration& 
 			ros::spinOnce();
 
 			boost::mutex::scoped_lock(arm_state_data_mutex_);
-			std::vector<double> cur_state = arm_state_current_->position;
+			std::vector<double> cur_state = *calibration_interface_->getCurrentArmState();
 			std::vector<double> difference(cur_state.size());
 			for (int i = 0; i<cur_state.size(); ++i)
 				difference[i] = arm_configuration.angles_[i]-cur_state[i];
@@ -315,22 +348,69 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::ArmConfiguration& 
 		}
 	}
 	else
-		ros::Duration(2).sleep();
+		ros::Duration(1).sleep();
 
 	return true;
 }
 
-bool ArmBaseCalibration::acquireCalibrationImages(const std::vector<calibration_utilities::ArmConfiguration>& arm_configurations,
-		const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
+bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfiguration& cam_configuration)
+{
+	// move pan-tilt unit
+	//std_msgs::Float64 msg;
+	std_msgs::Float64MultiArray angles;
+	angles.data.resize(cam_configuration.angles_.size());
+
+	for ( int i=0; i<angles.data.size(); ++i )
+		angles.data[i] = cam_configuration.angles_[i];
+
+	double pan_angle = cam_configuration.angles_[0];
+	double tilt_angle = cam_configuration.angles_[1];
+
+	/*msg.data = pan_angle;
+	calibration_interface_->assignNewCamaraPanAngle(msg);
+	msg.data = tilt_angle;
+	calibration_interface_->assignNewCamaraTiltAngle(msg);*/
+
+	calibration_interface_->assignNewCameraAngles(angles);
+
+	// wait for pan tilt to arrive at goal position
+	if (calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
+	{
+		Timer timeout;
+		while (timeout.getElapsedTimeInSec()<5.0)
+		{
+			boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
+			double pan_joint_state_current = calibration_interface_->getCurrentCameraPanAngle();
+			double tilt_joint_state_current = calibration_interface_->getCurrentCameraTiltAngle();
+
+			if (fabs(pan_joint_state_current-pan_angle)<0.01 && fabs(tilt_joint_state_current-tilt_angle)<0.01)
+				break;
+
+			ros::spinOnce();
+		}
+	}
+	else
+	{
+		ros::Duration(1).sleep();
+	}
+
+	ros::spinOnce();
+	return true;
+}
+
+bool ArmBaseCalibration::acquireCalibrationImages(const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
 		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_armbase_to_endeff_vector,
 		std::vector<cv::Mat>& T_base_to_camera_optical_vector)
 {
 	// capture images from different perspectives
-	const int number_images_to_capture = (int)arm_configurations.size();
+	const int number_images_to_capture = (int)arm_configurations_.size();
 	for (int image_counter = 0; image_counter < number_images_to_capture; ++image_counter)
 	{
 		if (!load_images)
-			moveArm(arm_configurations[image_counter]);
+		{
+			moveCamera(camera_configurations_[image_counter]);
+			moveArm(arm_configurations_[image_counter]);
+		}
 
 		// acquire image and extract checkerboard points
 		std::vector<cv::Point2f> checkerboard_points_2d;

@@ -51,35 +51,39 @@
 #include <robotino_calibration/robotino_interface.h>
 
 RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool bArmCalibration) :
-				CalibrationInterface(nh), pan_joint_state_current_(0), tilt_joint_state_current_(0)
+				CalibrationInterface(nh), pan_joint_state_current_(0), tilt_joint_state_current_(0), arm_state_current_(0)
 {
 	std::cout << "\n========== RobotinoInterface Parameters ==========\n";
 
 	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
+	node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/pan_controller/command");
+	std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
+	node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/tilt_controller/command");
+	std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
+	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
+	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
+	node_handle_.param<std::string>("pan_joint_state_topic", pan_joint_state_topic_, "/pan_controller/state");
+	std::cout << "pan_joint_state_topic: " << pan_joint_state_topic_ << std::endl;
+	node_handle_.param<std::string>("tilt_joint_state_topic", tilt_joint_state_topic_, "/tilt_controller/state");
+	std::cout << "tilt_joint_state_topic: " << tilt_joint_state_topic_ << std::endl;
+
+	pan_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(pan_joint_state_topic_, 0, &RobotinoInterface::panJointStateCallback, this);
+	tilt_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(tilt_joint_state_topic_, 0, &RobotinoInterface::tiltJointStateCallback, this);
+
 	if ( bArmCalibration )
 	{
 		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
 		std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
 		arm_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_joint_controller_command_, 1, false);
+
+		node_handle_.param<std::string>("arm_state_command", arm_state_command_, "");
+		std::cout << "arm_state_command: " << arm_state_command_ << std::endl;
+		arm_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_state_command_, 0, &RobotinoInterface::armStateCallback, this);
 	}
 	else
 	{
-		node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/pan_controller/command");
-		std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
-		node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/tilt_controller/command");
-		std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
-		tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
-		pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
-
-		node_handle_.param<std::string>("pan_joint_state_topic", pan_joint_state_topic_, "/pan_controller/state");
-		std::cout << "pan_joint_state_topic: " << pan_joint_state_topic_ << std::endl;
-		node_handle_.param<std::string>("tilt_joint_state_topic", tilt_joint_state_topic_, "/tilt_controller/state");
-		std::cout << "tilt_joint_state_topic: " << tilt_joint_state_topic_ << std::endl;
 		node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "/cmd_vel");
 		std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
-
-		pan_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(pan_joint_state_topic_, 0, &RobotinoInterface::panJointStateCallback, this);
-		tilt_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(tilt_joint_state_topic_, 0, &RobotinoInterface::tiltJointStateCallback, this);
 		base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
 	}
 
@@ -96,14 +100,21 @@ RobotinoInterface::~RobotinoInterface()
 //Callbacks - User defined
 void RobotinoInterface::panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
 {
-	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
+	boost::mutex::scoped_lock lock(pan_joint_state_data_mutex_);
 	pan_joint_state_current_ = msg->current_pos;
 }
 
 void RobotinoInterface::tiltJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
 {
-	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
+	boost::mutex::scoped_lock lock(tilt_joint_state_data_mutex_);
 	tilt_joint_state_current_ = msg->current_pos;
+}
+
+void RobotinoInterface::armStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+{
+	boost::mutex::scoped_lock lock(arm_state_data_mutex_);
+	arm_state_current_ = new sensor_msgs::JointState;
+	*arm_state_current_ = *msg;
 }
 // End Callbacks
 
@@ -125,15 +136,25 @@ void RobotinoInterface::assignNewCamaraTiltAngle(std_msgs::Float64 newTilt)
 	tilt_controller_.publish(newTilt);
 }
 
+void RobotinoInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
+{
+	// Adjust here: Assign new camera angles
+	std_msgs::Float64 angle;
+	angle.data = newAngles.data[0];
+	pan_controller_.publish(angle);
+	angle.data = newAngles.data[1];
+	tilt_controller_.publish(angle);
+}
+
 double RobotinoInterface::getCurrentCameraTiltAngle()
 {
-	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
+	boost::mutex::scoped_lock lock(tilt_joint_state_data_mutex_);
 	return tilt_joint_state_current_;
 }
 
 double RobotinoInterface::getCurrentCameraPanAngle()
 {
-	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
+	boost::mutex::scoped_lock lock(pan_joint_state_data_mutex_);
 	return pan_joint_state_current_;
 }
 // END CALIBRATION INTERFACE
@@ -144,6 +165,12 @@ void RobotinoInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointC
 {
 	// Adjust here: Assign new joints to your robot arm
 	arm_joint_controller_.publish(newJointConfig);
+}
+
+std::vector<double>* RobotinoInterface::getCurrentArmState()
+{
+	boost::mutex::scoped_lock lock(arm_state_data_mutex_);
+	return &arm_state_current_->position;
 }
 // END
 

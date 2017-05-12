@@ -53,30 +53,34 @@
 #include <trajectory_msgs/JointTrajectory.h>
 
 RAWInterface::RAWInterface(ros::NodeHandle nh, bool bArmCalibration) :
-				CalibrationInterface(nh), pan_joint_state_current_(0), tilt_joint_state_current_(0)
+				CalibrationInterface(nh), pan_joint_state_current_(0), tilt_joint_state_current_(0), arm_state_current_(0)
 {
 	std::cout << "\n========== RAWInterface Parameters ==========\n";
 
 	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
+	node_handle_.param<std::string>("camera_joint_controller_command", camera_joint_controller_command_, "/torso/joint_trajectory_controller/command");
+	std::cout << "camera_joint_controller_command: " << camera_joint_controller_command_ << std::endl;
+	camera_joint_controller_ = node_handle_.advertise<trajectory_msgs::JointTrajectory>(camera_joint_controller_command_, 1, false);
+
+	node_handle_.param<std::string>("camera_state_command", camera_state_command_, "/torso/joint_states");
+	std::cout << "camera_state_command: " << camera_state_command_ << std::endl;
+	camera_state_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_state_command_, 0, &RAWInterface::cameraStateCallback, this);
 
 	if ( bArmCalibration )
 	{
 		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "/arm/joint_trajectory_controller/command");
 		std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
 		arm_joint_controller_ = node_handle_.advertise<trajectory_msgs::JointTrajectory>(arm_joint_controller_command_, 1, false);
+
+		node_handle_.param<std::string>("arm_state_command", arm_state_command_, "/arm/joint_states");
+		std::cout << "arm_state_command: " << arm_state_command_ << std::endl;
+		arm_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_state_command_, 0, &RAWInterface::armStateCallback, this);
 	}
 	else
 	{
-		node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/pan_controller/command");
-		std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
-		node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/tilt_controller/command");
-		std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
-		tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
-		pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
-
-		node_handle_.param<std::string>("joint_state_topic", joint_state_topic_, "/arm/joint_states");
-		std::cout << "joint_state_topic: " << joint_state_topic_ << std::endl;
-		pan_tilt_state_ = node_handle_.subscribe<sensor_msgs::JointState>(joint_state_topic_, 0, &RAWInterface::panTiltJointStateCallback, this);
+		node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "/cmd_vel");
+		std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
+		base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
 	}
 
 	ROS_INFO("RAWInterface initialized.");
@@ -90,13 +94,28 @@ RAWInterface::~RAWInterface()
 // CAMERA CALIBRATION INTERFACE
 
 //Callbacks - User defined
-void RAWInterface::panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+void RAWInterface::cameraStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-	ROS_INFO("Old style controller state received.");
+	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
+	pan_joint_state_current_ = msg->position[0];
+	tilt_joint_state_current_ = msg->position[1];
+}
+
+
+/*void RAWInterface::panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+{
+	//ROS_INFO("Old style controller state received.");
 	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
 
 	pan_joint_state_current_ = msg->position[0];
 	tilt_joint_state_current_ = msg->position[1];
+}*/
+
+void RAWInterface::armStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+{
+	boost::mutex::scoped_lock lock(arm_state_data_mutex_);
+	arm_state_current_ = new sensor_msgs::JointState;
+	*arm_state_current_ = *msg;
 }
 // End Callbacks
 
@@ -109,13 +128,26 @@ void RAWInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity) // S
 void RAWInterface::assignNewCamaraPanAngle(std_msgs::Float64 newPan)
 {
 	// Adjust here: Assign new camera pan angle here
-	pan_controller_.publish(newPan);
 }
 
 void RAWInterface::assignNewCamaraTiltAngle(std_msgs::Float64 newTilt)
 {
 	// Adjust here: Assign new camera tilt angle here
-	tilt_controller_.publish(newTilt);
+}
+
+void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
+{
+	// Adjust here: Assign new camera tilt angle here
+	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
+	trajectory_msgs::JointTrajectory jointTraj;
+
+	jointTraj.joint_names = {"torso_pan_joint", "torso_tilt_joint"};
+	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newAngles.data.begin(), newAngles.data.end());
+	jointTrajPoint.time_from_start = ros::Duration(1);
+	jointTraj.points.push_back(jointTrajPoint);
+	jointTraj.header.stamp = ros::Time::now();
+
+	camera_joint_controller_.publish(jointTraj);
 }
 
 double RAWInterface::getCurrentCameraTiltAngle()
@@ -146,6 +178,12 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig
 	jointTraj.header.stamp = ros::Time::now();
 
 	arm_joint_controller_.publish(jointTraj); // RAW3-1
+}
+
+std::vector<double>* RAWInterface::getCurrentArmState()
+{
+	boost::mutex::scoped_lock lock(arm_state_data_mutex_);
+	return &arm_state_current_->position;
 }
 // END
 

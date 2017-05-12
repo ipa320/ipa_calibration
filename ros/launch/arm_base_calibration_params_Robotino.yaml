@@ -7,9 +7,13 @@ chessboard_cell_size: 0.018
 # string
 child_frame_name: "/landmark_reference_nav"
 
-# number of arm links
+# Degrees of freedom of arm
 # int
-link_Count: 5 # Robotino
+arm_dof: 5 # Robotino
+
+# Degrees of freedom of camera
+# int
+camera_dof: 2
 
 # number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
 # chessboard_pattern_size: [6,4]

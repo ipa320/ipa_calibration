@@ -56,7 +56,7 @@
 
 #include <tf/transform_listener.h>
 #include <sensor_msgs/Image.h>
-#include <sensor_msgs/JointState.h>
+//#include <sensor_msgs/JointState.h>
 
 // image transport
 #include <image_transport/image_transport.h>
@@ -94,7 +94,8 @@ public:
 
 protected:
 
-	bool moveArm(const calibration_utilities::ArmConfiguration& arm_configuration);
+	bool moveArm(const calibration_utilities::AngleConfiguration& arm_configuration);
+	bool moveCamera(const calibration_utilities::AngleConfiguration& cam_configuration);
 
 	void extrinsicCalibrationBaseToArm(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 			std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_endeff_vector);
@@ -102,8 +103,7 @@ protected:
 	void extrinsicCalibrationEndeffToCheckerboard(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 				std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_endeff_vector);
 
-	bool acquireCalibrationImages(const std::vector<calibration_utilities::ArmConfiguration>& arm_configurations,
-			const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
+	bool acquireCalibrationImages(const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
 			std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_armbase_to_endeff_vector,
 			std::vector<cv::Mat>& T_base_to_camera_optical_vector);
 	int acquireCalibrationImage(int& image_width, int& image_height,
@@ -111,7 +111,7 @@ protected:
 
 	void imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg);
 
-	void armStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+	//void armStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
 	// displays the calibration result in the urdf file's format and also stores the screen output to a file
 	void displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm_);
@@ -121,9 +121,9 @@ protected:
 	void displayMatrix(const cv::Mat& Trafo); // ToDo: Remove this, debug only!
 
 	//ros::Publisher arm_joint_controller_;
-	ros::Subscriber arm_state_;
-	sensor_msgs::JointState* arm_state_current_;
-	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
+	//ros::Subscriber arm_state_;
+	//sensor_msgs::JointState* arm_state_current_;
+	//boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
 
 	// TF frames
 	std::string armbase_frame_;
@@ -134,7 +134,7 @@ protected:
 
 	// parameters
 	//std::string arm_joint_controller_command_;
-	std::string arm_state_command_;
+	//std::string arm_state_command_;
 
 	image_transport::ImageTransport* it_;
 	image_transport::SubscriberFilter color_image_sub_; ///< Color camera image input topic
@@ -146,9 +146,11 @@ protected:
 
 	double chessboard_cell_size_;	// cell side length in [m]
 	cv::Size chessboard_pattern_size_;		// number of checkerboard corners in x and y direction
-	int link_Count_;					// number of links the arm has
+	int arm_dof_;					// degrees of freedom the arm has
+	int camera_dof_;				// degrees of freedom the camera has
 
-	std::vector<calibration_utilities::ArmConfiguration> arm_configurations_;  // wished arm configurations used for calibration
+	std::vector<calibration_utilities::AngleConfiguration> arm_configurations_;  // wished arm configurations used for calibration
+	std::vector<calibration_utilities::AngleConfiguration> camera_configurations_; // wished camera configurations. Can be used to calibrate the whole workspace of the arm.
 
 	cv::Mat K_;			// intrinsic matrix for camera
 	cv::Mat distortion_;	// distortion parameters for camera
