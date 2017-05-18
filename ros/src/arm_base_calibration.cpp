@@ -318,11 +318,12 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 	//Wait for arm to move
 	if ( (*calibration_interface_->getCurrentArmState()).size() > 0 )
 	{
-		int count = 0;
-		while (count++ < 100) //Max. 5 seconds to reach goal
+		//int count = 0;
+		Timer timeout;
+		while (timeout.getElapsedTimeInSec()<5.0) //Max. 5 seconds to reach goal
 		{
-			ros::Duration(0.05).sleep();
-			ros::spinOnce();
+			//ros::Duration(0.05).sleep();
+			//ros::spinOnce();
 
 			boost::mutex::scoped_lock(arm_state_data_mutex_);
 			std::vector<double> cur_state = *calibration_interface_->getCurrentArmState();
@@ -334,14 +335,16 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 
 			if ( length < 0.01 ) //Close enough to goal configuration (~0.5° deviation allowed)
 			{
-				std::cout << "Arm configuration reached in " << count << " step(s), deviation: " << length << std::endl;
+				std::cout << "Arm configuration reached, deviation: " << length << std::endl;
 				break;
 			}
+
+			ros::spinOnce();
 		}
 
-		if ( count >= 100 )
+		if ( timeout.getElapsedTimeInSec()>=5.0 )
 		{
-			ROS_WARN("Could not reach following arm configuration:");
+			ROS_WARN("Could not reach following arm configuration in time:");
 			for (int i = 0; i<arm_configuration.angles_.size(); ++i)
 				std::cout << arm_configuration.angles_[i] << "\t";
 			std::cout << std::endl;
@@ -350,6 +353,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 	else
 		ros::Duration(1).sleep();
 
+	ros::spinOnce();
 	return true;
 }
 
@@ -363,8 +367,8 @@ bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfigurat
 	for ( int i=0; i<angles.data.size(); ++i )
 		angles.data[i] = cam_configuration.angles_[i];
 
-	double pan_angle = cam_configuration.angles_[0];
-	double tilt_angle = cam_configuration.angles_[1];
+	//double pan_angle = cam_configuration.angles_[0];
+	//double tilt_angle = cam_configuration.angles_[1];
 
 	/*msg.data = pan_angle;
 	calibration_interface_->assignNewCamaraPanAngle(msg);
@@ -374,19 +378,43 @@ bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfigurat
 	calibration_interface_->assignNewCameraAngles(angles);
 
 	// wait for pan tilt to arrive at goal position
-	if (calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
+	if ( (*calibration_interface_->getCurrentCameraState()).size() > 0 )//calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
 	{
 		Timer timeout;
 		while (timeout.getElapsedTimeInSec()<5.0)
 		{
-			boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
+			std::vector<double> cur_state = *calibration_interface_->getCurrentCameraState();
+			std::vector<double> difference(cur_state.size());
+			for (int i = 0; i<cur_state.size(); ++i)
+				difference[i] = cam_configuration.angles_[i]-cur_state[i];
+
+			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
+
+			if ( length < 0.01 ) //Close enough to goal configuration (~0.5° deviation allowed)
+			{
+				std::cout << "Camera configuration reached, deviation: " << length << std::endl;
+				break;
+			}
+
+			ros::spinOnce();
+
+
+			/*boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
 			double pan_joint_state_current = calibration_interface_->getCurrentCameraPanAngle();
 			double tilt_joint_state_current = calibration_interface_->getCurrentCameraTiltAngle();
 
 			if (fabs(pan_joint_state_current-pan_angle)<0.01 && fabs(tilt_joint_state_current-tilt_angle)<0.01)
 				break;
 
-			ros::spinOnce();
+			ros::spinOnce();*/
+		}
+
+		if ( timeout.getElapsedTimeInSec()>=5.0 )
+		{
+			ROS_WARN("Could not reach following camera configuration in time:");
+			for (int i = 0; i<cam_configuration.angles_.size(); ++i)
+				std::cout << cam_configuration.angles_[i] << "\t";
+			std::cout << std::endl;
 		}
 	}
 	else

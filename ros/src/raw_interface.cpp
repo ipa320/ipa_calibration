@@ -53,7 +53,7 @@
 #include <trajectory_msgs/JointTrajectory.h>
 
 RAWInterface::RAWInterface(ros::NodeHandle nh, bool bArmCalibration) :
-				CalibrationInterface(nh), pan_joint_state_current_(0), tilt_joint_state_current_(0), arm_state_current_(0)
+				CalibrationInterface(nh), arm_state_current_(0)
 {
 	std::cout << "\n========== RAWInterface Parameters ==========\n";
 
@@ -65,6 +65,8 @@ RAWInterface::RAWInterface(ros::NodeHandle nh, bool bArmCalibration) :
 	node_handle_.param<std::string>("camera_state_command", camera_state_command_, "/torso/joint_states");
 	std::cout << "camera_state_command: " << camera_state_command_ << std::endl;
 	camera_state_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_state_command_, 0, &RAWInterface::cameraStateCallback, this);
+
+	camera_state_current_.resize(2);
 
 	if ( bArmCalibration )
 	{
@@ -97,8 +99,8 @@ RAWInterface::~RAWInterface()
 void RAWInterface::cameraStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
 	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
-	pan_joint_state_current_ = msg->position[0];
-	tilt_joint_state_current_ = msg->position[1];
+	camera_state_current_[0] = msg->position[0];
+	camera_state_current_[1] = msg->position[1];
 }
 
 
@@ -150,7 +152,7 @@ void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
 	camera_joint_controller_.publish(jointTraj);
 }
 
-double RAWInterface::getCurrentCameraTiltAngle()
+/*double RAWInterface::getCurrentCameraTiltAngle()
 {
 	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
 	return tilt_joint_state_current_;
@@ -160,6 +162,11 @@ double RAWInterface::getCurrentCameraPanAngle()
 {
 	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
 	return pan_joint_state_current_;
+}*/
+
+std::vector<double>* RAWInterface::getCurrentCameraState()
+{
+	return &camera_state_current_;
 }
 // END CALIBRATION INTERFACE
 

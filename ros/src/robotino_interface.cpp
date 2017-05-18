@@ -51,7 +51,7 @@
 #include <robotino_calibration/robotino_interface.h>
 
 RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool bArmCalibration) :
-				CalibrationInterface(nh), pan_joint_state_current_(0), tilt_joint_state_current_(0), arm_state_current_(0)
+				CalibrationInterface(nh), arm_state_current_(0)
 {
 	std::cout << "\n========== RobotinoInterface Parameters ==========\n";
 
@@ -69,6 +69,8 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool bArmCalibration) :
 
 	pan_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(pan_joint_state_topic_, 0, &RobotinoInterface::panJointStateCallback, this);
 	tilt_state_ = node_handle_.subscribe<dynamixel_msgs::JointState>(tilt_joint_state_topic_, 0, &RobotinoInterface::tiltJointStateCallback, this);
+
+	camera_state_current_.resize(2);
 
 	if ( bArmCalibration )
 	{
@@ -101,13 +103,17 @@ RobotinoInterface::~RobotinoInterface()
 void RobotinoInterface::panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
 {
 	boost::mutex::scoped_lock lock(pan_joint_state_data_mutex_);
-	pan_joint_state_current_ = msg->current_pos;
+
+	if ( camera_state_current_.size() == 2 )
+		camera_state_current_[0] = msg->current_pos;
 }
 
 void RobotinoInterface::tiltJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
 {
 	boost::mutex::scoped_lock lock(tilt_joint_state_data_mutex_);
-	tilt_joint_state_current_ = msg->current_pos;
+
+	if ( camera_state_current_.size() == 2 )
+		camera_state_current_[1] = msg->current_pos;
 }
 
 void RobotinoInterface::armStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
@@ -146,16 +152,29 @@ void RobotinoInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAng
 	tilt_controller_.publish(angle);
 }
 
-double RobotinoInterface::getCurrentCameraTiltAngle()
+/*double RobotinoInterface::getCurrentCameraTiltAngle()
 {
 	boost::mutex::scoped_lock lock(tilt_joint_state_data_mutex_);
-	return tilt_joint_state_current_;
+
+	if ( camera_state_current_.size() == 2 )
+		return camera_state_current_[1];
+	else
+		return 0.f;
 }
 
 double RobotinoInterface::getCurrentCameraPanAngle()
 {
 	boost::mutex::scoped_lock lock(pan_joint_state_data_mutex_);
-	return pan_joint_state_current_;
+
+	if ( camera_state_current_.size() == 2 )
+		return camera_state_current_[0];
+	else
+		return 0.f;
+}*/
+
+std::vector<double>* RobotinoInterface::getCurrentCameraState()
+{
+	return &camera_state_current_;
 }
 // END CALIBRATION INTERFACE
 

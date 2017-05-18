@@ -73,8 +73,9 @@ public:
 	virtual void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles) = 0;
 	virtual void assignNewCamaraPanAngle(std_msgs::Float64 newPan) = 0;
 	virtual void assignNewCamaraTiltAngle(std_msgs::Float64 newTilt) = 0;
-	virtual double getCurrentCameraTiltAngle() = 0;
-	virtual double getCurrentCameraPanAngle() = 0;
+	virtual std::vector<double>* getCurrentCameraState() = 0;
+	//virtual double getCurrentCameraTiltAngle() = 0;
+	//virtual double getCurrentCameraPanAngle() = 0;
 
 	// arm calibration interface
 	virtual void assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig) = 0;

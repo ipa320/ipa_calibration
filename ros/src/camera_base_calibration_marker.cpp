@@ -218,13 +218,6 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	//Avoid that robot moves, when there is an error with detecting the wall!
 
 	// move pan-tilt unit
-	/*std_msgs::Float64 msg;
-	msg.data = robot_configuration.pan_angle_;
-	calibration_interface_->assignNewCamaraPanAngle(msg);
-	//pan_controller_.publish(msg);
-	msg.data = robot_configuration.tilt_angle_;
-	//tilt_controller_.publish(msg);
-	calibration_interface_->assignNewCamaraTiltAngle(msg);*/
 	std_msgs::Float64MultiArray angles;
 	
 	angles.data.resize(2);
@@ -325,16 +318,20 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	}
 	
 	// wait for pan tilt to arrive at goal position
-	if (calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
+	if ( (*calibration_interface_->getCurrentCameraState()).size() > 0 )//calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
 	{
 		Timer timeout;
 		while (timeout.getElapsedTimeInSec()<5.0)
 		{
 			boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
-			double pan_joint_state_current = calibration_interface_->getCurrentCameraPanAngle();
-			double tilt_joint_state_current = calibration_interface_->getCurrentCameraTiltAngle();
+			std::vector<double> cur_state = *calibration_interface_->getCurrentCameraState();
+			std::vector<double> difference(cur_state.size());
+			for (int i = 0; i<cur_state.size(); ++i)
+				difference[i] = angles.data[i]-cur_state[i];
 
-			if (fabs(pan_joint_state_current-robot_configuration.pan_angle_)<0.01 && fabs(tilt_joint_state_current-robot_configuration.tilt_angle_)<0.01)
+			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
+
+			if ( length < 0.01 ) //Close enough to goal configuration (~0.5° deviation allowed)
 				break;
 
 			ros::spinOnce();

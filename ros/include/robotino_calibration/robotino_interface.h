@@ -70,8 +70,9 @@ protected:
 	std::string base_controller_topic_name_;
 	ros::Publisher base_controller_;
 
-	double pan_joint_state_current_;
-	double tilt_joint_state_current_;
+	//double pan_joint_state_current_;
+	//double tilt_joint_state_current_;
+	std::vector<double> camera_state_current_;
 	boost::mutex pan_joint_state_data_mutex_;	// secures read operations on pan joint state data
 	boost::mutex tilt_joint_state_data_mutex_;	// secures read operations on tilt joint state data
 	std::string tilt_joint_state_topic_;
@@ -91,8 +92,9 @@ public:
 	void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles);
 	void assignNewCamaraPanAngle(std_msgs::Float64 newPan);
 	void assignNewCamaraTiltAngle(std_msgs::Float64 newTilt);
-	double getCurrentCameraTiltAngle();
-	double getCurrentCameraPanAngle();
+	//double getCurrentCameraTiltAngle();
+	//double getCurrentCameraPanAngle();
+	std::vector<double>* getCurrentCameraState();
 
 	// callbacks
 	void panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg);
