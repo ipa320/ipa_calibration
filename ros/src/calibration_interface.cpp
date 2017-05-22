@@ -76,7 +76,7 @@ CalibrationInterface::~CalibrationInterface()
 {
 }
 
-// You can add more interfaces for further robots in here.
+// You can add further interfaces for other robots in here.
 CalibrationInterface* CalibrationInterface::createInterfaceByID(int ID, ros::NodeHandle nh, bool bArmCalibration)
 {
 	switch(ID)
