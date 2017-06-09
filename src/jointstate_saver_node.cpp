@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 
 	std::cout << "---------------- Joint Saver ----------------" << std::endl;
 	std::string storagePath = "";
-	n.param<std::string>("storage_path", storagePath, "jointstate_saver/Output");
+	n.param<std::string>("storage_path", storagePath, "jointstate_saver/output");
 	std::cout << "storage_path: " << storagePath << std::endl;
 
 	std::string file_name = "";

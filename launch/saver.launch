@@ -3,7 +3,7 @@
 <launch>
 
 	<node ns="jointstate_saver" name="jointstate_saver" pkg="jointstate_saver" type="jointstate_saver_node" output="screen">
-		<param name="storage_path" value="jointstate_saver/Output" />
+		<param name="storage_path" value="jointstate_saver/output" />
 		<param name="file_name" value="JointStates.txt" />
 		<param name="jointstate_topic_arm" value="/arm/joint_states" />
 		<param name="jointstate_topic_camera" value="/torso/joint_states" />
