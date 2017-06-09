@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 		std::cout << "arm: [";
 		for (size_t i=0; i<currentArmState.size(); ++i)
 			std::cout << currentArmState[i] << (i==currentArmState.size()-1 ? "]\n" : ", ");
-		std::cout << "torso: [";
+		std::cout << "camera: [";
 			for (size_t i=0; i<currentCamState.size(); ++i)
 				std::cout << currentCamState[i] << (i==currentCamState.size()-1 ? "]\n" : ", ");
 		std::cout << std::endl;
