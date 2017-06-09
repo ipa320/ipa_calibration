@@ -155,6 +155,7 @@ int main(int argc, char **argv)
 			else
 			{
 				std::cout << "Output file is corrupted, please delete it!" << std::endl;
+				file_output.close();
 				return -1;
 			}
 		}
@@ -177,6 +178,7 @@ int main(int argc, char **argv)
 			else
 			{
 				std::cout << "Output file is corrupted, please delete it!" << std::endl;
+				file_output.close();
 				return -1;
 			}
 		}
