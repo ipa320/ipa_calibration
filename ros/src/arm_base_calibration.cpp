@@ -106,6 +106,8 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
 	node_handle_.param<std::string>("camera_image_topic", camera_image_topic_, "/kinect/rgb/image_raw");
 	std::cout << "camera_image_topic: " << camera_image_topic_ << std::endl;
+	node_handle_.param("max_angle_deviation", max_angle_deviation_, 0.5);
+	std::cout << "max_angle_deviation: " << max_angle_deviation_ << std::endl;
 
 	// move commands
 	//node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, ""); // Moved to interface
@@ -312,6 +314,44 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 	for ( int i=0; i<new_joint_config.data.size(); ++i )
 		new_joint_config.data[i] = arm_configuration.angles_[i];
 
+	std::vector<double> cur_state = *calibration_interface_->getCurrentArmState();
+	if ( cur_state.size() != arm_configuration.angles_.size() )
+	{
+		ROS_ERROR("Size of target arm configuration and count of arm joints do not match! Please adjust the yaml file.");
+		return false;
+	}
+
+	// Ensure that target angles and current angles are not too far away from one another to avoid collision issues!
+	for ( size_t i=0; i<cur_state.size(); ++i )
+	{
+		double delta_angle = 0.0;
+
+		do
+		{
+			cur_state = *calibration_interface_->getCurrentArmState();
+			delta_angle = arm_configuration.angles_[i] - cur_state[i];
+
+			while (delta_angle < -CV_PI)
+				delta_angle += 2*CV_PI;
+			while (delta_angle > CV_PI)
+				delta_angle -= 2*CV_PI;
+
+			if ( delta_angle > max_angle_deviation_ )
+			{
+				ROS_WARN("%d. target angle exceeds max allowed deviation of %f!\n"
+						"Please move the arm manually closer to the target position to avoid collision issues. Waiting 5 seconds...", (int)(i+1), max_angle_deviation_);
+				std::cout << "Current arm state: ";
+				for ( size_t j=0; j<cur_state.size(); ++j )
+					std::cout << cur_state[j] << (j<cur_state.size()-1 ? "\t" : "\n");
+				std::cout << "Target arm state: ";
+				for ( size_t j=0; j<cur_state.size(); ++j )
+					std::cout << arm_configuration.angles_[j] << (j<cur_state.size()-1 ? "\t" : "\n");
+				ros::Duration(5).sleep();
+				ros::spinOnce();
+			}
+		} while ( delta_angle > max_angle_deviation_ && ros::ok() );
+	}
+
 	//arm_joint_controller_.publish(new_joint_config);
 	calibration_interface_->assignNewArmJoints(new_joint_config);
 
@@ -326,7 +366,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 			//ros::spinOnce();
 
 			boost::mutex::scoped_lock(arm_state_data_mutex_);
-			std::vector<double> cur_state = *calibration_interface_->getCurrentArmState();
+			cur_state = *calibration_interface_->getCurrentArmState();
 			std::vector<double> difference(cur_state.size());
 			for (int i = 0; i<cur_state.size(); ++i)
 				difference[i] = arm_configuration.angles_[i]-cur_state[i];
@@ -367,6 +407,13 @@ bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfigurat
 	for ( int i=0; i<angles.data.size(); ++i )
 		angles.data[i] = cam_configuration.angles_[i];
 
+	std::vector<double> cur_state = *calibration_interface_->getCurrentCameraState();
+	if ( cur_state.size() != cam_configuration.angles_.size() )
+	{
+		ROS_ERROR("Size of target camera configuration and count of camera joints do not match! Please adjust the yaml file.");
+		return false;
+	}
+
 	//double pan_angle = cam_configuration.angles_[0];
 	//double tilt_angle = cam_configuration.angles_[1];
 
@@ -378,12 +425,12 @@ bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfigurat
 	calibration_interface_->assignNewCameraAngles(angles);
 
 	// wait for pan tilt to arrive at goal position
-	if ( (*calibration_interface_->getCurrentCameraState()).size() > 0 )//calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
+	if ( cur_state.size() > 0 )//calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
 	{
 		Timer timeout;
 		while (timeout.getElapsedTimeInSec()<5.0)
 		{
-			std::vector<double> cur_state = *calibration_interface_->getCurrentCameraState();
+			cur_state = *calibration_interface_->getCurrentCameraState();
 			std::vector<double> difference(cur_state.size());
 			for (int i = 0; i<cur_state.size(); ++i)
 				difference[i] = cam_configuration.angles_[i]-cur_state[i];

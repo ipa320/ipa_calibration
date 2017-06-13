@@ -33,7 +33,7 @@ T_endeff_to_checkerboard_initial: [0.7, -0.45, -0.5, 0, -1.1, 0]
 # includes link_Count parameters per entry.
 # ROW3-1
 arm_configurations: [0, 0, 0, 0, 0, 0,
-                     0.1, 0, 0, 0, 0, 0,
+                     0.6, 0, 0, 0, 0, 0,
                      -0.1, 0, 0, 0, 0, 0,
                      0.2, 0, 0, 0, 0, 0,
                      -0.2, 0, 0, 0, 0, 0]
@@ -86,6 +86,10 @@ load_images: false
 # number of optimization iterations
 # int
 optimization_iterations: 100
+
+# max allowed deviation a target angle is allowed to have in terms of the current joint angle [rad]
+# double
+max_angle_deviation: 0.5
 
 # calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW
 # int

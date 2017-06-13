@@ -148,6 +148,7 @@ protected:
 	cv::Size chessboard_pattern_size_;		// number of checkerboard corners in x and y direction
 	int arm_dof_;					// degrees of freedom the arm has
 	int camera_dof_;				// degrees of freedom the camera has
+	double max_angle_deviation_;	// max value an angle of the target arm configuration is allowed to differ from the current arm configuration. Avoid collision issues! [rad]
 
 	std::vector<calibration_utilities::AngleConfiguration> arm_configurations_;  // wished arm configurations used for calibration
 	std::vector<calibration_utilities::AngleConfiguration> camera_configurations_; // wished camera configurations. Can be used to calibrate the whole workspace of the arm.

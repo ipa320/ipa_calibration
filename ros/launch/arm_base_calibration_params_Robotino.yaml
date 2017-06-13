@@ -92,6 +92,10 @@ load_images: false
 # int
 optimization_iterations: 100
 
+# max allowed deviation a target angle is allowed to have in terms of the current joint angle [rad]
+# double
+max_angle_deviation: 0.5
+
 # calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW
 # int
 calibration_ID: 0
