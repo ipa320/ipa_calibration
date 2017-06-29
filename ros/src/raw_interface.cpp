@@ -146,16 +146,21 @@ void RAWInterface::assignNewCamaraTiltAngle(std_msgs::Float64 newTilt)
 void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
 {
 	// Adjust here: Assign new camera tilt angle here
-	/*trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
+	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
 	trajectory_msgs::JointTrajectory jointTraj;
+
+	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("/torso/joint_trajectory_controller/follow_joint_trajectory", true);
+	control_msgs::FollowJointTrajectoryGoal camGoal;
 
 	jointTraj.joint_names = {"torso_pan_joint", "torso_tilt_joint"};
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newAngles.data.begin(), newAngles.data.end());
 	jointTrajPoint.time_from_start = ros::Duration(1);
 	jointTraj.points.push_back(jointTrajPoint);
-	jointTraj.header.stamp = ros::Time::now();*/
+	jointTraj.header.stamp = ros::Time::now();
 
-	camera_joint_controller_.publish(newAngles/*jointTraj*/);
+	camGoal.trajectory = jointTraj;
+	ac.sendGoal(camGoal);
+	//camera_joint_controller_.publish(newAngles/*jointTraj*/);
 }
 
 /*double RAWInterface::getCurrentCameraTiltAngle()
@@ -184,10 +189,8 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig
 	trajectory_msgs::JointTrajectoryPoint jointTrajPoint, currentPoint;
 	trajectory_msgs::JointTrajectory jointTraj;
 
-	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("arm", true);
-	control_msgs::FollowJointTrajectoryActionGoal goal;
-
-
+	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("/arm/joint_trajectory_controller/follow_joint_trajectory", true);
+	control_msgs::FollowJointTrajectoryGoal armGoal;
 
 	jointTraj.joint_names = {"arm_elbow_joint", "arm_shoulder_lift_joint", "arm_shoulder_pan_joint", "arm_wrist_1_joint", "arm_wrist_2_joint", "arm_wrist_3_joint"};
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newJointConfig.data.begin(), newJointConfig.data.end());
@@ -197,8 +200,8 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig
 	jointTraj.points.push_back(jointTrajPoint);
 	jointTraj.header.stamp = ros::Time::now();
 
-	goal.goal.trajectory = jointTraj;
-	ac.sendGoal(goal);
+	armGoal.trajectory = jointTraj;
+	ac.sendGoal(armGoal);
 	//arm_joint_controller_.publish(jointTraj); // RAW3-1
 }
 
