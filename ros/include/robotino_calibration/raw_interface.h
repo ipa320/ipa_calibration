@@ -79,6 +79,7 @@ protected:
 	sensor_msgs::JointState* arm_state_current_;
 	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
 
+
 public:
 	RAWInterface(ros::NodeHandle nh, bool bArmCalibration);
 	~RAWInterface();

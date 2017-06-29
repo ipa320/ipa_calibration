@@ -51,6 +51,12 @@
 #include <robotino_calibration/raw_interface.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <trajectory_msgs/JointTrajectory.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
+#include <control_msgs/FollowJointTrajectoryGoal.h>
+
+
+#include <actionlib/client/simple_action_client.h>
+
 
 RAWInterface::RAWInterface(ros::NodeHandle nh, bool bArmCalibration) :
 				CalibrationInterface(nh), arm_state_current_(0)
@@ -60,7 +66,7 @@ RAWInterface::RAWInterface(ros::NodeHandle nh, bool bArmCalibration) :
 	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
 	node_handle_.param<std::string>("camera_joint_controller_command", camera_joint_controller_command_, "/torso/joint_trajectory_controller/command");
 	std::cout << "camera_joint_controller_command: " << camera_joint_controller_command_ << std::endl;
-	camera_joint_controller_ = node_handle_.advertise<trajectory_msgs::JointTrajectory>(camera_joint_controller_command_, 1, false);
+	camera_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray/*trajectory_msgs::JointTrajectory*/>(camera_joint_controller_command_, 1, false);
 
 	node_handle_.param<std::string>("camera_state_command", camera_state_command_, "/torso/joint_states");
 	std::cout << "camera_state_command: " << camera_state_command_ << std::endl;
@@ -140,16 +146,16 @@ void RAWInterface::assignNewCamaraTiltAngle(std_msgs::Float64 newTilt)
 void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
 {
 	// Adjust here: Assign new camera tilt angle here
-	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
+	/*trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
 	trajectory_msgs::JointTrajectory jointTraj;
 
 	jointTraj.joint_names = {"torso_pan_joint", "torso_tilt_joint"};
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newAngles.data.begin(), newAngles.data.end());
 	jointTrajPoint.time_from_start = ros::Duration(1);
 	jointTraj.points.push_back(jointTrajPoint);
-	jointTraj.header.stamp = ros::Time::now();
+	jointTraj.header.stamp = ros::Time::now();*/
 
-	camera_joint_controller_.publish(jointTraj);
+	camera_joint_controller_.publish(newAngles/*jointTraj*/);
 }
 
 /*double RAWInterface::getCurrentCameraTiltAngle()
@@ -175,16 +181,25 @@ std::vector<double>* RAWInterface::getCurrentCameraState()
 void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig)
 {
 	// Adjust here: Assign new joints to your robot arm
-	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
+	trajectory_msgs::JointTrajectoryPoint jointTrajPoint, currentPoint;
 	trajectory_msgs::JointTrajectory jointTraj;
+
+	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("arm", true);
+	control_msgs::FollowJointTrajectoryActionGoal goal;
+
+
 
 	jointTraj.joint_names = {"arm_elbow_joint", "arm_shoulder_lift_joint", "arm_shoulder_pan_joint", "arm_wrist_1_joint", "arm_wrist_2_joint", "arm_wrist_3_joint"};
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newJointConfig.data.begin(), newJointConfig.data.end());
 	jointTrajPoint.time_from_start = ros::Duration(1);
+	currentPoint.positions.insert(currentPoint.positions.end(), arm_state_current_->position.begin(), arm_state_current_->position.end());
+	jointTraj.points.push_back(currentPoint);
 	jointTraj.points.push_back(jointTrajPoint);
 	jointTraj.header.stamp = ros::Time::now();
 
-	arm_joint_controller_.publish(jointTraj); // RAW3-1
+	goal.goal.trajectory = jointTraj;
+	ac.sendGoal(goal);
+	//arm_joint_controller_.publish(jointTraj); // RAW3-1
 }
 
 std::vector<double>* RAWInterface::getCurrentArmState()
