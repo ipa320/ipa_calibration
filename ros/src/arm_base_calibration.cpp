@@ -63,6 +63,7 @@
 
 
 //ToDo: Adjust displayAndSaveCalibrationResult() for new EndeffToChecker or remove the optimization for it.
+//ToDo: Add new setting to define the timeout time (move camera, move robot)
 
 ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 		RobotCalibration(nh, true), camera_dof_(2)
@@ -217,6 +218,10 @@ void ArmBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_i
 			return;
 
 		latest_image_time_ = color_image_msg->header.stamp;
+
+		if ( latest_image_time_.toSec() <= 0.01f ) //No time stamps -> use current time as stamp
+			latest_image_time_ = ros::Time::now();
+
 		capture_image_ = false;
 	}
 }
@@ -273,7 +278,7 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 
 
 	// Debug: ToDo - Remove me
-	std::cout << "Endeff to checkerboard optimized:" << std::endl;
+	/*std::cout << "Endeff to checkerboard optimized:" << std::endl;
 	displayMatrix(T_endeff_to_checkerboard_);
 	cv::Mat RealTrafo;
 	transform_utilities::getTransform(transform_listener_, endeff_frame_, "hand_checker_link", RealTrafo);
@@ -284,7 +289,7 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	displayMatrix(T_base_to_armbase_);
 	transform_utilities::getTransform(transform_listener_, base_frame_, armbase_frame_, RealTrafo);
 	std::cout << "Base to armbase real:" << std::endl;
-	displayMatrix(RealTrafo);
+	displayMatrix(RealTrafo);*/
 	// End Debug
 
 
@@ -360,7 +365,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 	{
 		//int count = 0;
 		Timer timeout;
-		while (timeout.getElapsedTimeInSec()<5.0) //Max. 5 seconds to reach goal
+		while (timeout.getElapsedTimeInSec()<15.0) //Max. 5 seconds to reach goal
 		{
 			//ros::Duration(0.05).sleep();
 			//ros::spinOnce();
@@ -373,7 +378,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 
 			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
 
-			if ( length < 0.01 ) //Close enough to goal configuration (~0.5° deviation allowed)
+			if ( length < 0.02 ) //Close enough to goal configuration (~1° deviation allowed)
 			{
 				std::cout << "Arm configuration reached, deviation: " << length << std::endl;
 				break;
@@ -382,7 +387,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 			ros::spinOnce();
 		}
 
-		if ( timeout.getElapsedTimeInSec()>=5.0 )
+		if ( timeout.getElapsedTimeInSec()>=15.0 )
 		{
 			ROS_WARN("Could not reach following arm configuration in time:");
 			for (int i = 0; i<arm_configuration.angles_.size(); ++i)
@@ -428,7 +433,7 @@ bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfigurat
 	if ( cur_state.size() > 0 )//calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
 	{
 		Timer timeout;
-		while (timeout.getElapsedTimeInSec()<5.0)
+		while (timeout.getElapsedTimeInSec()<15.0)
 		{
 			cur_state = *calibration_interface_->getCurrentCameraState();
 			std::vector<double> difference(cur_state.size());
@@ -437,7 +442,7 @@ bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfigurat
 
 			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
 
-			if ( length < 0.01 ) //Close enough to goal configuration (~0.5° deviation allowed)
+			if ( length < 0.02 ) //Close enough to goal configuration (~0.5° deviation allowed)
 			{
 				std::cout << "Camera configuration reached, deviation: " << length << std::endl;
 				break;
@@ -456,7 +461,7 @@ bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfigurat
 			ros::spinOnce();*/
 		}
 
-		if ( timeout.getElapsedTimeInSec()>=5.0 )
+		if ( timeout.getElapsedTimeInSec()>=15.0 )
 		{
 			ROS_WARN("Could not reach following camera configuration in time:");
 			for (int i = 0; i<cam_configuration.angles_.size(); ++i)
@@ -593,10 +598,14 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 	bool pattern_found = cv::findChessboardCorners(image, pattern_size, checkerboard_points_2d, cv::CALIB_CB_FAST_CHECK + cv::CALIB_CB_FILTER_QUADS);
 
 	// display
-	cv::Mat display = image.clone();
-	cv::drawChessboardCorners(display, pattern_size, cv::Mat(checkerboard_points_2d), pattern_found);
-	cv::imshow("image", display);
-	cv::waitKey(50);
+	//cv::Mat display = image.clone();
+	//cv::drawChessboardCorners(display, pattern_size, cv::Mat(checkerboard_points_2d), pattern_found);
+	//float scale = 512/display.cols;
+	//std::cout << "Size: " << display.cols << ", " << display.rows << std::endl;
+	//cv::resize(display, display, cv::Size(1024, 512));
+	//cv::namedWindow("image", cv::WINDOW_NORMAL);
+	//cv::imshow("image", display);
+	//cv::waitKey(50);
 
 	// collect 2d points
 	if (checkerboard_points_2d.size() == pattern_size.height*pattern_size.width)

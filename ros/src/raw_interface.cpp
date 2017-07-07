@@ -152,9 +152,13 @@ void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
 	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("/torso/joint_trajectory_controller/follow_joint_trajectory", true);
 	control_msgs::FollowJointTrajectoryGoal camGoal;
 
+	ac.waitForServer();
+
 	jointTraj.joint_names = {"torso_pan_joint", "torso_tilt_joint"};
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newAngles.data.begin(), newAngles.data.end());
 	jointTrajPoint.time_from_start = ros::Duration(1);
+	jointTrajPoint.velocities = {0,0}; //Initialize velocities to zero, does not work with empty list
+	jointTrajPoint.accelerations = {0,0};
 	jointTraj.points.push_back(jointTrajPoint);
 	jointTraj.header.stamp = ros::Time::now();
 
@@ -188,20 +192,26 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig
 	// Adjust here: Assign new joints to your robot arm
 	trajectory_msgs::JointTrajectoryPoint jointTrajPoint, currentPoint;
 	trajectory_msgs::JointTrajectory jointTraj;
-
 	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("/arm/joint_trajectory_controller/follow_joint_trajectory", true);
 	control_msgs::FollowJointTrajectoryGoal armGoal;
-
-	jointTraj.joint_names = {"arm_elbow_joint", "arm_shoulder_lift_joint", "arm_shoulder_pan_joint", "arm_wrist_1_joint", "arm_wrist_2_joint", "arm_wrist_3_joint"};
+	ac.waitForServer();
+	jointTraj.joint_names = {"arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_joint", "arm_wrist_1_joint", "arm_wrist_2_joint", "arm_wrist_3_joint"};
+			//{"arm_elbow_joint", "arm_shoulder_lift_joint", "arm_shoulder_pan_joint", "arm_wrist_1_joint", "arm_wrist_2_joint", "arm_wrist_3_joint"};
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), newJointConfig.data.begin(), newJointConfig.data.end());
 	jointTrajPoint.time_from_start = ros::Duration(1);
 	currentPoint.positions.insert(currentPoint.positions.end(), arm_state_current_->position.begin(), arm_state_current_->position.end());
+	currentPoint.velocities = {0,0,0,0,0,0};
+	currentPoint.accelerations = {0,0,0,0,0,0};
 	jointTraj.points.push_back(currentPoint);
+	jointTrajPoint.velocities = {0,0,0,0,0,0};
+	jointTrajPoint.accelerations = {0,0,0,0,0,0};
 	jointTraj.points.push_back(jointTrajPoint);
 	jointTraj.header.stamp = ros::Time::now();
-
 	armGoal.trajectory = jointTraj;
+	//bool success = ac.isServerConnected();
 	ac.sendGoal(armGoal);
+	//control_msgs::FollowJointTrajectoryResultConstPtr success2 = ac.getResult();
+	//std::cout << "Success " << success << " " << success2->error_string << "\n";
 	//arm_joint_controller_.publish(jointTraj); // RAW3-1
 }
 

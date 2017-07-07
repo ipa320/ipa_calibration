@@ -66,7 +66,8 @@ armbase_frame: "arm_base_link"
 
 # end effector frame attached to arm
 # string
-endeff_frame: "arm_gripper_frame"
+endeff_frame: "gripper_frame"
+#"arm_gripper_frame"
 
 # this is the camera coordinate system which refers to the color image sensor [the transformations between base_frame and camera_optical_frame should be available from tf]
 camera_optical_frame: "head_color_camera_r_frame"
@@ -77,11 +78,11 @@ camera_image_topic: "/camera/color_image"
 #"/cam3d/rgb/image_raw"
 
 # Topic to control camera postion
-camera_joint_controller_command: "/torso/joint_trajectory_controller/follow_joint_trajectory/goal"#"/torso/joint_group_position_controller/command"
+camera_joint_controller_command: "/torso/joint_group_position_controller/command"
 
 # Topic to control the arm joints.
 # string
-arm_joint_controller_command: "/arm/joint_trajectory_controller/follow_joint_trajectory/goal"#"/arm/joint_trajectory_controller/command" # RAW3-1
+arm_joint_controller_command: "/arm/joint_trajectory_controller/command" # RAW3-1
 
 # Topic to retrieve the current arm state
 # string
