@@ -93,7 +93,7 @@ namespace calibration_utilities
 			ROS_ERROR("ImageFlip::convertColorImageMessageToMat: cv_bridge exception: %s", e.what());
 			return false;
 		}
-		image = image_ptr->image;
+		image = image_ptr->image.clone();
 
 		return true;
 	}

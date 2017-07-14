@@ -129,6 +129,7 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	node_handle_.getParam("T_endeff_to_checkerboard_initial", temp);
 	if ( temp.size()==6 )
 		T_endeff_to_checkerboard_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+	transform_utilities::getTransform(transform_listener_, "gripper_frame", endeff_frame_, T_endeff_to_checkerboard_);
 	std::cout << "T_endeff_to_checkerboard_initial:\n" << T_endeff_to_checkerboard_ << std::endl;
 
 	// read out user-defined end effector configurations
@@ -214,8 +215,12 @@ void ArmBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_i
 	{
 		// read image
 		cv_bridge::CvImageConstPtr color_image_ptr;
+		//camera_image_.release();
 		if (calibration_utilities::convertImageMessageToMat(color_image_msg, color_image_ptr, camera_image_) == false)
 			return;
+
+		//std::cout << camera_image_ << std::endl;
+		//ros::Duration(1).sleep();
 
 		latest_image_time_ = color_image_msg->header.stamp;
 
@@ -223,6 +228,8 @@ void ArmBaseCalibration::imageCallback(const sensor_msgs::ImageConstPtr& color_i
 			latest_image_time_ = ros::Time::now();
 
 		capture_image_ = false;
+
+		//std::cout << camera_image_ << std::endl;
 	}
 }
 
@@ -283,13 +290,14 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	cv::Mat RealTrafo;
 	transform_utilities::getTransform(transform_listener_, endeff_frame_, "hand_checker_link", RealTrafo);
 	std::cout << "Endeff to checkerboard real:" << std::endl;
-	displayMatrix(RealTrafo);
+	displayMatrix(RealTrafo);*/
 
+	cv::Mat RealTrafo;
 	std::cout << "Base to armbase optimized:" << std::endl;
 	displayMatrix(T_base_to_armbase_);
 	transform_utilities::getTransform(transform_listener_, base_frame_, armbase_frame_, RealTrafo);
 	std::cout << "Base to armbase real:" << std::endl;
-	displayMatrix(RealTrafo);*/
+	displayMatrix(RealTrafo);
 	// End Debug
 
 
@@ -365,7 +373,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 	{
 		//int count = 0;
 		Timer timeout;
-		while (timeout.getElapsedTimeInSec()<15.0) //Max. 5 seconds to reach goal
+		while (timeout.getElapsedTimeInSec()<10.0) //Max. 10 seconds to reach goal
 		{
 			//ros::Duration(0.05).sleep();
 			//ros::spinOnce();
@@ -378,7 +386,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 
 			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
 
-			if ( length < 0.02 ) //Close enough to goal configuration (~1° deviation allowed)
+			if ( length < 0.025 ) //Close enough to goal configuration (~1° deviation allowed)
 			{
 				std::cout << "Arm configuration reached, deviation: " << length << std::endl;
 				break;
@@ -387,7 +395,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 			ros::spinOnce();
 		}
 
-		if ( timeout.getElapsedTimeInSec()>=15.0 )
+		if ( timeout.getElapsedTimeInSec()>=10.0 )
 		{
 			ROS_WARN("Could not reach following arm configuration in time:");
 			for (int i = 0; i<arm_configuration.angles_.size(); ++i)
@@ -433,7 +441,7 @@ bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfigurat
 	if ( cur_state.size() > 0 )//calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
 	{
 		Timer timeout;
-		while (timeout.getElapsedTimeInSec()<15.0)
+		while (timeout.getElapsedTimeInSec()<10.0)
 		{
 			cur_state = *calibration_interface_->getCurrentCameraState();
 			std::vector<double> difference(cur_state.size());
@@ -461,7 +469,7 @@ bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfigurat
 			ros::spinOnce();*/
 		}
 
-		if ( timeout.getElapsedTimeInSec()>=15.0 )
+		if ( timeout.getElapsedTimeInSec()>=10.0 )
 		{
 			ROS_WARN("Could not reach following camera configuration in time:");
 			for (int i = 0; i<cam_configuration.angles_.size(); ++i)
@@ -556,7 +564,7 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 	int return_value = 0;
 
 	// acquire image
-	cv::Mat image;
+	cv::Mat image, gray;
 	if (load_images == false)
 	{
 		ros::Duration(3).sleep();
@@ -573,6 +581,10 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 			if ((ros::Time::now() - latest_image_time_).toSec() < 20.0)
 			{
 				image = camera_image_.clone();
+
+				// convert to grayscale
+				gray = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
+				cv::cvtColor(image, gray, CV_BGR2GRAY);
 			}
 			else
 			{
@@ -587,25 +599,22 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 		std::stringstream ss;
 		ss << calibration_storage_path_ << image_counter;
 		std::string image_name = ss.str() + ".png";
-		image = cv::imread(image_name.c_str(), 0);
-		if (image.empty())
+		gray = cv::imread(image_name.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
+		if (gray.empty())
 			return -2;
 	}
-	image_width = image.cols;
-	image_height = image.rows;
+	image_width = gray.cols;
+	image_height = gray.rows;
 
 	// find pattern in image
-	bool pattern_found = cv::findChessboardCorners(image, pattern_size, checkerboard_points_2d, cv::CALIB_CB_FAST_CHECK + cv::CALIB_CB_FILTER_QUADS);
+	bool pattern_found = cv::findChessboardCorners(gray, pattern_size, checkerboard_points_2d, cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);//cv::CALIB_CB_FAST_CHECK + cv::CALIB_CB_FILTER_QUADS);
 
 	// display
-	//cv::Mat display = image.clone();
-	//cv::drawChessboardCorners(display, pattern_size, cv::Mat(checkerboard_points_2d), pattern_found);
-	//float scale = 512/display.cols;
-	//std::cout << "Size: " << display.cols << ", " << display.rows << std::endl;
-	//cv::resize(display, display, cv::Size(1024, 512));
-	//cv::namedWindow("image", cv::WINDOW_NORMAL);
-	//cv::imshow("image", display);
-	//cv::waitKey(50);
+//	cv::Mat display = gray.clone();
+//	cv::drawChessboardCorners(display, pattern_size, cv::Mat(checkerboard_points_2d), pattern_found);
+//	cv::namedWindow("image", cv::WINDOW_NORMAL);
+//	cv::imshow("image", display);
+//	cv::waitKey(20);
 
 	// collect 2d points
 	if (checkerboard_points_2d.size() == pattern_size.height*pattern_size.width)
