@@ -190,7 +190,7 @@ endeff_frame: "checkerboard_frame"
 #"arm_gripper_frame"
 
 # this is the camera coordinate system which refers to the color image sensor [the transformations between base_frame and camera_optical_frame should be available from tf]
-camera_optical_frame: "head_color_camera_r_frame"
+camera_optical_frame: "cam_optical_frame"
 
 # Image topic
 # string
@@ -220,7 +220,7 @@ load_images: true
 
 # number of optimization iterations
 # int
-optimization_iterations: 1
+optimization_iterations: 5
 
 # max allowed deviation a target angle is allowed to have in terms of the current joint angle [rad]
 # double

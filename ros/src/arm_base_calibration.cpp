@@ -274,6 +274,9 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 		cv::Rodrigues(rvecs[i], R);
 		cv::Mat T_base_to_checkerboard = T_base_to_camera_optical_vector[i] * transform_utilities::makeTransform(R, tvecs[i]);
 		T_base_to_checkerboard_vector.push_back(T_base_to_checkerboard);
+		std::cout << "Cam->C: " << tvecs[i] << std::endl;
+		//std::cout << "BC" << T_base_to_checkerboard_vector[i] << std::endl;
+		//std::cout << "AC" << T_armbase_to_endeff_vector[i] << std::endl;
 	}
 
 	// extrinsic calibration between base and arm_base as well as end effector and checkerboard
@@ -294,10 +297,10 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 
 	cv::Mat RealTrafo;
 	std::cout << "Base to armbase optimized:" << std::endl;
-	displayMatrix(T_base_to_armbase_);
+	//displayMatrixdisplayMatrix(T_base_to_armbase_);
 	transform_utilities::getTransform(transform_listener_, base_frame_, armbase_frame_, RealTrafo);
 	std::cout << "Base to armbase real:" << std::endl;
-	displayMatrix(RealTrafo);
+	//displayMatrix(RealTrafo);
 	// End Debug
 
 
@@ -644,7 +647,7 @@ void ArmBaseCalibration::extrinsicCalibrationBaseToArm(std::vector< std::vector<
 	std::vector<cv::Point3d> points_3d_base, points_3d_armbase;
 	for (size_t i=0; i<pattern_points_3d.size(); ++i)
 	{
-		cv::Mat T_armbase_to_checkerboard = T_armbase_to_endeff_vector[i] * T_endeff_to_checkerboard_;
+		cv::Mat T_armbase_to_checkerboard = T_armbase_to_endeff_vector[i];// * T_endeff_to_checkerboard_;
 
 		for (size_t j=0; j<pattern_points_3d[i].size(); ++j)
 		{
@@ -652,17 +655,24 @@ void ArmBaseCalibration::extrinsicCalibrationBaseToArm(std::vector< std::vector<
 
 			// to base coordinate system
 			cv::Mat point_base = T_base_to_checkerboard_vector[i] * point;
+			//displayMatrix(point_base);
+			//std::cout << "Base: " << point_base << std::endl;
 			//std::cout << "point_base: " << pattern_points_3d[i][j].x <<", "<< pattern_points_3d[i][j].y <<", "<< pattern_points_3d[i][j].z << " --> " << point_base.at<double>(0,0) <<", "<< point_base.at<double>(1,0) << ", " << point_base.at<double>(2,0) << std::endl;
 			points_3d_base.push_back(cv::Point3d(point_base.at<double>(0), point_base.at<double>(1), point_base.at<double>(2)));
 
 			// to armbase coordinate
 			cv::Mat point_armbase = T_armbase_to_checkerboard * point;
+			//displayMatrix(point_armbase);
+			//std::cout << "ArmBase: " << point_armbase << std::endl;
 			//std::cout << "point_torso_lower: " << pattern_points_3d[i][j].x <<", "<< pattern_points_3d[i][j].y <<", "<< pattern_points_3d[i][j].z << " --> " << point_torso_lower.at<double>(0) <<", "<< point_torso_lower.at<double>(1) << ", " << point_torso_lower.at<double>(2) << std::endl;
 			points_3d_armbase.push_back(cv::Point3d(point_armbase.at<double>(0), point_armbase.at<double>(1), point_armbase.at<double>(2)));
 		}
 	}
 
 	T_base_to_armbase_ = transform_utilities::computeExtrinsicTransform(points_3d_base, points_3d_armbase);
+	//for ( size_t i = 0; i<points_3d_base.size(); ++i )
+	//std::cout << "Diff: " << cv::norm(points_3d_base[i] - points_3d_armbase[i]) << std::endl;
+	//displayMatrix(T_base_to_armbase_);
 }
 
 void ArmBaseCalibration::extrinsicCalibrationEndeffToCheckerboard(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
@@ -792,12 +802,15 @@ void ArmBaseCalibration::displayMatrix(const cv::Mat& Trafo)
 	// display calibration parameters
 	std::stringstream output;
 	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(Trafo);
+	float length = std::sqrt((float)(Trafo.at<double>(0,3)*Trafo.at<double>(0,3) + Trafo.at<double>(1,3)*Trafo.at<double>(1,3) + Trafo.at<double>(2,3)*Trafo.at<double>(2,3)));
+	//float length = std::sqrt((float)(Trafo.at<double>(0)*Trafo.at<double>(0) + Trafo.at<double>(1)*Trafo.at<double>(1) + Trafo.at<double>(2)*Trafo.at<double>(2)));
 	output 	  << "  x value=\"" << Trafo.at<double>(0,3) << "\"/>\n"
 			  << "  y value=\"" << Trafo.at<double>(1,3) << "\"/>\n"
 			  << "  z value=\"" << Trafo.at<double>(2,3) << "\"/>\n"
 			  << "  roll value=\"" << ypr.val[2] << "\"/>\n"
 			  << "  pitch value=\"" << ypr.val[1] << "\"/>\n"
-			  << "  yaw value=\"" << ypr.val[0] << "\"/>\n\n";
+			  << "  yaw value=\"" << ypr.val[0] << "\"/>\n"
+			  << "  length = " << length << "\n\n";
 	std::cout << output.str();
 }
 

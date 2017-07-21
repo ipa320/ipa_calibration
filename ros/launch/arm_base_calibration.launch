@@ -3,6 +3,7 @@
 <launch>
 
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_gripper_checkerboard" output="screen" args="0.292 -0.165 0.035 0 0 0 gripper_frame checkerboard_frame 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_cam3d_optical" output="screen" args="0 0 0.062 0 0 0 head_cam3d_frame cam_optical_frame 100"/>
 	<node ns="arm_base_calibration" name="arm_base_calibration" pkg="robotino_calibration" type="arm_base_calibration" output="screen">
 		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/arm_base_calibration_params_RAW.yaml"/>
 	 	<!-- <remap from="~colorimage_in" to="/kinect/rgb/image_raw"/> -->
