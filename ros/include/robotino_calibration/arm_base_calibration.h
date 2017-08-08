@@ -120,6 +120,11 @@ protected:
 
 	void displayMatrix(const cv::Mat& Trafo); // ToDo: Remove this, debug only!
 
+	double computeReprojectionErrors( const std::vector<std::vector<cv::Point3f> >& objectPoints,
+	                                         const std::vector<std::vector<cv::Point2f> >& imagePoints,
+	                                         const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
+	                                         const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs); // ToDo: Remove, debug only!
+
 	//ros::Publisher arm_joint_controller_;
 	//ros::Subscriber arm_state_;
 	//sensor_msgs::JointState* arm_state_current_;

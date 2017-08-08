@@ -274,17 +274,17 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 		cv::Rodrigues(rvecs[i], R);
 		cv::Mat T_base_to_checkerboard = T_base_to_camera_optical_vector[i] * transform_utilities::makeTransform(R, tvecs[i]);
 		T_base_to_checkerboard_vector.push_back(T_base_to_checkerboard);
-		std::cout << "Cam->C: " << tvecs[i] << std::endl;
+		//std::cout << "Cam->C: " << tvecs[i] << std::endl;
 		//std::cout << "BC" << T_base_to_checkerboard_vector[i] << std::endl;
 		//std::cout << "AC" << T_armbase_to_endeff_vector[i] << std::endl;
 	}
 
 	// extrinsic calibration between base and arm_base as well as end effector and checkerboard
-	for (int i=0; i<optimization_iterations_; ++i)
-	{
+	//for (int i=0; i<optimization_iterations_; ++i)
+	//{
 		extrinsicCalibrationBaseToArm(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector );
 		//extrinsicCalibrationEndeffToCheckerboard(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_endeff_vector);
-	}
+	//}
 
 
 	// Debug: ToDo - Remove me
@@ -320,6 +320,32 @@ void ArmBaseCalibration::intrinsicCalibration(const std::vector< std::vector<cv:
 	distortion_ = cv::Mat::zeros(8, 1, CV_64F);
 	cv::calibrateCamera(pattern_points, camera_points_2d_per_image, image_size, K_, distortion_, rvecs, tvecs);
 	std::cout << "Intrinsic calibration:\nK:\n" << K_ << "\ndistortion:\n" << distortion_ << std::endl;
+
+	double error = computeReprojectionErrors(pattern_points, camera_points_2d_per_image, rvecs, tvecs, K_, distortion_);
+	std::cout << "Total reprojection error: " << error << std::endl;
+}
+
+double ArmBaseCalibration::computeReprojectionErrors( const std::vector<std::vector<cv::Point3f> >& objectPoints,
+                                         const std::vector<std::vector<cv::Point2f> >& imagePoints,
+                                         const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
+                                         const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs)
+{
+    std::vector<cv::Point2f> imagePoints2;
+    size_t totalPoints = 0;
+    double totalErr = 0, err = 0;
+
+    for(size_t i = 0; i < objectPoints.size(); ++i )
+    {
+        cv::projectPoints(objectPoints[i], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imagePoints2);
+
+        err = cv::norm(imagePoints[i], imagePoints2, cv::NORM_L2);
+        size_t n = objectPoints[i].size();
+        //double perViewError = (float) std::sqrt(err*err/n);
+        //std::cout << "View error " << (i+1) << ": " << perViewError << std::endl;
+        totalErr        += err*err;
+        totalPoints     += n;
+    }
+    return std::sqrt(totalErr/totalPoints);
 }
 
 bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration& arm_configuration)
@@ -612,6 +638,12 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 	// find pattern in image
 	bool pattern_found = cv::findChessboardCorners(gray, pattern_size, checkerboard_points_2d, cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);//cv::CALIB_CB_FAST_CHECK + cv::CALIB_CB_FILTER_QUADS);
 
+	if ( pattern_found )
+	{
+        cv::cornerSubPix( gray, checkerboard_points_2d, cv::Size(11,11),
+            cv::Size(-1,-1), cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 30, 0.1 ));
+	}
+
 	// display
 //	cv::Mat display = gray.clone();
 //	cv::drawChessboardCorners(display, pattern_size, cv::Mat(checkerboard_points_2d), pattern_found);
@@ -813,5 +845,4 @@ void ArmBaseCalibration::displayMatrix(const cv::Mat& Trafo)
 			  << "  length = " << length << "\n\n";
 	std::cout << output.str();
 }
-
 
