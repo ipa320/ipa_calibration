@@ -90,10 +90,6 @@ public:
 	// camera calibration interface
 	void assignNewRobotVelocity(geometry_msgs::Twist newVelocity);
 	void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles);
-	void assignNewCamaraPanAngle(std_msgs::Float64 newPan);
-	void assignNewCamaraTiltAngle(std_msgs::Float64 newTilt);
-	//double getCurrentCameraTiltAngle();
-	//double getCurrentCameraPanAngle();
 	std::vector<double>* getCurrentCameraState();
 
 	// callbacks

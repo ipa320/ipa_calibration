@@ -130,18 +130,6 @@ void RobotinoInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity)
 	base_controller_.publish(newVelocity);
 }
 
-void RobotinoInterface::assignNewCamaraPanAngle(std_msgs::Float64 newPan)
-{
-	// Adjust here: Assign new camera pan angle here
-	pan_controller_.publish(newPan);
-}
-
-void RobotinoInterface::assignNewCamaraTiltAngle(std_msgs::Float64 newTilt)
-{
-	// Adjust here: Assign new camera tilt angle here
-	tilt_controller_.publish(newTilt);
-}
-
 void RobotinoInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
 {
 	// Adjust here: Assign new camera angles
@@ -151,26 +139,6 @@ void RobotinoInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAng
 	angle.data = newAngles.data[1];
 	tilt_controller_.publish(angle);
 }
-
-/*double RobotinoInterface::getCurrentCameraTiltAngle()
-{
-	boost::mutex::scoped_lock lock(tilt_joint_state_data_mutex_);
-
-	if ( camera_state_current_.size() == 2 )
-		return camera_state_current_[1];
-	else
-		return 0.f;
-}
-
-double RobotinoInterface::getCurrentCameraPanAngle()
-{
-	boost::mutex::scoped_lock lock(pan_joint_state_data_mutex_);
-
-	if ( camera_state_current_.size() == 2 )
-		return camera_state_current_[0];
-	else
-		return 0.f;
-}*/
 
 std::vector<double>* RobotinoInterface::getCurrentCameraState()
 {

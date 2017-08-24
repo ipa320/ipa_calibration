@@ -109,16 +109,6 @@ void RAWInterface::cameraStateCallback(const sensor_msgs::JointState::ConstPtr& 
 	camera_state_current_[1] = msg->position[1];
 }
 
-
-/*void RAWInterface::panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
-{
-	//ROS_INFO("Old style controller state received.");
-	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
-
-	pan_joint_state_current_ = msg->position[0];
-	tilt_joint_state_current_ = msg->position[1];
-}*/
-
 void RAWInterface::armStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
 	boost::mutex::scoped_lock lock(arm_state_data_mutex_);
@@ -131,16 +121,6 @@ void RAWInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity) // S
 {
 	// Adjust here: Assign new robot velocity here
 	base_controller_.publish(newVelocity);
-}
-
-void RAWInterface::assignNewCamaraPanAngle(std_msgs::Float64 newPan)
-{
-	// Adjust here: Assign new camera pan angle here
-}
-
-void RAWInterface::assignNewCamaraTiltAngle(std_msgs::Float64 newTilt)
-{
-	// Adjust here: Assign new camera tilt angle here
 }
 
 void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
@@ -166,18 +146,6 @@ void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
 	ac.sendGoal(camGoal);
 	//camera_joint_controller_.publish(newAngles/*jointTraj*/);
 }
-
-/*double RAWInterface::getCurrentCameraTiltAngle()
-{
-	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
-	return tilt_joint_state_current_;
-}
-
-double RAWInterface::getCurrentCameraPanAngle()
-{
-	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
-	return pan_joint_state_current_;
-}*/
 
 std::vector<double>* RAWInterface::getCurrentCameraState()
 {
