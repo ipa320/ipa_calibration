@@ -68,13 +68,8 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 	std::cout << "base_frame: " << base_frame_ << std::endl;
 	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/robotino_calibration/calibration");
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
-	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
-	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
 	node_handle_.param("calibration_ID", calibration_ID_, 0);
 	std::cout << "calibration_ID: " << calibration_ID_ << std::endl;
-	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "/landmark_reference_nav");
-	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
-
 
 	calibration_interface_ = CalibrationInterface::createInterfaceByID(calibration_ID_,node_handle_,bArmCalibration);
 	createStorageFolder();
@@ -89,6 +84,9 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 	// Do not let the robot start driving when the reference frame has not been set up properly! Bad things could happen!
 	if ( !bArmCalibration ) //During arm calibration the robot does not drive and there is no child frame available.
 	{
+		node_handle_.param<std::string>("child_frame_name", child_frame_name_, "/landmark_reference_nav");
+		std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
+
 		Timer timeout;
 		while ( timeout.getElapsedTimeInSec() < 10.f )
 		{

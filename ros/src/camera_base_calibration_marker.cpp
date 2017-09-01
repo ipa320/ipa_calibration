@@ -77,20 +77,8 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	std::cout << "camera_frame: " << camera_frame_ << std::endl;
 	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "kinect_rgb_optical_frame");
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
-	//node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/pan_controller/command");
-	//std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
-	//node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/tilt_controller/command");
-	//std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
-	//node_handle_.param<std::string>("pan_joint_state_topic", pan_joint_state_topic_, "/pan_controller/state");
-	//std::cout << "pan_joint_state_topic: " << pan_joint_state_topic_ << std::endl;
-	//node_handle_.param<std::string>("tilt_joint_state_topic", tilt_joint_state_topic_, "/tilt_controller/state");
-	//std::cout << "tilt_joint_state_topic: " << tilt_joint_state_topic_ << std::endl;
-	//node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "/cmd_vel");
-	//std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
-
-	// deprecated
-	//node_handle_.param<std::string>("joint_state_topic", joint_state_topic_, "/pan_tilt_controller/joint_states");
-	//std::cout << "joint_state_topic: " << joint_state_topic_ << std::endl;
+	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
+	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
 
 	// initial parameters
 	T_base_to_torso_lower_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));

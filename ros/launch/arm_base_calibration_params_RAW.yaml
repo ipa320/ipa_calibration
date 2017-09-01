@@ -1,11 +1,7 @@
 ### checkerboard parameters
 # side length of the chessboard squares
-# chessboard_cell_size: 0.05
+# double
 chessboard_cell_size: 0.03
-
-# The name of the computed child frame (reference frame). Has to match the entry found in the relative_localization yaml files.
-# string
-child_frame_name: "/landmark_reference_nav"
 
 # Degrees of freedom of arm
 # int
@@ -16,7 +12,6 @@ arm_dof: 6
 camera_dof: 2
 
 # number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
-# chessboard_pattern_size: [6,4]
 chessboard_pattern_size: [10,6]
 
 ### initial values for transformation estimates
@@ -24,10 +19,10 @@ chessboard_pattern_size: [10,6]
 # transform from base to first link of arm.
 T_base_to_armbase_initial: [0.324, -0.191, 0.585, 0.785393, -3.14159, 3.14159]
 
+
 ### checkerboard observation positions for capturing calibration images
-# list of robot link configurations (angles per link in [rad]) for observing the checkerboard attached to robot's end effector
-# includes link_Count parameters per entry.
-# ROW3-1
+# list of arm link configurations (angles per link in [rad]) for observing the checkerboard attached to robot's end effector
+# includes <arm_dof> parameters per entry.
 arm_configurations: [0.290486, -1.59249, -1.66967, -1.59205, -1.70336, -0.964658,
 0.104803, -1.2313, -1.97507, -1.52801, -1.70267, -1.24475,
 0.0669326, -0.821055, -2.24594, -1.48192, -1.45296, -0.856033,
@@ -88,17 +83,8 @@ arm_configurations: [0.290486, -1.59249, -1.66967, -1.59205, -1.70336, -0.964658
 -0.802715, -2.5777, -1.56996, -0.433844, -2.24011, 0.348525,
 -0.82061, -2.1899, -1.59903, -0.817661, -2.04856, 0.348477]
 
-#[0.290486, -1.59249, -1.66967, -1.59205, -1.70336, -0.964658,
-#0.104803, -1.2313, -1.97507, -1.52801, -1.70267, -1.24475,
-#0.0669326, -0.821055, -2.24594, -1.48192, -1.45296, -0.856033,
-#0.233963, -1.50205, -2.06433, -1.27911, -1.90443, -0.856944,
-#-0.244221, -1.59419, -1.93948, -1.28011, -1.67018, -0.85692,
-#-0.869446, -1.53095, -1.91072, -1.32768, -1.88009, -0.886976,
-##-0.951875, -1.89197, -2.0929, -0.970447, -2.23167, -0.655609, # <-- 6 invalid, too much rotated
-#-0.0767832, -2.48617, -1.27004, -1.04663, -1.84198, -0.655777,
-#-0.482841, -1.85463, -2.21126, -0.954778, -1.93444, -0.655825,
-#-0.388208, -2.31912, -1.55404, -0.99531, -1.93626, -0.42266]
-
+# list of camera link configurations (angles per link in [rad]) for observing the checkerboard attached to robot's end effector
+# includes <camera_dof> parameters per entry.
 camera_configurations: [1.30348, -0.300788,
 1.30348, -0.300788,
 1.30348, -0.300788,
@@ -159,32 +145,22 @@ camera_configurations: [1.30348, -0.300788,
 1.89637, 0.299957,
 1.89637, 0.299957]
 
-#[1.30348, -0.300788,
-#1.30348, -0.300788,
-#1.30348, -0.300788,
-#1.30348, -0.300788,
-#1.30348, -0.300788,
-##1.30348, -0.300788,
-#1.30348, -0.300788,
-#1.30348, -0.300788,
-#1.30348, -0.300788,
-#1.60423, -0.299957]
 
-# link names for the robot coordinate systems
-# string
 # the robot base frame [the transformation between laser scanner and base should be accomplished before, the transform from base_frame to armbase_frame will be calibrated by this program]
+# string
 base_frame: "base_link"
 
 # arm frame attached to robot base
 # string
 armbase_frame: "arm_base_link"
 
-
 # checkerboard frame attached to arm (2nd upper left corner) [the transformation between armbase and checkerboard_frame should be available from tf]
+# this transformation is created in the arm_base_calibration.launch file.
 # string
 checkerboard_frame: "checkerboard_frame"
 
 # this is the camera coordinate system which refers to the color image sensor [the transformations between base_frame and camera_optical_frame should be available from tf]
+# string
 camera_optical_frame: "ensenso_frame"
 
 # Image topic
@@ -196,11 +172,11 @@ camera_joint_controller_command: "/torso/joint_group_position_controller/command
 
 # Topic to control the arm joints.
 # string
-arm_joint_controller_command: "/arm/joint_trajectory_controller/command" # RAW3-1
+arm_joint_controller_command: "/arm/joint_trajectory_controller/command"
 
 # Topic to retrieve the current arm state
 # string
-arm_state_command: "/arm/joint_states" # RAW3-1
+arm_state_command: "/arm/joint_states"
 
 # storage folder that holds the calibration output
 # string
@@ -210,7 +186,7 @@ calibration_storage_path: "~/.ros/raw3-1_calibration/calibration"
 ### program sequence
 # loads calibration images and transforms from disk if set to true
 # bool
-load_images: true
+load_images: false
 
 # max allowed deviation a target angle is allowed to have in terms of the current joint angle [rad]
 # double

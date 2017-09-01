@@ -101,9 +101,7 @@ protected:
 	int counter;
 	Timer elapsed_time_since_start_;
 
-	//void panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg); //deprecated
-	//void panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg);
-	//void tiltJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg);
+	int optimization_iterations_;	// number of iterations for optimization
 
 	// moves the robot to a desired location and adjusts the torso joints
 	bool moveRobot(const calibration_utilities::RobotConfiguration& robot_configuration);
@@ -119,20 +117,6 @@ protected:
 	// displays the calibration result in the urdf file's format and also stores the screen output to a file
 	void displayAndSaveCalibrationResult(const cv::Mat& T_base_to_torso_lower_, const cv::Mat& T_torso_upper_to_camera_);
 
-
-	//ros::Publisher base_controller_;
-	//ros::Publisher tilt_controller_;
-	//ros::Publisher pan_controller_;
-
-	//ros::Subscriber pan_tilt_state_;
-	//ros::Subscriber pan_state_;
-	//ros::Subscriber tilt_state_;
-
-	//sensor_msgs::JointState* pan_tilt_joint_state_current_;
-	//double* pan_joint_state_current_;
-	//double* tilt_joint_state_current_;
-	//boost::mutex pan_tilt_joint_state_data_mutex_;	// secures read operations on pan tilt joint state data
-
 	std::string torso_lower_frame_;
 	std::string torso_upper_frame_;
 	std::string camera_frame_;
@@ -140,14 +124,6 @@ protected:
 
 	cv::Mat T_base_to_torso_lower_;		// transformation to estimate from base to torso_lower
 	cv::Mat T_torso_upper_to_camera_;		// transformation to estimate from torso_upper to camera
-
-	// parameters
-	//std::string tilt_controller_command_;
-	//std::string pan_controller_command_;
-	//std::string joint_state_topic_;
-	//std::string tilt_joint_state_topic_;
-	//std::string pan_joint_state_topic_;
-	//std::string base_controller_topic_name_;
 
 	std::vector<calibration_utilities::RobotConfiguration> robot_configurations_;  // wished robot configurations used for calibration
 };
