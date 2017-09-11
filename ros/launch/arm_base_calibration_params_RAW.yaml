@@ -184,7 +184,7 @@ calibration_storage_path: "~/.ros/raw3-1_calibration/calibration"
 
 
 ### program sequence
-# loads calibration images and transforms from disk if set to true
+# loads calibration images and transforms from disk if set to true, for offline calibration
 # bool
 load_images: false
 

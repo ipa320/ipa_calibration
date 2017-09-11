@@ -183,7 +183,7 @@ CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 	*tilt_joint_state_current_ = msg->position[1];
 }*/
 
-// new controller. moved to calibreation interface
+// new controller. moved to calibration interface
 /*void CameraBaseCalibrationMarker::panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
 {
 	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);

@@ -50,6 +50,8 @@
 
 #include <robotino_calibration/robotino_interface.h>
 
+// ToDo: Adjust interface to new topics
+
 RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool bArmCalibration) :
 				CalibrationInterface(nh), arm_state_current_(0)
 {

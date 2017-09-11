@@ -49,22 +49,19 @@ camera_optical_frame: "kinect_rgb_optical_frame"
 
 # Image topic
 # string
-camera_image_topic: "/camera/color_image"
-
-# Topic to control camera postion
-camera_joint_controller_command: "/torso/joint_group_position_controller/command"
+camera_image_topic: "/kinect/rgb/image_raw"
 
 # topic names for commanding the pan tilt unit
 # string
 # pan controller
-pan_controller_command: "/pan_controller/command"
+pan_controller_command: "/pan_tilt_controller/pan_joint_position_controller/command"
 
 # tilt controller
-tilt_controller_command: "/tilt_controller/command"
+tilt_controller_command: "/pan_tilt_controller/tilt_joint_position_controller/command"
 
 # Topic to control the arm joints.
 # string
-arm_joint_controller_command: "/arm_controller/joint_group_position_controller/command"
+arm_joint_controller_command: "/arm_controller/joint_trajectory_controller/command"
 
 # pan state
 # string
@@ -73,6 +70,10 @@ pan_joint_state_topic: "/pan_controller/state"
 # tilt state
 # string
 tilt_joint_state_topic: "/tilt_controller/state"
+
+pan, tilt states
+# string
+pan_tilt_states_topic: "/pan_tilt_controller/joint_states"
 
 # Topic to retrieve the current arm state
 # string
@@ -84,7 +85,7 @@ calibration_storage_path: "~/.ros/robotino_calibration/calibration"
 
 
 ### program sequence
-# loads calibration images and transforms from disk if set to true
+# loads calibration images and transforms from disk if set to true, for offline calibration
 # bool
 load_images: false
 
