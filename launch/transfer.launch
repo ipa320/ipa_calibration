@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<node ns="transfer_calibration" name="transfer_calibration" pkg="transfer_calibration" type="transfer_calibration_node" output="screen">
+		<rosparam command="load" file="$(find transfer_calibration)/launch/transfer_params.yaml"/>
+	</node>
+</launch>
