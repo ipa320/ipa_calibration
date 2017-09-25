@@ -70,7 +70,7 @@ void CobInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
 
 std::vector<double>* CobInterface::getCurrentCameraState()
 {
-
+	return 0;
 }
 
 void CobInterface::cameraStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
