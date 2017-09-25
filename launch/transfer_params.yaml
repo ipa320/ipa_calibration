@@ -11,5 +11,5 @@ target_path: "/home/rmb/Desktop"
 target_file: "target.xml"
 
 # vector<string>
-parameters: ["arm_base_x","hans","arm_base_y","arm_base_z"]
+parameters: ["arm_base_x"]
 

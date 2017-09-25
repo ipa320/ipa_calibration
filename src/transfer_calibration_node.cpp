@@ -53,7 +53,7 @@
 #include <sstream>
 #include <fstream>
 
-//#include <boost/filesystem.hpp>
+#include <boost/filesystem.hpp>
 
 bool readFileContent(const std::string path, const std::string file, std::string &content)
 {
@@ -80,28 +80,53 @@ bool readFileContent(const std::string path, const std::string file, std::string
 	}
 	else
 	{
-		std::cout << "Warning, couldn't " << path << "/" << file << " for reading!" << std::endl << std::endl;
+		std::cout << "Warning, couldn't open " << path_file << " for reading!" << std::endl << std::endl;
 		return false;
 	}
 }
 
-bool writeFileContent(const std::string path, const std::string file, const std::string content)
+bool writeFileContent(const std::string path, const std::string file, const std::string content) // Safely writes to file
 {
 	std::fstream file_output;
 	std::string path_file = path + "/" + file;
+	std::string path_file_tmp = path + "/" + file + "_temp";
 
-	file_output.open(path_file.c_str(), std::ios::out | std::ios::trunc);
+	// Check that _temp does not already exist! Append zeros otherwise
+	unsigned short i = 0;
+	while ( boost::filesystem::exists( path_file_tmp ) )
+	{
+		path_file_tmp += "0";
+
+		++i;
+		if ( i >= 10 )
+		{
+			std::cout << "Error creating temporary file!" << std::endl << "It seems there are other files that share the same name " << path_file_tmp << std::endl;
+			return false;
+		}
+	}
+
+	file_output.open(path_file_tmp.c_str(), std::ios::out | std::ios::trunc);
 	if ( !file_output.is_open() )
 	{
-		std::cout << "Error, couldn't open " << path_file << "!" << std::endl;
+		std::cout << "An error happened while trying to write a file!" << std::endl << "Please try again." << std::endl;
 		std::cout << "Printing all data to screen to prevent data loss:" << std::endl;
 		std::cout << content << std::endl;
-
 		return false;
 	}
 
 	file_output << content;
 	file_output.close();
+
+	if ( std::remove( path_file.c_str() ) == 0 )
+	{
+		if ( std::rename( path_file_tmp.c_str(), path_file.c_str() ) != 0 )
+		{
+			std::cout << "Error renaming temporary file " << path_file_tmp << std::endl;
+		}
+	}
+	else
+		std::cout << "Error replacing file " << path_file << std::endl;
+
 	return true;
 }
 
@@ -139,8 +164,10 @@ int main(int argc, char **argv)
 	std::string target_content = "";
 
 	// Read in calibration results and target file
-	readFileContent(calibration_path, calibration_file, calib_content);
-	readFileContent(target_path, target_file, target_content);
+	if ( !readFileContent(calibration_path, calibration_file, calib_content) )
+		return -1;
+	if ( !readFileContent(target_path, target_file, target_content) )
+		return -1;
 
 	// Retrieve values from calibration result and store them
 	std::vector<double> calib_data(parameters.size());
@@ -170,7 +197,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	writeFileContent(target_path, target_file, target_content);
+	if ( !writeFileContent(target_path, target_file, target_content) )
+		return -2;
 
 	return 0;
 }
