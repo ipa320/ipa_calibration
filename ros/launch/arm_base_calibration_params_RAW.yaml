@@ -174,9 +174,13 @@ camera_joint_controller_command: "/torso/joint_group_position_controller/command
 # string
 arm_joint_controller_command: "/arm/joint_trajectory_controller/command"
 
+# joint states topic for camera unit
+# string
+camera_joint_state_topic: "/joint_states"
+
 # Topic to retrieve the current arm state
 # string
-arm_state_command: "/arm/joint_states"
+arm_state_topic: "/arm/joint_states"
 
 # storage folder that holds the calibration output
 # string

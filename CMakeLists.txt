@@ -20,7 +20,6 @@ set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is 
 	cv_bridge
 	cob_fiducials
 	cob_object_detection_msgs
-	dynamixel_msgs
 	geometry_msgs
 	image_transport
 	roscpp

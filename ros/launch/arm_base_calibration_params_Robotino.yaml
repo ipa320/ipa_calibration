@@ -29,6 +29,9 @@ arm_configurations: []
 # includes <camera_dof> parameters per entry.
 camera_configurations: []
 
+# Image topic
+# string
+camera_image_topic: "/kinect/rgb/image_raw"
 
 # the robot base frame [the transformation between laser scanner and base should be accomplished before, the transform from base_frame to armbase_frame will be calibrated by this program]
 # string
@@ -47,41 +50,36 @@ checkerboard_frame: "checkerboard_frame"
 # string
 camera_optical_frame: "kinect_rgb_optical_frame"
 
-# Image topic
-# string
-camera_image_topic: "/kinect/rgb/image_raw"
 
-# topic names for commanding the pan tilt unit
+### commands needed to move the robot and camera
+## topic names for commanding the pan tilt unit
 # string
 # pan controller
-pan_controller_command: "/pan_tilt_controller/pan_joint_position_controller/command"
+pan_controller_command: "/neck_pan_controller/joint_group_position_controller/command"
 
 # tilt controller
-tilt_controller_command: "/pan_tilt_controller/tilt_joint_position_controller/command"
+tilt_controller_command: "/neck_tilt_controller/joint_group_position_controller/command"
 
-# Topic to control the arm joints.
+# topic to control the arm joints
 # string
 arm_joint_controller_command: "/arm_controller/joint_trajectory_controller/command"
 
-# pan state
+## topic names for reading the joint state of the pan tilt unit
+# joint states topic for camera unit
 # string
-pan_joint_state_topic: "/pan_controller/state"
+camera_joint_state_topic: "/joint_states"
 
-# tilt state
+# name of the pan joint in camera_joint_state_topic
 # string
-tilt_joint_state_topic: "/tilt_controller/state"
+pan_joint_name: "neck_pan_joint"
 
-pan, tilt states
+# name of the pan joint in camera_joint_state_topic
 # string
-pan_tilt_states_topic: "/pan_tilt_controller/joint_states"
+tilt_joint_name: "neck_tilt_joint"
 
 # Topic to retrieve the current arm state
 # string
-arm_state_command: "/arm_controller/joint_states"
-
-# storage folder that holds the calibration output
-# string
-calibration_storage_path: "~/.ros/robotino_calibration/calibration"
+arm_state_topic: "/arm_controller/joint_states"
 
 
 ### program sequence
@@ -96,3 +94,7 @@ max_angle_deviation: 3
 # calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW
 # int
 calibration_ID: 0
+
+# storage folder that holds the calibration output
+# string
+calibration_storage_path: "~/.ros/robotino_calibration/calibration"

@@ -153,50 +153,12 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 			std::cout << temp[5*i] << "\t" << temp[5*i+1] << "\t" << temp[5*i+2] << "\t" << temp[5*i+3] << "\t" << temp[5*i+4] << std::endl;
 		}
 	}
-
-	// topics
-	//tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
-	//pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
-	//base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
-
 	std::cout << "CameraBaseCalibrationMarker: init done." << std::endl;
 }
 
 CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 {
-	//if (pan_tilt_joint_state_current_!=0)
-		//delete pan_tilt_joint_state_current_;
-	//if (pan_joint_state_current_!=0)
-	//	delete pan_joint_state_current_;
-	//if (tilt_joint_state_current_!=0)
-	//	delete tilt_joint_state_current_;
 }
-
-// old style controller
-/*void CameraBaseCalibrationMarker::panTiltJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
-{
-	ROS_INFO("Old style controller state received.");
-	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
-	pan_joint_state_current_ = new double;
-	*pan_joint_state_current_ = msg->position[0];
-	tilt_joint_state_current_ = new double;
-	*tilt_joint_state_current_ = msg->position[1];
-}*/
-
-// new controller. moved to calibration interface
-/*void CameraBaseCalibrationMarker::panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
-{
-	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
-	pan_joint_state_current_ = new double;
-	*pan_joint_state_current_ = msg->current_pos;
-}
-
-void CameraBaseCalibrationMarker::tiltJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg)
-{
-	boost::mutex::scoped_lock lock(pan_tilt_joint_state_data_mutex_);
-	tilt_joint_state_current_ = new double;
-	*tilt_joint_state_current_ = msg->current_pos;
-}*/
 
 bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotConfiguration& robot_configuration)
 {
@@ -208,6 +170,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	// move pan-tilt unit
 	std_msgs::Float64MultiArray angles;
 	
+	// to do: make the number of camera angles in robot_configuration variable, i.e. std::vector<double> camera_joints; instead of pan_angle/tilt_angle
 	angles.data.resize(2);
 	angles.data[0] = robot_configuration.pan_angle_;
 	angles.data[1] = robot_configuration.tilt_angle_;
@@ -251,7 +214,6 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
 			tw.angular.z = std::min(0.05, k_phi*error_phi);
-			//base_controller_.publish(tw);
 			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
 		}
@@ -270,7 +232,6 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 //			std::cout << "error_y: " << error_y << std::endl;
 			tw.linear.x = std::min(0.05, k_base*error_x);
 			tw.linear.y = std::min(0.05, k_base*error_y);
-			//base_controller_.publish(tw);
 			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
 		}
@@ -291,7 +252,6 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
 			tw.angular.z = std::min(0.05, k_phi*error_phi);
-			//base_controller_.publish(tw);
 			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
 		}
@@ -301,7 +261,6 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		tw.linear.x = 0;
 		tw.linear.y = 0;
 		tw.angular.z = 0;
-		//base_controller_.publish(tw);
 		calibration_interface_->assignNewRobotVelocity(tw);
 	}
 	

@@ -52,7 +52,6 @@
 #define ROBOTINO_INTERFACE_H_
 
 #include <robotino_calibration/calibration_interface.h>
-#include <dynamixel_msgs/JointState.h>
 #include <sensor_msgs/JointState.h>
 #include <boost/thread/mutex.hpp>
 
@@ -61,44 +60,40 @@ class RobotinoInterface : public CalibrationInterface
 protected:
 	ros::Publisher arm_joint_controller_;
 	std::string arm_joint_controller_command_;
-	ros::Subscriber pan_state_;
-	ros::Subscriber tilt_state_;
-	ros::Publisher tilt_controller_;
 	ros::Publisher pan_controller_;
-	std::string tilt_controller_command_;
 	std::string pan_controller_command_;
-	std::string base_controller_topic_name_;
+	ros::Publisher tilt_controller_;
+	std::string tilt_controller_command_;
 	ros::Publisher base_controller_;
+	std::string base_controller_topic_name_;
 
-	//double pan_joint_state_current_;
-	//double tilt_joint_state_current_;
+	ros::Subscriber camera_joint_state_sub_;
+	std::string camera_joint_state_topic_;			// topic name of the topic which contains current camera joint states
 	std::vector<double> camera_state_current_;
-	boost::mutex pan_joint_state_data_mutex_;	// secures read operations on pan joint state data
-	boost::mutex tilt_joint_state_data_mutex_;	// secures read operations on tilt joint state data
-	std::string tilt_joint_state_topic_;
-	std::string pan_joint_state_topic_;
+	boost::mutex camera_joint_state_data_mutex_;	// secures read operations on camera joint state data
+	std::string pan_joint_name_;			// name of the pan joint in array of tilt_joint_states_topic_ topic
+	std::string tilt_joint_name_;			// name of the tilt joint in array of tilt_joint_states_topic_ topic
 
-	std::string arm_state_command_;
 	ros::Subscriber arm_state_;
+	std::string arm_state_topic_;
 	sensor_msgs::JointState* arm_state_current_;
 	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
 
 public:
-	RobotinoInterface(ros::NodeHandle nh, bool bArmCalibration);
+	RobotinoInterface(ros::NodeHandle nh, bool do_arm_calibration);
 	~RobotinoInterface();
 
 	// camera calibration interface
-	void assignNewRobotVelocity(geometry_msgs::Twist newVelocity);
-	void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles);
+	void assignNewRobotVelocity(geometry_msgs::Twist new_velocity);
+	void assignNewCameraAngles(std_msgs::Float64MultiArray new_angles);
 	std::vector<double>* getCurrentCameraState();
 
 	// callbacks
-	void panJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg);
-	void tiltJointStateCallback(const dynamixel_msgs::JointState::ConstPtr& msg);
+	void cameraJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 	void armStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
 	// arm calibration interface
-	void assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig);
+	void assignNewArmJoints(std_msgs::Float64MultiArray new_joint_config);
 	std::vector<double>* getCurrentArmState();
 };
 

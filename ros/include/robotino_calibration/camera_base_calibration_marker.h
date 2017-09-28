@@ -56,9 +56,8 @@
 
 #include <tf/transform_listener.h>
 #include <sensor_msgs/Image.h>
-//#include <sensor_msgs/JointState.h>  //deprecated
-//#include <dynamixel_msgs/JointState.h>
-//#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64MultiArray.h>
+#include <geometry_msgs/Twist.h>
 
 // image transport
 #include <image_transport/image_transport.h>

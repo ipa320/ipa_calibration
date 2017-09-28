@@ -71,22 +71,22 @@ protected:
 	boost::mutex pan_tilt_joint_state_data_mutex_;	// secures read operations on pan tilt joint state data
 	std::string joint_state_topic_;
 
-	std::string camera_state_command_;
+	std::string camera_joint_state_topic_;
 	ros::Subscriber camera_state_;
 
-	std::string arm_state_command_;
+	std::string arm_state_topic_;
 	ros::Subscriber arm_state_;
 	sensor_msgs::JointState* arm_state_current_;
 	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
 
 
 public:
-	RAWInterface(ros::NodeHandle nh, bool bArmCalibration);
+	RAWInterface(ros::NodeHandle nh, bool do_arm_calibration);
 	~RAWInterface();
 
 	// camera calibration interface
-	void assignNewRobotVelocity(geometry_msgs::Twist newVelocity);
-	void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles);
+	void assignNewRobotVelocity(geometry_msgs::Twist new_velocity);
+	void assignNewCameraAngles(std_msgs::Float64MultiArray new_angles);
 	std::vector<double>* getCurrentCameraState();
 
 	// callbacks
@@ -94,7 +94,7 @@ public:
 	void armStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
 	// arm calibration interface
-	void assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig);
+	void assignNewArmJoints(std_msgs::Float64MultiArray new_joint_config);
 	std::vector<double>* getCurrentArmState();
 };
 

@@ -59,7 +59,7 @@
 #include <tf/exceptions.h>
 
 
-RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
+RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) :
 		node_handle_(nh), transform_listener_(nh), calibrated_(false)
 {
 	// load parameters
@@ -71,10 +71,10 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 	node_handle_.param("calibration_ID", calibration_ID_, 0);
 	std::cout << "calibration_ID: " << calibration_ID_ << std::endl;
 
-	calibration_interface_ = CalibrationInterface::createInterfaceByID(calibration_ID_,node_handle_,bArmCalibration);
+	calibration_interface_ = CalibrationInterface::createInterfaceByID(calibration_ID_, node_handle_, do_arm_calibration);
 	createStorageFolder();
 
-	if ( calibration_interface_ == 0 ) // Throw exception, as we need an calibration interface in order to function properly!
+	if (calibration_interface_ == 0) // Throw exception, as we need an calibration interface in order to function properly!
 	{
 		ROS_FATAL("Could not create a calibration interface for calibration_ID: %d", calibration_ID_);
 		throw std::exception();
@@ -82,7 +82,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 
 	// Check whether relative_localization has initialized the reference frame yet.
 	// Do not let the robot start driving when the reference frame has not been set up properly! Bad things could happen!
-	if ( !bArmCalibration ) //During arm calibration the robot does not drive and there is no child frame available.
+	if (do_arm_calibration==false) //During arm calibration the robot does not drive and there is no child frame available.
 	{
 		node_handle_.param<std::string>("child_frame_name", child_frame_name_, "/landmark_reference_nav");
 		std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
@@ -92,9 +92,8 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool bArmCalibration) :
 		{
 			try
 			{
-				bool bResult = transform_listener_.waitForTransform(base_frame_, child_frame_name_, ros::Time::now(), ros::Duration(1.f));
-
-				if ( bResult ) // Everything is fine, return
+				bool result = transform_listener_.waitForTransform(base_frame_, child_frame_name_, ros::Time::now(), ros::Duration(1.f));
+				if (result) // Everything is fine, return
 					return;
 			}
 			catch (tf::TransformException& ex)
