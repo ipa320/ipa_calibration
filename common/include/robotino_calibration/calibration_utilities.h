@@ -63,7 +63,7 @@ namespace calibration_utilities
 		double pose_x_;
 		double pose_y_;
 		double pose_phi_;
-		double pan_angle_;
+		double pan_angle_;	// todo: make it more general with a vector of angles or similar
 		double tilt_angle_;
 
 		RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle);
