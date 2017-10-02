@@ -58,9 +58,9 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool do_arm_calibration
 	std::cout << "\n========== RobotinoInterface Parameters ==========\n";
 
 	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
-	node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/neck_pan_controller/joint_group_position_controller/command");
+	node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "/shell_controller/neck_pan_controller/command");
 	std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
-	node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/neck_tilt_controller/joint_group_position_controller/command");
+	node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "/shell_controller/neck_tilt_controller/command");
 	std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
 	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);

@@ -90,10 +90,10 @@ child_frame_name: "/landmark_reference_nav"
 ## topic names for commanding the pan tilt unit
 # string
 # pan controller
-pan_controller_command: "/neck_pan_controller/joint_group_position_controller/command"
+pan_controller_command: "/shell_controller/neck_pan_controller/command"
 
 # tilt controller
-tilt_controller_command: "/neck_tilt_controller/joint_group_position_controller/command"
+tilt_controller_command: "/shell_controller/neck_tilt_controller/command"
 
 ## topic names for reading the joint state of the pan tilt unit
 # joint states topic for camera unit
