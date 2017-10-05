@@ -1,10 +1,12 @@
 ### initial values for transformation estimates
 # insert the values as x, y, z, yaw (rot around z), pitch (rot around y), roll (rot around x)
 # the transform from base_frame to torso_lower_frame
-T_base_to_torso_lower_initial: [0.26, 0, 0.65, 0.0, 0.0, 0.0]
+#T_base_to_torso_lower_initial: [0.26, 0, 0.65, 0.0, 0.0, 0.0]
+T_base_to_torso_lower_initial: [0.0, 0, 0.0, 0.0, 0.0, 0.0]
 
 # the transform from torso_upper_frame to camera_frame
-T_torso_upper_to_camera_initial: [0.015, 0.065, 0.0, 0.0, 0.0, -1.57]
+#T_torso_upper_to_camera_initial: [0.015, 0.065, 0.0, 0.0, 0.0, -1.57]
+T_torso_upper_to_camera_initial: [0.0, 0.0, 0.0, 0.0, 0.0, -1.57]
 
 
 ### Observation positions for capturing calibration images of the pitags
@@ -15,11 +17,11 @@ use_range: true
 # ranges for the degrees of freedom of the robot
 # each parameter is set as [min_value, step, max_value]
 # double
-x_range: [-1.5, 0.4, -0.7]       # in [m]
+x_range: [-1.25, 0.25, -0.5]       # in [m]
 y_range: [-1.0, 0.2, -0.6]       # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
-pan_range: [-0.3, 0.1, 1.3]     # in [rad]
-tilt_range: [-0.3, 0.1, 1.5]    # in [rad]
+pan_range: [-1.2, 0.1, 0.3]     # in [rad]
+tilt_range: [-0.9, 0.1, 0.2]    # in [rad]
 #pan_range: [-0.52, 0.02, 0.52]     # in [rad]
 #tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
 
@@ -129,4 +131,4 @@ calibration_ID: 0
 
 # storage folder that holds the calibration output
 # string
-calibration_storage_path: "~/.ros/robotino_calibration/calibration"
+calibration_storage_path: "robotino_calibration/calibration"

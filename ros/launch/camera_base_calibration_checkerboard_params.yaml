@@ -140,4 +140,4 @@ calibration_ID: 0
 
 # storage folder that holds the calibration output
 # string
-calibration_storage_path: "~/.ros/robotino_calibration/calibration"
+calibration_storage_path: "robotino_calibration/calibration"

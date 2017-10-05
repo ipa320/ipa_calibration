@@ -372,15 +372,15 @@ void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult(const cv::Mat&
 	std::stringstream output;
 	output << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
 	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T_base_to_torso_lower_);
-	output << "  <!-- pan_tilt mount positions | handeye calibration | relative to base_link -->\n"
-			  << "  <property name=\"pan_tilt_x\" value=\"" << T_base_to_torso_lower_.at<double>(0,3) << "\"/>\n"
-			  << "  <property name=\"pan_tilt_y\" value=\"" << T_base_to_torso_lower_.at<double>(1,3) << "\"/>\n"
-			  << "  <property name=\"pan_tilt_z\" value=\"" << T_base_to_torso_lower_.at<double>(2,3) << "\"/>\n"
-			  << "  <property name=\"pan_tilt_roll\" value=\"" << ypr.val[2] << "\"/>\n"
-			  << "  <property name=\"pan_tilt_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
-			  << "  <property name=\"pan_tilt_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
+	output << "  <!-- base_neck_link mount positions | camera base calibration | relative to base_link -->\n"
+			  << "  <property name=\"shell_x\" value=\"" << T_base_to_torso_lower_.at<double>(0,3) << "\"/>\n"
+			  << "  <property name=\"shell_y\" value=\"" << T_base_to_torso_lower_.at<double>(1,3) << "\"/>\n"
+			  << "  <property name=\"shell_z\" value=\"" << T_base_to_torso_lower_.at<double>(2,3) << "\"/>\n"
+			  << "  <property name=\"shell_roll\" value=\"" << ypr.val[2] << "\"/>\n"
+			  << "  <property name=\"shell_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
+			  << "  <property name=\"shell_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
 	ypr = transform_utilities::YPRFromRotationMatrix(T_torso_upper_to_camera_);
-	output << "  <!-- kinect mount positions | handeye calibration | relative to pan_tilt_link -->\n"
+	output << "  <!-- kinect mount positions | camera base calibration | relative to neck_tilt_link -->\n"
 			  << "  <property name=\"kinect_x\" value=\"" << T_torso_upper_to_camera_.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"kinect_y\" value=\"" << T_torso_upper_to_camera_.at<double>(1,3) << "\"/>\n"
 			  << "  <property name=\"kinect_z\" value=\"" << T_torso_upper_to_camera_.at<double>(2,3) << "\"/>\n"

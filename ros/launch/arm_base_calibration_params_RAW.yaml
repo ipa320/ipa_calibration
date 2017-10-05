@@ -184,7 +184,7 @@ arm_state_topic: "/arm/joint_states"
 
 # storage folder that holds the calibration output
 # string
-calibration_storage_path: "~/.ros/raw3-1_calibration/calibration"
+calibration_storage_path: "raw3-1_calibration/calibration"
 
 
 ### program sequence
