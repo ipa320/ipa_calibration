@@ -106,12 +106,12 @@ e.g.
 e.g.
  ```
   <!-- base_neck_link mount positions | camera base calibration | relative to base_link -->
-  <property name="shell_x" value="0.308614"/>
-  <property name="shell_y" value="-0.00660354"/>
-  <property name="shell_z" value="0.669155"/>
-  <property name="shell_roll" value="0.0205246"/>
-  <property name="shell_pitch" value="-0.00419423"/>
-  <property name="shell_yaw" value="0.208381"/>
+  <property name="base_neck_x" value="0.308614"/>
+  <property name="base_neck_y" value="-0.00660354"/>
+  <property name="base_neck_z" value="0.669155"/>
+  <property name="base_neck_roll" value="0.0205246"/>
+  <property name="base_neck_pitch" value="-0.00419423"/>
+  <property name="base_neck_yaw" value="0.208381"/>
 
   <!-- kinect mount positions | camera base calibration | relative to neck_tilt_link -->
   <property name="kinect_x" value="0.00633317"/>

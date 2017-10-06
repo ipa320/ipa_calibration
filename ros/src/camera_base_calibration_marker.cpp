@@ -373,12 +373,12 @@ void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult(const cv::Mat&
 	output << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
 	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T_base_to_torso_lower_);
 	output << "  <!-- base_neck_link mount positions | camera base calibration | relative to base_link -->\n"
-			  << "  <property name=\"shell_x\" value=\"" << T_base_to_torso_lower_.at<double>(0,3) << "\"/>\n"
-			  << "  <property name=\"shell_y\" value=\"" << T_base_to_torso_lower_.at<double>(1,3) << "\"/>\n"
-			  << "  <property name=\"shell_z\" value=\"" << T_base_to_torso_lower_.at<double>(2,3) << "\"/>\n"
-			  << "  <property name=\"shell_roll\" value=\"" << ypr.val[2] << "\"/>\n"
-			  << "  <property name=\"shell_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
-			  << "  <property name=\"shell_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
+			  << "  <property name=\"base_neck_x\" value=\"" << T_base_to_torso_lower_.at<double>(0,3) << "\"/>\n"
+			  << "  <property name=\"base_neck_y\" value=\"" << T_base_to_torso_lower_.at<double>(1,3) << "\"/>\n"
+			  << "  <property name=\"base_neck_z\" value=\"" << T_base_to_torso_lower_.at<double>(2,3) << "\"/>\n"
+			  << "  <property name=\"base_neck_roll\" value=\"" << ypr.val[2] << "\"/>\n"
+			  << "  <property name=\"base_neck_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
+			  << "  <property name=\"base_neck_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
 	ypr = transform_utilities::YPRFromRotationMatrix(T_torso_upper_to_camera_);
 	output << "  <!-- kinect mount positions | camera base calibration | relative to neck_tilt_link -->\n"
 			  << "  <property name=\"kinect_x\" value=\"" << T_torso_upper_to_camera_.at<double>(0,3) << "\"/>\n"
