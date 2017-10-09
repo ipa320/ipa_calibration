@@ -67,8 +67,6 @@
 #include <pcl/point_types.h>
 
 // opencv
-//#include <opencv/cv.h>
-//#include <opencv/highgui.h>
 #include <opencv2/opencv.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
