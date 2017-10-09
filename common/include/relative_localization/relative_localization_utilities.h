@@ -61,7 +61,7 @@
 #include <iostream>
 #include <vector>
 
-#include <opencv/cv.h>
+#include <opencv2/opencv.hpp>
 #include <tf/transform_listener.h>
 
 
