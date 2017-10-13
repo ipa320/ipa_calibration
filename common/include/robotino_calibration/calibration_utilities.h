@@ -63,21 +63,12 @@ namespace calibration_utilities
 		double pose_x_;
 		double pose_y_;
 		double pose_phi_;
-		double pan_angle_;	// todo: make it more general with a vector of angles or similar
+		//AngleConfiguration camera_angles_; Not now, leave static camera link count of 2 for robotino
+		double pan_angle_; // todo: make it more general with a vector of angles or similar
 		double tilt_angle_;
 
 		RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle);
 	};
-
-	// struct for the end effector configurations
-	/*struct EndeffectorConfiguration
-	{
-		double pose_x_;
-		double pose_y_;
-		double pose_z_;
-
-		EndeffectorConfiguration(const double pose_x, const double pose_y, const double pose_z);
-	};*/
 
 	struct AngleConfiguration
 	{
@@ -85,14 +76,6 @@ namespace calibration_utilities
 
 		AngleConfiguration(const std::vector<double> angles);
 	};
-
-	/*struct CameraConfiguration
-	{
-		double pan_angle_;
-		double tilt_angle_;
-
-		CameraConfiguration(const double pan_angle, const double tilt_angle);
-	};*/
 
 	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image);
 

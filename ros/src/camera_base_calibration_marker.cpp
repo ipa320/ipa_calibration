@@ -62,6 +62,7 @@
 #include <sstream>
 #include <fstream>
 
+// ToDo: Remove static camera angle link count of 2
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 			RobotCalibration(nh, false), counter(0)

@@ -58,6 +58,16 @@
 class CobInterface : public CalibrationInterface
 {
 protected:
+	std::string arm_left_command_;
+	std::string arm_left_state_topic_;
+	std::string arm_right_command_;
+	std::string arm_right_state_topic_;
+	std::string base_velocity_command_;
+	ros::Subscriber arm_left_state_;
+	ros::Subscriber arm_right_state_;
+	ros::Publisher arm_left_controller_;
+	ros::Publisher arm_right_controller_;
+	ros::Publisher base_velocity_controller_;
 
 public:
 	CobInterface(ros::NodeHandle nh, bool bArmCalibration);
@@ -70,7 +80,8 @@ public:
 
 	// callbacks
 	void cameraStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
-	void armStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+	void armLeftStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+	void armRightStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
 	// arm calibration interface
 	void assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig);
