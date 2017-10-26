@@ -6,5 +6,5 @@
 	<arg name="marker" default="pitag"/>	<!-- checkerboard or pitag -->
 
 	<include file="$(find relative_localization)/ros/launch/$(arg reference)_localization.launch"/>
-	<include file="$(find robotino_calibration)/ros/launch/camera_base_calibration_$(arg marker).launch"/>
+	<include file="$(find robotino_calibration)/ros/launch/camera_base_calibration_$(arg marker)_2.launch"/>
 </launch>
