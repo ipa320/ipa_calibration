@@ -4,7 +4,7 @@
 
 	<include file="$(find robotino_calibration)/ros/launch/pi_tag/fiducials.launch"/>
 
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_robot2camera" output="screen" args="0.0 0.06 0.187 0 0 -1.57079632679 head_base_link ensenso_frame 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_robot2camera" output="screen" args="-0.01957318079 -0.20404139431 0.0 0.0 1.57079632679 0.39269908169 torso_knob_link ensenso_frame 100"/>
 
 	<!-- transform between marker (e.g. tag or checkerboard) coordinate system and landmark_reference coordinate system
 		tag_x: for a PiTag with ID "x" - starts in upper left corner of Pi tag pattern, x goes horizontal to the right, y goes downwards to gravity direction, z goes into the plane

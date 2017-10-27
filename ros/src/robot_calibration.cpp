@@ -92,7 +92,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 		{
 			try
 			{
-				bool result = transform_listener_.waitForTransform(base_frame_, child_frame_name_, ros::Time::now(), ros::Duration(1.f));
+				bool result = transform_listener_.waitForTransform(base_frame_, child_frame_name_, ros::Time(0), ros::Duration(1.f));
 				if (result) // Everything is fine, return
 					return;
 			}
