@@ -3,7 +3,8 @@
 
   <!-- topic identifying the rgb source -->
   <!-- arg name="rgb_topic" default="/cam3d/rgb/" /-->
-  <arg name="rgb_topic" default="/kinect/rgb/" />
+  <!-- <arg name="rgb_topic" default="/kinect/rgb/" /> Robotino -->
+  <arg name="rgb_topic" default="/camera/color_image" /> <!-- RAW3-1 -->
   <!--arg name="rgb_topic" default="/stereo/left/" /-->
   <!--arg name="rgb_topic" default="/stereo/right/" /-->
   <arg name="yaml_file" default="fiducials_0.yaml" />
@@ -16,8 +17,10 @@
   <node pkg="cob_fiducials" ns="fiducials" type="fiducials" name="fiducials" output="screen">
         <!--launch-prefix="/usr/bin/gdb"-->
         <!--<remap from="image_color" to="$(arg rgb_topic)/image_rect_color"/>-->
-        <remap from="image_color" to="$(arg rgb_topic)/image_raw"/>
-        <remap from="camera_info" to="$(arg rgb_topic)/camera_info"/>
+        <!-- <remap from="image_color" to="$(arg rgb_topic)/image_raw"/> Robotino -->
+	<remap from="image_color" to="$(arg rgb_topic)"/> <!-- RAW3-1 -->
+        <!-- <remap from="camera_info" to="$(arg rgb_topic)/camera_info"/> Robotino -->
+	<remap from="camera_info" to="/camera/depth_registered/camera_info"/> <!-- RAW3-1 -->
         
         <remap from="detect_fiducials" to="/fiducials/detect_fiducials"/>
         <remap from="fiducial_markers" to="/fiducials/fiducial_markers"/>
