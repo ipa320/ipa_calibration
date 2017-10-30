@@ -15,9 +15,9 @@ use_range: true
 # ranges for the degrees of freedom of the robot
 # each parameter is set as [min_value, step, max_value]
 # double
-x_range: [-1.7, 0.1, -1.5]       # in [m]
-y_range: [1.2, 0.1, 1.2]       # in [m], fixed y-coordinate
-phi_range: [0, 0.1, 0]         # in [rad], fixed phi-angle
+x_range: [-2.0, 0.2, -1.8]       # in [m]
+y_range: [1.0, 0.4, 1.4]       # in [m], fixed y-coordinate
+phi_range: [0, 1.0, 0]         # in [rad], fixed phi-angle
 pan_range: [-2.4, 0.2, -1.6]     # in [rad]
 tilt_range: [0.4, 0.2, 0.8]    # in [rad]
 
@@ -65,10 +65,10 @@ robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
 torso_lower_frame: "torso_0_link"
 
 # last link of torso chain [the transformations between torso_lower_frame and torso_upper_frame should be available from tf]
-torso_upper_frame: "torso_base_link"
+torso_upper_frame: "torso_knob_link" #"torso_base_link"
 
 # camera frame with fixed transform to torso_upper_frame [transform from torso_upper_frame to camera will be calibrated by this program]
-camera_frame: "torso_knob_link"
+camera_frame: "ensenso_frame" #"torso_knob_link"
 
 # this is the camera coordinate system which refers to the color image sensor [the transformations between camera_frame and camera_optical_frame should be available from tf]
 camera_optical_frame: "ensenso_frame"

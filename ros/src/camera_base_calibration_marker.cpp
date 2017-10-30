@@ -65,6 +65,7 @@
 // ToDo: Remove static camera angle link count of 2
 // ToDo: Pan_Range and Tilt_Range needs to be stored in one 3*X vector (X number of camera links and 3: min, step, end)
 // ToDo: displayAndSaveCalibrationResult, alter behaviour so that it prints custom strings instead of hardcoded ones.
+// ToDo: Stop robot immediately if reference frame gets lost!!!!
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 			RobotCalibration(nh, false), counter(0)
@@ -205,7 +206,11 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		while(true)
 		{
 			if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
+			{
+				turnOffBaseMotion();
 				return false;
+			}
+
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 			double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
@@ -221,11 +226,17 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 			ros::Rate(20).sleep();
 		}
 
+		turnOffBaseMotion();
+
 		// control position
 		while(true)
 		{
 			if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
+			{
+				turnOffBaseMotion();
 				return false;
+			}
+
 			geometry_msgs::Twist tw;
 			error_x = robot_configuration.pose_x_ - T.at<double>(0,3);
 			error_y = robot_configuration.pose_y_ - T.at<double>(1,3);
@@ -239,11 +250,17 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 			ros::Rate(20).sleep();
 		}
 
+		turnOffBaseMotion();
+
 		// control robot angle
 		while (true)
 		{
 			if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
+			{
+				turnOffBaseMotion();
 				return false;
+			}
+
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 				double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
@@ -260,11 +277,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		}
 
 		// turn off robot motion
-		geometry_msgs::Twist tw;
-		tw.linear.x = 0;
-		tw.linear.y = 0;
-		tw.angular.z = 0;
-		calibration_interface_->assignNewRobotVelocity(tw);
+		turnOffBaseMotion();
 	}
 	
 	// wait for pan tilt to arrive at goal position
@@ -304,6 +317,15 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	//ros::Duration(1).sleep();
 
 	return true;
+}
+
+void CameraBaseCalibrationMarker::turnOffBaseMotion()
+{
+	geometry_msgs::Twist tw;
+	tw.linear.x = 0;
+	tw.linear.y = 0;
+	tw.angular.z = 0;
+	calibration_interface_->assignNewRobotVelocity(tw);
 }
 
 void CameraBaseCalibrationMarker::extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,

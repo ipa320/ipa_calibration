@@ -185,6 +185,8 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 		if ( !ros::ok() )
 			return false;
 
+		std::cout << "Configuration " << image_counter << "/" << number_images_to_capture << std::endl;
+
 		if (!load_images)
 			moveRobot(robot_configurations[image_counter]);
 

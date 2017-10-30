@@ -133,10 +133,9 @@ void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray new_angles)
 	control_msgs::FollowJointTrajectoryGoal camGoal;
 
 	ac.waitForServer();
-
-	jointTraj.joint_names = {"torso_pan_joint", "torso_tilt_joint"};
+	jointTraj.joint_names = {"torso_bottom_joint", "torso_side_joint"};
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), new_angles.data.begin(), new_angles.data.end());
-	jointTrajPoint.time_from_start = ros::Duration(1);
+	jointTrajPoint.time_from_start = ros::Duration(2);
 	jointTrajPoint.velocities = {0,0}; //Initialize velocities to zero, does not work with empty list
 	jointTrajPoint.accelerations = {0,0};
 	jointTraj.points.push_back(jointTrajPoint);

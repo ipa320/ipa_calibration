@@ -103,6 +103,9 @@ protected:
 	// moves the robot to a desired location and adjusts the torso joints
 	bool moveRobot(const calibration_utilities::RobotConfiguration& robot_configuration);
 
+	// Turn off base movement
+	void turnOffBaseMotion();
+
 	void extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 			std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 			std::vector<cv::Mat>& T_camera_to_checkerboard_vector);
