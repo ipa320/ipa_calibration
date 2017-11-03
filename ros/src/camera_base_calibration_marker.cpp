@@ -65,10 +65,10 @@
 // ToDo: Remove static camera angle link count of 2
 // ToDo: Pan_Range and Tilt_Range needs to be stored in one 3*X vector (X number of camera links and 3: min, step, end)
 // ToDo: displayAndSaveCalibrationResult, alter behaviour so that it prints custom strings instead of hardcoded ones.
-// ToDo: Stop robot immediately if reference frame gets lost!!!!
+// ToDo: Stop robot immediately if reference frame gets lost or jumps around!!!! [Done]
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
-			RobotCalibration(nh, false), counter(0)
+			RobotCalibration(nh, false), counter(0), RefHistoryIndex_(0)
 {
 	// load parameters
 	std::cout << "\n========== CameraBaseCalibrationMarker Parameters ==========\n";
@@ -83,6 +83,8 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
 	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
 	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
+	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "/landmark_reference_nav");
+	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
 
 	// initial parameters
 	T_base_to_torso_lower_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
@@ -157,11 +159,73 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 			std::cout << temp[5*i] << "\t" << temp[5*i+1] << "\t" << temp[5*i+2] << "\t" << temp[5*i+3] << "\t" << temp[5*i+4] << std::endl;
 		}
 	}
+
+	// Check whether relative_localization has initialized the reference frame yet.
+	// Do not let the robot start driving when the reference frame has not been set up properly! Bad things could happen!
+	Timer timeout;
+	bool result = false;
+
+	while ( timeout.getElapsedTimeInSec() < 10.f )
+	{
+		try
+		{
+			result = transform_listener_.waitForTransform(base_frame_, child_frame_name_, ros::Time(0), ros::Duration(1.f));
+			if (result) // Everything is fine, exit loop
+			{
+				cv::Mat T;
+				transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T);
+
+				for ( int i=0; i<RefFrameHistorySize; ++i ) // Initialize history array
+				{
+					RefFrameHistory_[i] = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3); // Squared norm is suffice here, no need to take root.
+				}
+				break;
+			}
+		}
+		catch (tf::TransformException& ex)
+		{
+			ROS_WARN("%s", ex.what());
+			// Continue with loop and try again
+		}
+
+		ros::Duration(0.1f).sleep(); //Wait for child_frame transform to register properly
+	}
+
+	//Failed to set up child frame, exit
+	if ( !result )
+	{
+		ROS_FATAL("RobotCalibration::RobotCalibration: Reference frame has not been set up for 10 seconds.");
+		throw std::exception();
+	}
+
 	std::cout << "CameraBaseCalibrationMarker: init done." << std::endl;
 }
 
 CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 {
+}
+
+bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T) // Safety measure, to avoid undetermined motion
+{
+	if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
+		return false;
+
+	double currentSqNorm = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3);
+
+	double average = 0.0;
+	for ( int i=0; i<RefFrameHistorySize; ++i )
+		average += RefFrameHistory_[i];
+	average /= RefFrameHistorySize;
+
+	RefFrameHistory_[ RefHistoryIndex_ < RefFrameHistorySize-1 ? RefHistoryIndex_++ : (RefHistoryIndex_ = 0) ] = currentSqNorm; // Update with new measurement
+
+	if ( average == 0.0 || abs(1.0 - (currentSqNorm/average)) > 0.15  ) // Up to 15% deviation to average is allowed.
+	{
+		ROS_WARN("Reference frame can't be detected reliably. It's current deviation to average to too great.");
+		return false;
+	}
+
+	return true;
 }
 
 bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotConfiguration& robot_configuration)
@@ -185,9 +249,12 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	double error_phi = 10;
 	double error_x = 10;
 	double error_y = 10;
+
 	cv::Mat T;
-	if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
+
+	if (!isReferenceFrameValid(T))
 		return false;
+
 	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 	double robot_yaw = ypr.val[0];
 	geometry_msgs::Twist tw;
@@ -205,7 +272,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		// control robot angle
 		while(true)
 		{
-			if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
+			if (!isReferenceFrameValid(T))
 			{
 				turnOffBaseMotion();
 				return false;
@@ -231,7 +298,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		// control position
 		while(true)
 		{
-			if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
+			if (!isReferenceFrameValid(T))
 			{
 				turnOffBaseMotion();
 				return false;
@@ -255,14 +322,14 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		// control robot angle
 		while (true)
 		{
-			if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
+			if (!isReferenceFrameValid(T))
 			{
 				turnOffBaseMotion();
 				return false;
 			}
 
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
-				double robot_yaw = ypr.val[0];
+			double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
 			error_phi = robot_configuration.pose_phi_ - robot_yaw;
 			while (error_phi < -CV_PI*0.5)

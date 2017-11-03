@@ -80,6 +80,8 @@
 #include <robotino_calibration/timer.h>
 #include <robotino_calibration/robot_calibration.h>
 
+#define RefFrameHistorySize 10
+
 
 class CameraBaseCalibrationMarker : public RobotCalibration
 {
@@ -106,6 +108,8 @@ protected:
 	// Turn off base movement
 	void turnOffBaseMotion();
 
+	bool isReferenceFrameValid(cv::Mat &T); // Returns wether reference frame is valid -> if so, it is save to move the robot base, otherwise stop!
+
 	void extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
 			std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 			std::vector<cv::Mat>& T_camera_to_checkerboard_vector);
@@ -126,6 +130,8 @@ protected:
 	cv::Mat T_torso_upper_to_camera_;		// transformation to estimate from torso_upper to camera
 
 	std::vector<calibration_utilities::RobotConfiguration> robot_configurations_;  // wished robot configurations used for calibration
+	double RefFrameHistory_[RefFrameHistorySize]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <RefFrameHistorySize> measurements.
+	int RefHistoryIndex_; // Current index of history building
 };
 
 
