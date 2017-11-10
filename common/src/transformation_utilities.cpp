@@ -56,6 +56,9 @@
 //Exception
 #include <tf/exceptions.h>
 
+#include <string>
+#include <ros/ros.h>
+
 namespace transform_utilities
 {
 	// compute rotation matrix from yaw, pitch, roll
@@ -98,6 +101,40 @@ namespace transform_utilities
 				R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
 				0., 0., 0., 1);
 		return T;
+	}
+
+	// Takes a string like "1,1,1,1,1,1" and creates a 4x4 transformation matrix out of it.
+	bool stringToTransform(std::string values, cv::Mat& trafo)
+	{
+		const std::string delimiter = ",";
+		size_t npos = 0, opos = 0;
+		std::vector<double> nums;
+
+		trafo.release();
+
+		while ( (npos = values.find(delimiter)) != std::string::npos )
+		{
+			double temp = std::stod(values.substr(opos, npos));
+			nums.push_back(temp);
+		}
+
+		if ( nums.size() == 6 )
+		{
+			trafo = makeTransform( rotationMatrixFromYPR(nums[3], nums[4], nums[5]), cv::Mat(cv::Vec3d(nums[0], nums[1], nums[2])));
+			return true;
+		}
+		else
+		{
+			ROS_WARN("String does not contain enough values for a transformation (6 needed).");
+
+			trafo = ( cv::Mat_<double>(4,4) <<
+							0., 0., 0., 0.,
+							0., 0., 0., 0.,
+							0., 0., 0., 0.,
+							0., 0., 0., 0.);
+
+			return false;
+		}
 	}
 
 	// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)

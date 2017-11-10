@@ -80,7 +80,7 @@
 #include <robotino_calibration/timer.h>
 #include <robotino_calibration/robot_calibration.h>
 
-#define RefFrameHistorySize 10
+#define RefFrameHistorySize 10 // 10 entries used to build the average upon
 
 
 class CameraBaseCalibrationMarker : public RobotCalibration

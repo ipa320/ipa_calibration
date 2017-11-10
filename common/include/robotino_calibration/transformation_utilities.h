@@ -71,6 +71,8 @@ namespace transform_utilities
 
 	cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
 
+	bool stringToTransform(const std::string& values, cv::Mat& trafo); // Takes a string like "1,1,1,1,1,1" and creates a 4x4 transformation matrix out of it.
+
 	// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
 	bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T);
 

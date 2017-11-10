@@ -64,7 +64,7 @@
 
 // ToDo: Remove static camera angle link count of 2
 // ToDo: Pan_Range and Tilt_Range needs to be stored in one 3*X vector (X number of camera links and 3: min, step, end)
-// ToDo: displayAndSaveCalibrationResult, alter behaviour so that it prints custom strings instead of hardcoded ones.
+// ToDo: displayAndSaveCalibrationResult, alter behaviour so that it prints custom strings instead of hardcoded ones. [Done]
 // ToDo: Stop robot immediately if reference frame gets lost or jumps around!!!! [Done]
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
@@ -485,16 +485,16 @@ void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult(const std::vec
 	output << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
 	for ( int i=0; i<calibratedTransforms.size(); ++i )
 	{
-		cv::Mat transform = calibratedTransforms.at(i);
+		cv::Mat transform = calibratedTransforms[i];
 		cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(transform);
 
-			output << "  <!-- " << parameter_names.at(i) <<" mount positions | camera base calibration | relative to base_link -->\n"
-					<< "  <property name=\"" << parameter_names.at(i) << "_x\" value=\"" << transform.at<double>(0,3) << "\"/>\n"
-					<< "  <property name=\"" << parameter_names.at(i) << "_y\" value=\"" << transform.at<double>(1,3) << "\"/>\n"
-					<< "  <property name=\"" << parameter_names.at(i) << "_z\" value=\"" << transform.at<double>(2,3) << "\"/>\n"
-					<< "  <property name=\"" << parameter_names.at(i) << "_roll\" value=\"" << ypr.val[2] << "\"/>\n"
-					<< "  <property name=\"" << parameter_names.at(i) << "_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
-					<< "  <property name=\"" << parameter_names.at(i) << "_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
+			output << "  <!-- " << parameter_names[i] <<" mount positions | camera base calibration | relative to base_link -->\n"
+					<< "  <property name=\"" << parameter_names[i] << "_x\" value=\"" << transform.at<double>(0,3) << "\"/>\n"
+					<< "  <property name=\"" << parameter_names[i] << "_y\" value=\"" << transform.at<double>(1,3) << "\"/>\n"
+					<< "  <property name=\"" << parameter_names[i] << "_z\" value=\"" << transform.at<double>(2,3) << "\"/>\n"
+					<< "  <property name=\"" << parameter_names[i] << "_roll\" value=\"" << ypr.val[2] << "\"/>\n"
+					<< "  <property name=\"" << parameter_names[i] << "_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
+					<< "  <property name=\"" << parameter_names[i] << "_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
 	}
 	/*ypr = transform_utilities::YPRFromRotationMatrix(T_torso_upper_to_camera_);
 	output << "  <!-- kinect mount positions | camera base calibration | relative to neck_tilt_link -->\n"
