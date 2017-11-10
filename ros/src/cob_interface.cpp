@@ -91,6 +91,11 @@ CobInterface::~CobInterface()
 {
 }
 
+void CobInterface::getParameterNames(std::vector<std::string> parameter_names)
+{
+
+}
+
 // Callbacks
 void CobInterface::cameraStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {

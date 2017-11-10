@@ -99,6 +99,14 @@ RAWInterface::~RAWInterface()
 }
 
 
+// General functions
+// ToDo: Remove this function later on, because these names can be retrieved from the yaml file directly.
+void RAWInterface::getParameterNames(std::vector<std::string> parameter_names)
+{
+	parameter_names.push_back("torso_0_link");
+	parameter_names.push_back("torso_knob_link");
+}
+
 // CAMERA CALIBRATION INTERFACE
 
 //Callbacks - User defined

@@ -164,7 +164,10 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	}
 
 	// display calibration parameters
-	displayAndSaveCalibrationResult(T_base_to_torso_lower_, T_torso_upper_to_camera_);
+	std::vector<cv::Mat> calibrated_Transforms;
+	calibrated_Transforms.push_back(T_base_to_torso_lower_);
+	calibrated_Transforms.push_back(T_torso_upper_to_camera_);
+	displayAndSaveCalibrationResult(calibrated_Transforms);
 
 	// save calibration
 	saveCalibration();

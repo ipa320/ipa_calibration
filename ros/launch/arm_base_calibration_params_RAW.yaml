@@ -165,7 +165,7 @@ camera_optical_frame: "ensenso_frame"
 
 # Image topic
 # string
-camera_image_topic: "/camera/color_image"
+camera_image_topic: "/camera/rgb"
 
 # Topic to control camera postion
 camera_joint_controller_command: "/torso/joint_group_position_controller/command"

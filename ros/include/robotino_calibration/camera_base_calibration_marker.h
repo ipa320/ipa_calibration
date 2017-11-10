@@ -119,7 +119,7 @@ protected:
 			std::vector<cv::Mat>& T_camera_to_marker_vector);
 
 	// displays the calibration result in the urdf file's format and also stores the screen output to a file
-	void displayAndSaveCalibrationResult(const cv::Mat& T_base_to_torso_lower_, const cv::Mat& T_torso_upper_to_camera_);
+	void displayAndSaveCalibrationResult(const std::vector<cv::Mat>& calibratedTransforms);//const cv::Mat& T_base_to_torso_lower_, const cv::Mat& T_torso_upper_to_camera_);
 
 	std::string torso_lower_frame_;
 	std::string torso_upper_frame_;

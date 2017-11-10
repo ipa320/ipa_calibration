@@ -1,10 +1,10 @@
 ### initial values for transformation estimates
 # insert the values as x, y, z, yaw (rot around z), pitch (rot around y), roll (rot around x)
 # the transform from base_frame to torso_lower_frame
-T_base_to_torso_lower_initial: [0.166, 0.2175, 0.302, 0.0, 0.0, 1.57079632679]
+T_base_to_torso_lower_initial: [0.166, 0.2175, 0.302, 1.57079632679, 0.0, 0.0]
 
 # the transform from torso_upper_frame to camera_frame
-T_torso_upper_to_camera_initial: [-0.01957318079 -0.20404139431 0.0 0.0 1.57079632679 0.39269908169]
+T_torso_upper_to_camera_initial: [-0.01957318079, -0.20404139431, 0.0, 0.0, 1.57079632679, 0.39269908169]
 
 
 ### Observation positions for capturing calibration images of the pitags
@@ -71,7 +71,7 @@ torso_upper_frame: "torso_knob_link" #"torso_base_link"
 camera_frame: "ensenso_frame" #"torso_knob_link"
 
 # this is the camera coordinate system which refers to the color image sensor [the transformations between camera_frame and camera_optical_frame should be available from tf]
-camera_optical_frame: "ids_ueye_frame" #"ensenso_frame"
+camera_optical_frame: "ensenso_frame" #"ids_ueye_frame"
 
 # the robot base frame [the transformation between laser scanner and base should be accomplished before, the transform from base_frame to torso_lower_frame will be calibrated by this program]
 base_frame: "base_link"

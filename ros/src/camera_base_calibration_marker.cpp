@@ -458,27 +458,53 @@ void CameraBaseCalibrationMarker::extrinsicCalibrationTorsoUpperToCamera(std::ve
 	T_base_to_torso_lower_ = transform_utilities::computeExtrinsicTransform(points_3d_base, points_3d_torso_lower);
 }
 
-void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult(const cv::Mat& T_base_to_torso_lower_, const cv::Mat& T_torso_upper_to_camera_)
+void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult(const std::vector<cv::Mat>& calibratedTransforms)//const cv::Mat& T_base_to_torso_lower_, const cv::Mat& T_torso_upper_to_camera_)
 {
+	std::vector<std::string> parameter_names;
+
+	calibration_interface_->getParameterNames(parameter_names);
+
+	int ps = parameter_names.size();
+	int cs = calibratedTransforms.size();
+	if ( ps < cs )
+	{
+		ROS_WARN("Parameter name size is smaller than amount of calibrated transforms, inserting default names...");
+
+		for ( int i=0; i<(cs-ps); ++i )
+		{
+			std::stringstream ss;
+			ss << "Param_" << (i+1);
+			parameter_names.push_back(ss.str());
+		}
+	}
+	else if ( ps > cs )
+		ROS_WARN("Parameter name size is greater than amount of calibrated transforms, skipping those...");
+
 	// display calibration parameters
 	std::stringstream output;
 	output << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
-	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T_base_to_torso_lower_);
-	output << "  <!-- base_neck_link mount positions | camera base calibration | relative to base_link -->\n"
-			  << "  <property name=\"base_neck_x\" value=\"" << T_base_to_torso_lower_.at<double>(0,3) << "\"/>\n"
-			  << "  <property name=\"base_neck_y\" value=\"" << T_base_to_torso_lower_.at<double>(1,3) << "\"/>\n"
-			  << "  <property name=\"base_neck_z\" value=\"" << T_base_to_torso_lower_.at<double>(2,3) << "\"/>\n"
-			  << "  <property name=\"base_neck_roll\" value=\"" << ypr.val[2] << "\"/>\n"
-			  << "  <property name=\"base_neck_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
-			  << "  <property name=\"base_neck_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
-	ypr = transform_utilities::YPRFromRotationMatrix(T_torso_upper_to_camera_);
+	for ( int i=0; i<calibratedTransforms.size(); ++i )
+	{
+		cv::Mat transform = calibratedTransforms.at(i);
+		cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(transform);
+
+			output << "  <!-- " << parameter_names.at(i) <<" mount positions | camera base calibration | relative to base_link -->\n"
+					<< "  <property name=\"" << parameter_names.at(i) << "_x\" value=\"" << transform.at<double>(0,3) << "\"/>\n"
+					<< "  <property name=\"" << parameter_names.at(i) << "_y\" value=\"" << transform.at<double>(1,3) << "\"/>\n"
+					<< "  <property name=\"" << parameter_names.at(i) << "_z\" value=\"" << transform.at<double>(2,3) << "\"/>\n"
+					<< "  <property name=\"" << parameter_names.at(i) << "_roll\" value=\"" << ypr.val[2] << "\"/>\n"
+					<< "  <property name=\"" << parameter_names.at(i) << "_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
+					<< "  <property name=\"" << parameter_names.at(i) << "_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
+	}
+	/*ypr = transform_utilities::YPRFromRotationMatrix(T_torso_upper_to_camera_);
 	output << "  <!-- kinect mount positions | camera base calibration | relative to neck_tilt_link -->\n"
 			  << "  <property name=\"kinect_x\" value=\"" << T_torso_upper_to_camera_.at<double>(0,3) << "\"/>\n"
 			  << "  <property name=\"kinect_y\" value=\"" << T_torso_upper_to_camera_.at<double>(1,3) << "\"/>\n"
 			  << "  <property name=\"kinect_z\" value=\"" << T_torso_upper_to_camera_.at<double>(2,3) << "\"/>\n"
 			  << "  <property name=\"kinect_roll\" value=\"" << ypr.val[2] << "\"/>\n"
 			  << "  <property name=\"kinect_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
-			  << "  <property name=\"kinect_yaw\" value=\"" << ypr.val[0] << "\"/>\n" << std::endl;
+			  << "  <property name=\"kinect_yaw\" value=\"" << ypr.val[0] << "\"/>\n" << std::endl;*/
+
 	std::cout << output.str();
 
 	std::string path_file = calibration_storage_path_ + "camera_calibration_urdf.txt";
