@@ -70,7 +70,7 @@ public:
 
 	// general functions
 	// ToDo: Remove this function later on, because these names can be retrieved from the yaml file directly.
-	virtual void getParameterNames(std::vector<std::string> parameter_names) = 0;
+	virtual void getParameterNames(std::vector<std::string>& parameter_names) = 0;
 
 	// camera calibration interface
 	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;

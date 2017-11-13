@@ -91,7 +91,7 @@ CobInterface::~CobInterface()
 {
 }
 
-void CobInterface::getParameterNames(std::vector<std::string> parameter_names)
+void CobInterface::getParameterNames(std::vector<std::string>& parameter_names)
 {
 
 }

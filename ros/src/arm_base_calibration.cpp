@@ -445,7 +445,7 @@ bool ArmBaseCalibration::acquireCalibrationImages(const cv::Size pattern_size, c
 		if ( !ros::ok() )
 			return false;
 
-		std::cout << "Configuration " << image_counter << "/" << number_images_to_capture << std::endl;
+		std::cout << "Configuration " << (image_counter+1) << "/" << number_images_to_capture << std::endl;
 
 		if (!load_images)
 		{

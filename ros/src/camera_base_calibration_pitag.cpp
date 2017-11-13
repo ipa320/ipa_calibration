@@ -139,10 +139,13 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 			if ( !ros::ok() )
 				return false;
 
-			std::cout << "Configuration " << image_counter << "/" << number_images_to_capture << std::endl;
+			std::cout << "Configuration " << (image_counter+1) << "/" << number_images_to_capture << std::endl;
 
 			moveRobot(robot_configurations[image_counter]);
 			// wait a moment here to mitigate shaking camera effects?
+
+			ros::Duration(3).sleep();
+
 			// NOT necessary, apparently the results are good enough and simulated tests show that the influence of little shaking can be compensated by enough data
 
 			// extract marker points

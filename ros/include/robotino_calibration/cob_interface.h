@@ -74,7 +74,7 @@ public:
 	~CobInterface();
 
 	// general functions
-	void getParameterNames(std::vector<std::string> parameter_names);
+	void getParameterNames(std::vector<std::string>& parameter_names);
 
 	// camera calibration interface
 	void assignNewRobotVelocity(geometry_msgs::Twist newVelocity);

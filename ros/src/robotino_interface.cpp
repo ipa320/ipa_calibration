@@ -98,7 +98,7 @@ RobotinoInterface::~RobotinoInterface()
 {
 }
 
-void RobotinoInterface::getParameterNames(std::vector<std::string> parameter_names)
+void RobotinoInterface::getParameterNames(std::vector<std::string>& parameter_names)
 {
 	parameter_names.push_back("base_neck");
 	parameter_names.push_back("kinect");
