@@ -684,11 +684,18 @@ void ArmBaseCalibration::displayAndSaveCalibrationResult(const cv::Mat& T_base_t
 			  << "  <property name=\"arm_base_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
 	std::cout << output.str();
 
-	std::string path_file = calibration_storage_path_ + "arm_calibration_urdf.txt";
-	std::fstream file_output;
-	file_output.open(path_file.c_str(), std::ios::out);
-	if (file_output.is_open())
-		file_output << output.str();
-	file_output.close();
+	if ( ros::ok() )
+	{
+		std::string path_file = calibration_storage_path_ + "arm_calibration_urdf.txt";
+		std::fstream file_output;
+		file_output.open(path_file.c_str(), std::ios::out);
+		if (file_output.is_open())
+			file_output << output.str();
+		file_output.close();
+	}
+	else
+	{
+		ROS_INFO("Skipping to save calibration result.");
+	}
 }
 

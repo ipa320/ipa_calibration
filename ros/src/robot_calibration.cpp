@@ -54,6 +54,7 @@
 #include <boost/filesystem.hpp>
 #include <exception>
 #include <robotino_calibration/timer.h>
+#include <robotino_calibration/transformation_utilities.h>
 
 //Exception
 #include <tf/exceptions.h>
@@ -70,6 +71,37 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
 	node_handle_.param("calibration_ID", calibration_ID_, 0);
 	std::cout << "calibration_ID: " << calibration_ID_ << std::endl;
+
+	// load gaps including its initial values
+	std::vector<std::string> uncertain_chain;
+	node_handle_.getParam("uncertain_chain", uncertain_chain);
+	std::map<std::string,std::string> calib_trafos;
+	node_handle_.getParam("trafos_to_calibrate", calib_trafos);
+	// ToDo: Put Parent, Child, init value inside a struct and create a vector from that holding our uncertain trafos.
+
+	/*std::map<std::string, std::string>::iterator it;
+	for ( it=calib_trafos.begin(); it != calib_trafos.end(); it++ )
+	{
+		// Find parent trafo
+		for ( int i=0; i<uncertain_chain.size(); ++i )
+		{
+			if ( uncertain_chain[i] == it->first )
+			{
+				if ( i > 0 )
+				{
+					CalibrationInfo tmp;
+
+					tmp.parent_ = uncertain_chain[i-1];
+					tmp.child_ = uncertain_chain[i];
+					transform_utilities::stringToTransform(it->second, tmp.current_trafo_); // Assign initial trafo as first guess
+				}
+				else
+					ROS_WARN("First element cannot be uncertain!");
+
+				break;
+			}
+		}
+	}*/
 
 	calibration_interface_ = CalibrationInterface::createInterfaceByID(calibration_ID_, node_handle_, do_arm_calibration);
 	createStorageFolder();

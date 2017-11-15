@@ -104,7 +104,7 @@ namespace transform_utilities
 	}
 
 	// Takes a string like "1,1,1,1,1,1" and creates a 4x4 transformation matrix out of it.
-	bool stringToTransform(std::string values, cv::Mat& trafo)
+	bool stringToTransform(const std::string values, cv::Mat& trafo)
 	{
 		const std::string delimiter = ",";
 		size_t npos = 0, opos = 0;

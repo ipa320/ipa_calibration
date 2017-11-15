@@ -4,9 +4,14 @@
 T_base_to_torso_lower_initial: [0.166, 0.2175, 0.302, 1.57079632679, 0.0, 0.0]
 
 # the transform from torso_upper_frame to camera_frame
-T_torso_upper_to_camera_initial: [-0.01957318079, -0.20404139431, 0.0, 0.0, 1.57079632679, 0.39269908169]
+T_torso_upper_to_camera_initial: [-0.0961665, -0.181019, 0.0, 0.0, 1.57079632679, 0.39269908169] #[-0.01957318079, -0.20404139431, 0.0, 0.0, 1.57079632679, 0.39269908169]
 
-a_map: {base_knob_link: "1,1,1,1,1,1", , }
+
+
+
+uncertain_chain = [] # Chain to marker including uncertainties
+
+trafos_to_calibrate: {base_knob_link: "1,1,1,1,1,1" }
 
 ### Observation positions for capturing calibration images of the pitags
 # if this flag is true, then the robot configurations will be sampled on a equally spaced grid from the given ranges, if false, the user-provided configurations in robot_configurations will be used

@@ -89,7 +89,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	// initial parameters
 	T_base_to_torso_lower_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
 	T_torso_upper_to_camera_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
-	std::vector<double>temp;
+	std::vector<double> temp;
 	node_handle_.getParam("T_base_to_torso_lower_initial", temp);
 	if (temp.size()==6)
 		T_base_to_torso_lower_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
@@ -507,10 +507,17 @@ void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult(const std::vec
 
 	std::cout << output.str();
 
-	std::string path_file = calibration_storage_path_ + "camera_calibration_urdf.txt";
-	std::fstream file_output;
-	file_output.open(path_file.c_str(), std::ios::out);
-	if (file_output.is_open())
-		file_output << output.str();
-	file_output.close();
+	if ( ros::ok() )
+	{
+		std::string path_file = calibration_storage_path_ + "camera_calibration_urdf.txt";
+		std::fstream file_output;
+		file_output.open(path_file.c_str(), std::ios::out);
+		if (file_output.is_open())
+			file_output << output.str();
+		file_output.close();
+	}
+	else
+	{
+		ROS_INFO("Skipping to save calibration result.");
+	}
 }
