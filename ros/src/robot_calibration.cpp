@@ -79,10 +79,10 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 	node_handle_.getParam("trafos_to_calibrate", calib_trafos);
 	// ToDo: Put Parent, Child, init value inside a struct and create a vector from that holding our uncertain trafos.
 
-	/*std::map<std::string, std::string>::iterator it;
+	std::map<std::string, std::string>::iterator it;
 	for ( it=calib_trafos.begin(); it != calib_trafos.end(); it++ )
 	{
-		// Find parent trafo
+		// Find parent frame
 		for ( int i=0; i<uncertain_chain.size(); ++i )
 		{
 			if ( uncertain_chain[i] == it->first )
@@ -94,14 +94,16 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 					tmp.parent_ = uncertain_chain[i-1];
 					tmp.child_ = uncertain_chain[i];
 					transform_utilities::stringToTransform(it->second, tmp.current_trafo_); // Assign initial trafo as first guess
+
+					transforms_to_calibrate_.push_back(tmp);
 				}
 				else
-					ROS_WARN("First element cannot be uncertain!");
+					ROS_WARN("First frame in uncertain_chain can't be part of the trafos_to_calibrate list!");
 
 				break;
 			}
 		}
-	}*/
+	}
 
 	calibration_interface_ = CalibrationInterface::createInterfaceByID(calibration_ID_, node_handle_, do_arm_calibration);
 	createStorageFolder();

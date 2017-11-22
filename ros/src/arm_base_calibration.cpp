@@ -111,13 +111,22 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
 	std::cout << "max_angle_deviation: " << max_angle_deviation_ << std::endl;
 
 	// initial parameters
-	temp.clear();
+	bool success = transform_utilities::getTransform(transform_listener_, base_frame_, armbase_frame_, T_base_to_armbase_);
+	if ( success == false )
+	{
+		ROS_FATAL("Could not retrieve transform from %s to %s from TF!",base_frame_.c_str(),armbase_frame_.c_str());
+		throw std::exception();
+	}
+	else
+		std::cout << "T_base_to_armbase_initial:\n" << T_base_to_armbase_ << std::endl;
+
+	/*temp.clear();
 	T_base_to_armbase_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.0, 0.0, 0.0)));
 	node_handle_.getParam("T_base_to_armbase_initial", temp);
 	if ( temp.size()==6 )
 		T_base_to_armbase_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
 	std::cout << "T_base_to_arm_initial:\n" << T_base_to_armbase_ << std::endl;
-	temp.clear();
+	temp.clear();*/
 
 	// read out user-defined end effector configurations
 	temp.clear();

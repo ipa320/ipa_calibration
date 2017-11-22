@@ -56,16 +56,16 @@
 #include <tf/transform_listener.h>
 #include <robotino_calibration/calibration_utilities.h>
 #include <robotino_calibration/calibration_interface.h>
-//#include <opencv2/opencv.hpp>
-//#include <cv_bridge/cv_bridge.h>
+#include <opencv2/opencv.hpp>
+#include <cv_bridge/cv_bridge.h>
 
 
-/*struct CalibrationInfo
+struct CalibrationInfo
 {
 	std::string parent_;
 	std::string child_;
 	cv::Mat current_trafo_;
-};*/
+};
 
 class RobotCalibration
 {
@@ -90,7 +90,7 @@ protected:
 	std::string calibration_storage_path_;  // path to data
 	std::string child_frame_name_;  // name of reference frame
 	CalibrationInterface *calibration_interface_;
-	//std::vector<CalibrationInfo> transforms_to_calibrate_;
+	std::vector<CalibrationInfo> transforms_to_calibrate_;
 };
 
 

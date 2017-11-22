@@ -157,7 +157,7 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 			for (size_t detection=0; detection<detect.response.object_list.detections.size(); ++detection)
 			{
 				cob_object_detection_msgs::Detection& det = detect.response.object_list.detections[detection];
-				std::string marker_frame = marker_frame_base_name_ + det.label.substr(3);	// yields e.g. "marker_18"
+				std::string marker_frame = marker_frame_base_name_ + det.label.substr(3);	// yields e.g. "tag_18"
 
 				// retrieve transformations
 				cv::Mat T_base_to_marker, T_torso_lower_to_torso_upper, T_camera_to_camera_optical, T_camera_optical_to_marker, T_camera_to_marker;

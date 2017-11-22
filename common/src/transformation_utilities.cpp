@@ -66,7 +66,37 @@ namespace transform_utilities
 	// 1. rotation = yaw around z
 	// 2. rotation = pitch around y'
 	// 3. rotation = roll around x''
-	cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
+
+
+	/*cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
+	{
+		double sy = sin(yaw);
+		double cy = cos(yaw);
+		double sp = sin(pitch);
+		double cp = cos(pitch);
+		double sr = sin(roll);
+		double cr = cos(roll);
+		cv::Mat rotation = (cv::Mat_<double>(3,3) <<
+				cp*cy,					-cp*sy,					sp,
+				cy*sp*sr + cr*sy,		cp*cr - sp*sr*sy,		-cp*sr,
+				sr*sy - cr*cy*sp,		cp*sr + cr*sp*sy,		cp*cr);
+
+		return rotation;
+	}
+
+	// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
+	cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot)
+	{
+		Eigen::Matrix3f rot_eigen;
+		for (int i=0; i<3; ++i)
+			for (int j=0; j<3; ++j)
+				rot_eigen(i,j) = rot.at<double>(i,j);
+		Eigen::Vector3f euler_angles = rot_eigen.eulerAngles(2,1,0);
+		return cv::Vec3d(euler_angles(2), euler_angles(1), euler_angles(0));
+	}*/
+
+
+	/*cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
 	{
 		double sy = sin(yaw);
 		double cy = cos(yaw);
@@ -80,7 +110,7 @@ namespace transform_utilities
 				-sp,		cp*sr,					cp*cr);
 
 		return rotation;
-	}
+	}*/
 
 	// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
 	cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot)
@@ -125,7 +155,7 @@ namespace transform_utilities
 		}
 		else
 		{
-			ROS_WARN("String does not contain enough values for a transformation (6 needed).");
+			ROS_WARN("String does not contain amount of values for a transformation (exactly 6 needed).");
 
 			trafo = ( cv::Mat_<double>(4,4) <<
 							0., 0., 0., 0.,
