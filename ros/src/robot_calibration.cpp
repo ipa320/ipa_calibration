@@ -73,11 +73,58 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 	std::cout << "calibration_ID: " << calibration_ID_ << std::endl;
 
 	// load gaps including its initial values
-	std::vector<std::string> uncertain_chain;
+	std::vector<std::string> uncertainties_list;
+	node_handle_.getParam("uncertainties_list", uncertainties_list);
+
+	if ( uncertainties_list.size() % 2 != 0 )
+		ROS_WARN("Size of uncertainsties_list is not a factor of two.");
+
+	for ( int i=0; i<uncertainties_list.size(); i+=2 )
+	{
+		CalibrationInfo tmp;
+		tmp.parent_ = uncertainties_list[i];
+		tmp.child_ = uncertainties_list[i+1];
+		tmp.trafo_until_next_gap_idx_ = -1;
+		bool success = transform_utilities::getTransform(transform_listener_, tmp.parent_, tmp.child_, tmp.current_trafo_);
+
+		if ( success == false )
+		{
+			ROS_FATAL("Could not retrieve transform from %s to %s from TF!", tmp.parent_.c_str(), tmp.child_.c_str());
+			throw std::exception();
+		}
+
+		transforms_to_calibrate_.push_back(tmp);
+	}
+
+	node_handle_.getParam("calibration_order", calibration_order_);
+	if ( calibration_order_.size() != transforms_to_calibrate_.size() )
+	{
+		ROS_FATAL("Size of calibration_order and gaps inside uncertainties_list do not match!");
+		throw std::exception();
+	}
+
+	std::cout << "calibration order:" << std::endl;
+	for ( int i=0; i<calibration_order_.size(); ++i )
+	{
+		if ( calibration_order_[i] < 1 || calibration_order_[i] > transforms_to_calibrate_.size() )
+		{
+			ROS_FATAL("Invalid index in calibration order %d", calibration_order_[i]);
+			throw std::exception();
+		}
+		else
+		{
+			calibration_order_[i] = calibration_order_[i]-1; // zero-indexed values from now on
+			std::cout << (i+1) << ". From " << transforms_to_calibrate_[calibration_order_[i]].parent_ << " to " << transforms_to_calibrate_[calibration_order_[i]].child_ << std::endl;
+			std::cout << "Initial transform: " << transforms_to_calibrate_[calibration_order_[i]].current_trafo_ << std::endl;
+		}
+	}
+
+
+
+	/*std::vector<std::string> uncertain_chain;
 	node_handle_.getParam("uncertain_chain", uncertain_chain);
 	std::map<std::string,std::string> calib_trafos;
 	node_handle_.getParam("trafos_to_calibrate", calib_trafos);
-	// ToDo: Put Parent, Child, init value inside a struct and create a vector from that holding our uncertain trafos.
 
 	std::map<std::string, std::string>::iterator it;
 	for ( it=calib_trafos.begin(); it != calib_trafos.end(); it++ )
@@ -103,7 +150,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 				break;
 			}
 		}
-	}
+	}*/
 
 	calibration_interface_ = CalibrationInterface::createInterfaceByID(calibration_ID_, node_handle_, do_arm_calibration);
 	createStorageFolder();

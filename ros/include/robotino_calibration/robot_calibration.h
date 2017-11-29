@@ -65,6 +65,7 @@ struct CalibrationInfo
 	std::string parent_;
 	std::string child_;
 	cv::Mat current_trafo_;
+	int trafo_until_next_gap_idx_; // index to between_gaps trafo
 };
 
 class RobotCalibration
@@ -91,6 +92,7 @@ protected:
 	std::string child_frame_name_;  // name of reference frame
 	CalibrationInterface *calibration_interface_;
 	std::vector<CalibrationInfo> transforms_to_calibrate_;
+	std::vector<int> calibration_order_;
 };
 
 

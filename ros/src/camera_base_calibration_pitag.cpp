@@ -123,6 +123,149 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 	return true;
 }
 
+bool CameraBaseCalibrationPiTag::calibrateCameraToBaseNEW(const bool load_data)
+{
+	// acquire images
+	std::vector<cv::Mat> T_base_to_marker_vector;
+	std::vector< std::vector<cv::Mat> > T_between_gaps_vector;
+	std::vector<cv::Mat> T_camera_to_marker_vector;
+	acquireCalibrationDataNEW(robot_configurations_, load_data,
+			T_base_to_marker_vector, T_between_gaps_vector, T_camera_to_marker_vector);
+
+	// prepare marker 3d points (actually only the point (0,0,0) in the marker coordinate system
+	std::vector< std::vector<cv::Point3f> > pattern_points_3d(T_base_to_marker_vector.size(), std::vector<cv::Point3f>(1, cv::Point3f(0.f, 0.f, 0.f)));
+
+	// extrinsic calibration optimization
+	for (int i=0; i<optimization_iterations_; ++i)
+	{
+		for ( int j=0; j<transforms_to_calibrate_.size(); ++j )
+		{
+			extrinsicCalibration(pattern_points_3d, T_base_to_marker_vector, T_between_gaps_vector, T_camera_to_marker_vector, calibration_order_[j]);
+		}
+	}
+
+	// display calibration parameters
+	displayAndSaveCalibrationResult();
+
+	// save calibration
+	saveCalibration();
+	calibrated_ = true;
+
+	return true;
+}
+
+bool CameraBaseCalibrationPiTag::acquireCalibrationDataNEW(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
+		const bool load_data, std::vector<cv::Mat>& T_base_to_marker_vector,
+		std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_camera_to_marker_vector)
+{
+	std::stringstream path;
+	path << calibration_storage_path_ << "pitag_data.yml";
+
+	// capture images from different perspectives
+	if (load_data == false)
+	{
+		const int number_images_to_capture = (int)robot_configurations.size();
+		for (int image_counter = 0; image_counter < number_images_to_capture; ++image_counter)
+		{
+			if ( !ros::ok() )
+				return false;
+
+			std::cout << "Configuration " << (image_counter+1) << "/" << number_images_to_capture << std::endl;
+
+			moveRobot(robot_configurations[image_counter]);
+
+			// wait a moment here to mitigate shaking camera effects.
+			ros::Duration(3).sleep();
+
+			// extract marker points
+			cob_object_detection_msgs::DetectObjects detect;
+			pitag_client_.call(detect);
+			if (detect.response.object_list.detections.size() == 0)
+				continue;
+
+			for (size_t detection=0; detection<detect.response.object_list.detections.size(); ++detection)
+			{
+				cob_object_detection_msgs::Detection& det = detect.response.object_list.detections[detection];
+				std::string marker_frame = marker_frame_base_name_ + det.label.substr(3);	// yields e.g. "tag_18"
+
+				// retrieve transformations
+				cv::Mat T_base_to_marker, T_camera_to_camera_optical, T_camera_optical_to_marker, T_camera_to_marker;
+				std::vector<cv::Mat> T_between_gaps;
+				bool result = true;
+				result &= transform_utilities::getTransform(transform_listener_, base_frame_, marker_frame, T_base_to_marker);
+				result &= transform_utilities::getTransform(transform_listener_, camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
+
+				for ( int i=0; i<transforms_to_calibrate_.size()-1; ++i )
+				{
+					if ( transforms_to_calibrate_[i].parent_ == transforms_to_calibrate_[i].child_ ) // several gaps in a row, no certain trafos in between
+						continue;
+
+					cv::Mat temp;
+					result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[i].child_, transforms_to_calibrate_[i+1].parent_, temp);
+					T_between_gaps.push_back(temp);
+					transforms_to_calibrate_[i].trafo_until_next_gap_idx_ = T_between_gaps.size()-1;
+				}
+
+				if (result == false)
+					continue;
+				tf::Stamped<tf::Pose> pose;
+				tf::poseStampedMsgToTF(det.pose, pose);
+				const tf::Matrix3x3& rot = pose.getBasis();
+				const tf::Vector3& trans = pose.getOrigin();
+				cv::Mat rotcv(3,3,CV_64FC1);
+				cv::Mat transcv(3,1,CV_64FC1);
+				for (int v=0; v<3; ++v)
+					for (int u=0; u<3; ++u)
+						rotcv.at<double>(v,u) = rot[v].m_floats[u];
+				for (int v=0; v<3; ++v)
+					transcv.at<double>(v) = trans.m_floats[v];
+				T_camera_optical_to_marker = transform_utilities::makeTransform(rotcv, transcv);
+				T_camera_to_marker = T_camera_to_camera_optical*T_camera_optical_to_marker;
+
+				// attach data to array
+				T_base_to_marker_vector.push_back(T_base_to_marker);
+				T_between_gaps_vector.push_back(T_between_gaps);
+				T_camera_to_marker_vector.push_back(T_camera_to_marker);
+
+				ROS_INFO("=#=#=#=#=#=#=#=#= Found %s", marker_frame.c_str());
+			}
+		}
+
+		// save transforms to file
+		cv::FileStorage fs(path.str().c_str(), cv::FileStorage::WRITE);
+		if (fs.isOpened())
+		{
+			fs << "T_base_to_marker_vector" << T_base_to_marker_vector;
+			fs << "T_camera_to_marker_vector" << T_camera_to_marker_vector;
+			fs << "T_torso_lower_to_torso_upper_vector" << T_between_gaps_vector;
+		}
+		else
+		{
+			ROS_WARN("Could not write transformations to file '%s'.", path.str().c_str());
+		}
+		fs.release();
+	}
+	else
+	{
+		// load data from file
+		cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
+		if (fs.isOpened())
+		{
+			fs["T_base_to_marker_vector"] >> T_base_to_marker_vector;
+			fs["T_camera_to_marker_vector"] >> T_camera_to_marker_vector;
+			fs["T_torso_lower_to_torso_upper_vector"] >> T_between_gaps_vector;
+		}
+		else
+		{
+			ROS_WARN("Could not read transformations from file '%s'.", path.str().c_str());
+		}
+		fs.release();
+	}
+
+	std::cout << "Captured markers: " << T_camera_to_marker_vector.size() << std::endl;
+	return true;
+}
+
 bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
 		const bool load_data, std::vector<cv::Mat>& T_base_to_marker_vector,
 		std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector, std::vector<cv::Mat>& T_camera_to_marker_vector)

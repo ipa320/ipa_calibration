@@ -64,6 +64,7 @@ public:
 
 	// starts the calibration between camera and base including data acquisition
 	bool calibrateCameraToBase(const bool load_data);
+	bool calibrateCameraToBaseNEW(const bool load_data);
 
 	// load/save calibration data from/to file
 	bool saveCalibration();
@@ -79,6 +80,10 @@ protected:
 	bool acquireCalibrationData(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations, const bool load_data,
 			std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 			std::vector<cv::Mat>& T_camera_to_marker_vector);
+
+	bool acquireCalibrationDataNEW(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
+			const bool load_data, std::vector<cv::Mat>& T_base_to_marker_vector,
+			std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_camera_to_marker_vector); // New version, more flexible
 
 	ros::ServiceClient pitag_client_;
 	std::string marker_frame_base_name_;

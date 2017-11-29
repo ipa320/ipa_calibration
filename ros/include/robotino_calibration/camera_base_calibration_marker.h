@@ -118,9 +118,9 @@ protected:
 			std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
 			std::vector<cv::Mat>& T_camera_to_marker_vector);
 
-	void extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d, CalibrationInfo trafo,
-			std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
-			std::vector<cv::Mat>& T_camera_to_marker_vector);
+	void extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
+			std::vector<cv::Mat>& T_base_to_marker_vector, std::vector< std::vector<cv::Mat> > T_between_gaps_vector,
+			std::vector<cv::Mat>& T_camera_to_marker_vector, int trafo_to_calibrate);
 
 	// displays the calibration result in the urdf file's format and also stores the screen output to a file
 	void displayAndSaveCalibrationResult(const std::vector<cv::Mat>& calibratedTransforms);//const cv::Mat& T_base_to_torso_lower_, const cv::Mat& T_torso_upper_to_camera_);
