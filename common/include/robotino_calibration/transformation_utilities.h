@@ -64,14 +64,14 @@ namespace transform_utilities
 	// 1. rotation = yaw around z
 	// 2. rotation = pitch around y'
 	// 3. rotation = roll around x''
-	cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll);
+	//cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll);
 
 	// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
 	cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot);
 
 	cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
 
-	bool stringToTransform(const std::string& values, cv::Mat& trafo); // Takes a string like "1,1,1,1,1,1" and creates a 4x4 transformation matrix out of it.
+	//bool stringToTransform(const std::string& values, cv::Mat& trafo); // Takes a string like "1,1,1,1,1,1" and creates a 4x4 transformation matrix out of it.
 
 	// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
 	bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T);

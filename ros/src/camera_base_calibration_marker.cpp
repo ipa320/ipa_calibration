@@ -489,6 +489,7 @@ void CameraBaseCalibrationMarker::extrinsicCalibration(std::vector< std::vector<
 		cv::Mat T_child_to_marker;
 
 		// Iterate over uncertain trafos, add in between trafos as well
+		// Forwards in chain from child frame on
 		for ( int j=trafo_to_calibrate; j<transforms_to_calibrate_.size()-1; ++j )
 		{
 			if ( transforms_to_calibrate_[j].trafo_until_next_gap_idx_ > -1 )
@@ -498,26 +499,31 @@ void CameraBaseCalibrationMarker::extrinsicCalibration(std::vector< std::vector<
 		}
 		T_child_to_marker *= T_camera_to_marker_vector[i];
 
-		// Inverse behaviour than above code
-		cv::Mat T_parent_to_marker = T_base_to_marker_vector[i];
+		cv::Mat T_parent_to_marker;
+		// Backwards in chain from parent frame on
+		for ( int j=trafo_to_calibrate-1; j>=0; --j )
+		{
+			if ( transforms_to_calibrate_[j].trafo_until_next_gap_idx_ > -1 )
+				T_parent_to_marker *= T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_].inv();
+
+			T_parent_to_marker *= transforms_to_calibrate_[j].current_trafo_.inv();
+		}
+		T_parent_to_marker *= T_base_to_marker_vector[i];
 
 
-		cv::Mat T_torso_upper_to_marker = T_torso_lower_to_torso_upper_vector[i].inv() * T_base_to_torso_lower_.inv() * T_base_to_marker_vector[i];
-		//std::cout << "T_camera_to_marker_vector[i]:\n" << T_camera_to_marker_vector[i] << std::endl;
-		//std::cout << "T_torso_upper_to_marker:\n" << T_torso_upper_to_marker << std::endl;
 		for (size_t j=0; j<pattern_points_3d[i].size(); ++j)
 		{
 			cv::Mat point = cv::Mat(cv::Vec4d(pattern_points_3d[i][j].x, pattern_points_3d[i][j].y, pattern_points_3d[i][j].z, 1.0));
 
 			// to child coordinate system
-			cv::Mat point_camera = T_camera_to_marker_vector[i] * point;
+			cv::Mat point_child = T_child_to_marker * point;
 			//std::cout << "point_camera=" << point_camera << std::endl;
-			points_3d_camera.push_back(cv::Point3d(point_camera.at<double>(0), point_camera.at<double>(1), point_camera.at<double>(2)));
+			points_3d_child.push_back(cv::Point3d(point_child.at<double>(0), point_child.at<double>(1), point_child.at<double>(2)));
 
 			// to parent coordinate system
-			cv::Mat point_torso_upper = T_torso_upper_to_marker * point;
+			cv::Mat point_parent = T_parent_to_marker * point;
 			//std::cout << "point_torso_upper=" << point_torso_upper << std::endl;
-			points_3d_torso_upper.push_back(cv::Point3d(point_torso_upper.at<double>(0), point_torso_upper.at<double>(1), point_torso_upper.at<double>(2)));
+			points_3d_parent.push_back(cv::Point3d(point_parent.at<double>(0), point_parent.at<double>(1), point_parent.at<double>(2)));
 		}
 	}
 }
