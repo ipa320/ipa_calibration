@@ -65,8 +65,8 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 {
 	// load parameters
 	std::cout << "\n========== Calibration Parameters ==========\n";
-	node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
-	std::cout << "base_frame: " << base_frame_ << std::endl;
+	//node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
+	//std::cout << "base_frame: " << base_frame_ << std::endl;
 	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/robotino_calibration/calibration");
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
 	node_handle_.param("calibration_ID", calibration_ID_, 0);

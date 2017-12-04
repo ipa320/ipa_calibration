@@ -81,7 +81,7 @@ CameraBaseCalibrationPiTag::~CameraBaseCalibrationPiTag()
 {
 }
 
-bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
+bool CameraBaseCalibrationPiTag::calibrateCameraToBaseNEW(const bool load_data) // Actually old one, function is deprecated. Remove me!
 {
 	// setup storage folder
 	//int return_value = system("mkdir -p robotino_calibration/camera_calibration");
@@ -123,24 +123,24 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 	return true;
 }
 
-bool CameraBaseCalibrationPiTag::calibrateCameraToBaseNEW(const bool load_data)
+bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 {
 	// acquire images
-	std::vector<cv::Mat> T_base_to_marker_vector;
+	std::vector<cv::Mat> T_gapfirst_to_marker_vector;
 	std::vector< std::vector<cv::Mat> > T_between_gaps_vector;
-	std::vector<cv::Mat> T_camera_to_marker_vector;
+	std::vector<cv::Mat> T_gaplast_to_marker_vector;
 	acquireCalibrationDataNEW(robot_configurations_, load_data,
-			T_base_to_marker_vector, T_between_gaps_vector, T_camera_to_marker_vector);
+			T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector);
 
 	// prepare marker 3d points (actually only the point (0,0,0) in the marker coordinate system
-	std::vector< std::vector<cv::Point3f> > pattern_points_3d(T_base_to_marker_vector.size(), std::vector<cv::Point3f>(1, cv::Point3f(0.f, 0.f, 0.f)));
+	std::vector< std::vector<cv::Point3f> > pattern_points_3d(T_gapfirst_to_marker_vector.size(), std::vector<cv::Point3f>(1, cv::Point3f(0.f, 0.f, 0.f)));
 
 	// extrinsic calibration optimization
 	for (int i=0; i<optimization_iterations_; ++i)
 	{
 		for ( int j=0; j<transforms_to_calibrate_.size(); ++j )
 		{
-			extrinsicCalibration(pattern_points_3d, T_base_to_marker_vector, T_between_gaps_vector, T_camera_to_marker_vector, calibration_order_[j]);
+			extrinsicCalibration(pattern_points_3d, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector, calibration_order_[j]);
 		}
 	}
 
@@ -155,8 +155,8 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBaseNEW(const bool load_data)
 }
 
 bool CameraBaseCalibrationPiTag::acquireCalibrationDataNEW(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
-		const bool load_data, std::vector<cv::Mat>& T_base_to_marker_vector,
-		std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_camera_to_marker_vector)
+		const bool load_data, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
+		std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_marker_vector)
 {
 	std::stringstream path;
 	path << calibration_storage_path_ << "pitag_data.yml";
@@ -189,11 +189,11 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationDataNEW(const std::vector<cal
 				std::string marker_frame = marker_frame_base_name_ + det.label.substr(3);	// yields e.g. "tag_18"
 
 				// retrieve transformations
-				cv::Mat T_base_to_marker, T_camera_to_camera_optical, T_camera_optical_to_marker, T_camera_to_marker;
+				cv::Mat T_gapfirst_to_marker, T_gaplast_to_camera_optical, T_camera_optical_to_marker, T_camera_to_marker;
 				std::vector<cv::Mat> T_between_gaps;
 				bool result = true;
-				result &= transform_utilities::getTransform(transform_listener_, base_frame_, marker_frame, T_base_to_marker);
-				result &= transform_utilities::getTransform(transform_listener_, camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
+				result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[0].parent_, marker_frame, T_gapfirst_to_marker);
+				result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[ transforms_to_calibrate_.size()-1 ].child_, camera_optical_frame_, T_gaplast_to_camera_optical);
 
 				for ( int i=0; i<transforms_to_calibrate_.size()-1; ++i )
 				{
@@ -220,12 +220,12 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationDataNEW(const std::vector<cal
 				for (int v=0; v<3; ++v)
 					transcv.at<double>(v) = trans.m_floats[v];
 				T_camera_optical_to_marker = transform_utilities::makeTransform(rotcv, transcv);
-				T_camera_to_marker = T_camera_to_camera_optical*T_camera_optical_to_marker;
+				T_camera_to_marker = T_gaplast_to_camera_optical*T_camera_optical_to_marker;
 
 				// attach data to array
-				T_base_to_marker_vector.push_back(T_base_to_marker);
+				T_gapfirst_to_marker_vector.push_back(T_gapfirst_to_marker);
 				T_between_gaps_vector.push_back(T_between_gaps);
-				T_camera_to_marker_vector.push_back(T_camera_to_marker);
+				T_gaplast_to_marker_vector.push_back(T_camera_to_marker);
 
 				ROS_INFO("=#=#=#=#=#=#=#=#= Found %s", marker_frame.c_str());
 			}
@@ -235,9 +235,9 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationDataNEW(const std::vector<cal
 		cv::FileStorage fs(path.str().c_str(), cv::FileStorage::WRITE);
 		if (fs.isOpened())
 		{
-			fs << "T_base_to_marker_vector" << T_base_to_marker_vector;
-			fs << "T_camera_to_marker_vector" << T_camera_to_marker_vector;
-			fs << "T_torso_lower_to_torso_upper_vector" << T_between_gaps_vector;
+			fs << "T_gapfirst_to_marker_vector" << T_gapfirst_to_marker_vector;
+			fs << "T_gaplast_to_marker_vector" << T_gaplast_to_marker_vector;
+			fs << "T_between_gaps_vector" << T_between_gaps_vector;
 		}
 		else
 		{
@@ -251,9 +251,9 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationDataNEW(const std::vector<cal
 		cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
 		if (fs.isOpened())
 		{
-			fs["T_base_to_marker_vector"] >> T_base_to_marker_vector;
-			fs["T_camera_to_marker_vector"] >> T_camera_to_marker_vector;
-			fs["T_torso_lower_to_torso_upper_vector"] >> T_between_gaps_vector;
+			fs["T_gapfirst_to_marker_vector"] >> T_gapfirst_to_marker_vector;
+			fs["T_gaplast_to_marker_vector"] >> T_gaplast_to_marker_vector;
+			fs["T_between_gaps_vector"] >> T_between_gaps_vector;
 		}
 		else
 		{
@@ -262,7 +262,7 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationDataNEW(const std::vector<cal
 		fs.release();
 	}
 
-	std::cout << "Captured markers: " << T_camera_to_marker_vector.size() << std::endl;
+	std::cout << "Captured markers: " << T_gaplast_to_marker_vector.size() << std::endl;
 	return true;
 }
 

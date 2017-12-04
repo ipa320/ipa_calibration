@@ -82,8 +82,8 @@ protected:
 			std::vector<cv::Mat>& T_camera_to_marker_vector);
 
 	bool acquireCalibrationDataNEW(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
-			const bool load_data, std::vector<cv::Mat>& T_base_to_marker_vector,
-			std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_camera_to_marker_vector); // New version, more flexible
+			const bool load_data, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
+			std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_marker_vector); // New version, more flexible
 
 	ros::ServiceClient pitag_client_;
 	std::string marker_frame_base_name_;
