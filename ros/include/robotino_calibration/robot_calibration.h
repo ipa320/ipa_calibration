@@ -84,6 +84,7 @@ protected:
 	void createStorageFolder();
 
 	int calibration_ID_;		// ID for identifying which calibration interface to use.
+	int optimization_iterations_;	// number of iterations for optimization
 	bool calibrated_;
 	tf::TransformListener transform_listener_;
 	ros::NodeHandle node_handle_;

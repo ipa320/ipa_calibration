@@ -65,9 +65,9 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 {
 	// load parameters
 	std::cout << "\n========== Calibration Parameters ==========\n";
-	//node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
-	//std::cout << "base_frame: " << base_frame_ << std::endl;
-	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/robotino_calibration/calibration");
+	node_handle_.param<std::string>("base_frame", base_frame_, "");
+	std::cout << "base_frame: " << base_frame_ << std::endl;
+	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/calibration");
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
 	node_handle_.param("calibration_ID", calibration_ID_, 0);
 	std::cout << "calibration_ID: " << calibration_ID_ << std::endl;
@@ -95,6 +95,15 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 
 		transforms_to_calibrate_.push_back(tmp);
 	}
+
+	node_handle_.param("optimization_iterations", optimization_iterations_, 1000);
+
+	if ( transforms_to_calibrate_.size() == 1 )
+	{
+		std::cout << "Only one transform to calibrate: Setting optimization_iterations to 1." << std::endl;
+		optimization_iterations_ = 1;
+	}
+	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
 
 	node_handle_.getParam("calibration_order", calibration_order_);
 	if ( calibration_order_.size() != transforms_to_calibrate_.size() )

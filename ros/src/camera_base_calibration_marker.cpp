@@ -66,11 +66,12 @@
 // ToDo: Pan_Range and Tilt_Range needs to be stored in one 3*X vector (X number of camera links and 3: min, step, end)
 // ToDo: displayAndSaveCalibrationResult, alter behaviour so that it prints custom strings instead of hardcoded ones. [Done]
 // ToDo: Stop robot immediately if reference frame gets lost or jumps around!!!! [Done]
-// ToDo: Make that pitag/checkerboard/arm calibration calibration results will be stored to different subfolders
+// ToDo: Make that pitag/checkerboard/arm calibration calibration results will be stored to different subfolders [Done, as already possible]
 // ToDo: Change convention of rotations from RPY to YPR inside transformations_utilities! Function says YPR already, but it is wrong! [Done, by removing function]
 // ToDo: Port over more flexible calibration code to checkerboard calibration as well.
 // ToDo: Remove unused attributes
-// ToDo: Move optimization_iterations to robot_calibration mother class and set its value to one if there is only one transform to be calibrated
+// ToDo: Move optimization_iterations to robot_calibration mother class and set its value to one if there is only one transform to be calibrated [Done]
+// ToDo: Add timer in moverobot/movearm and check if robots setup has changed since last time (maybe 1 sec), if not give a warning.
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 			RobotCalibration(nh, false), counter(0), RefHistoryIndex_(0)
@@ -86,8 +87,6 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	//std::cout << "camera_frame: " << camera_frame_ << std::endl;
 	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "");
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
-	node_handle_.param("optimization_iterations", optimization_iterations_, 100);
-	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
 	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "/landmark_reference_nav");
 	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
 

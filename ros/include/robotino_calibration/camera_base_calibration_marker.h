@@ -100,8 +100,6 @@ protected:
 	int counter;
 	Timer elapsed_time_since_start_;
 
-	int optimization_iterations_;	// number of iterations for optimization
-
 	// moves the robot to a desired location and adjusts the torso joints
 	bool moveRobot(const calibration_utilities::RobotConfiguration& robot_configuration);
 

@@ -18,8 +18,8 @@ use_range: true
 x_range: [-1.25, 0.25, -0.75]       # in [m]
 y_range: [-1.0, 0.2, -0.6]       # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
-pan_range: [-1.2, 0.1, 0.3]     # in [rad]
-tilt_range: [-0.9, 0.1, 0.2]    # in [rad]
+pan_range: [-1.2, 0.2, 0.4]     # in [rad]
+tilt_range: [-0.8, 0.2, 0.2]    # in [rad]
 #pan_range: [-0.52, 0.02, 0.52]     # in [rad]
 #tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
 
@@ -106,7 +106,7 @@ tilt_controller_command: "/shell_controller/neck_tilt_controller/command"
 ## topic names for reading the joint state of the pan tilt unit
 # joint states topic for camera unit
 # string
-camera_joint_state_topic: "/joint_states"
+camera_joint_state_topic: "/shell_controller/joint_states"
 
 # name of the pan joint in camera_joint_state_topic
 # string
