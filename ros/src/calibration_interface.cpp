@@ -63,8 +63,6 @@
 #define CareOBot	2
 
 
-//ToDo: Generalize robot_configuration as well, so that it only uses PositionConfiguration and AngleConfiguration -> more flexible
-
 CalibrationInterface::CalibrationInterface()
 {
 }

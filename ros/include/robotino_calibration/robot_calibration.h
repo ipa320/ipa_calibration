@@ -74,9 +74,8 @@ public:
 
 	RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration);
 	virtual ~RobotCalibration();
-	virtual bool saveCalibration() = 0;
-	virtual bool loadCalibration() = 0;
-	void setCalibrationStatus(bool calibrated);
+	//virtual bool saveCalibration() = 0;
+	//virtual bool loadCalibration() = 0;
 
 
 protected:
@@ -88,7 +87,7 @@ protected:
 	bool calibrated_;
 	tf::TransformListener transform_listener_;
 	ros::NodeHandle node_handle_;
-	std::string base_frame_;
+	std::string base_frame_;  // name of base frame
 	std::string calibration_storage_path_;  // path to data
 	std::string child_frame_name_;  // name of reference frame
 	CalibrationInterface *calibration_interface_;

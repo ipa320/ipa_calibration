@@ -83,9 +83,6 @@ public:
 	RobotinoInterface(ros::NodeHandle nh, bool do_arm_calibration);
 	~RobotinoInterface();
 
-	// general functions
-	void getParameterNames(std::vector<std::string>& parameter_names);
-
 	// camera calibration interface
 	void assignNewRobotVelocity(geometry_msgs::Twist new_velocity);
 	void assignNewCameraAngles(std_msgs::Float64MultiArray new_angles);

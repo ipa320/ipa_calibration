@@ -50,7 +50,6 @@
 
 #include <robotino_calibration/robotino_interface.h>
 
-// ToDo: Adjust interface to new topics
 
 RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool do_arm_calibration) :
 				CalibrationInterface(nh), camera_state_current_(2, 0.), arm_state_current_(0)
@@ -98,11 +97,6 @@ RobotinoInterface::~RobotinoInterface()
 {
 }
 
-void RobotinoInterface::getParameterNames(std::vector<std::string>& parameter_names)
-{
-	parameter_names.push_back("base_neck");
-	parameter_names.push_back("kinect");
-}
 
 // CAMERA CALIBRATION INTERFACE
 

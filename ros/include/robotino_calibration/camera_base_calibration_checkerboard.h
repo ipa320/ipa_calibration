@@ -66,9 +66,9 @@ public:
 	bool calibrateCameraToBase(const bool load_images);
 
 	// load/save calibration data from/to file
-	bool saveCalibration();
-	bool loadCalibration();
-	void getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera);
+	//bool saveCalibration();
+	//bool loadCalibration();
+	//void getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera);
 
 	void undistort(const cv::Mat& image, cv::Mat& image_undistorted);
 
@@ -82,8 +82,8 @@ protected:
 	// retrieves the image size, checkerboard points per image as well as all relevant transformations
 	bool acquireCalibrationImages(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations, const cv::Size pattern_size, const bool load_images,
 			int& image_width, int& image_height, std::vector< std::vector<cv::Point2f> >& points_2d_per_image,
-			std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
-			std::vector<cv::Mat>& T_camera_to_camera_optical_vector);
+			std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> >& T_between_gaps_vector,
+			std::vector<cv::Mat>& T_gaplast_to_camera_optical_vector);
 
 	// acquire a single image and detect checkerboard points
 	int acquireCalibrationImage(int& image_width, int& image_height, std::vector<cv::Point2f>& points_2d_per_image,

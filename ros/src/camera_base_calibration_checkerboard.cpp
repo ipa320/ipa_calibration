@@ -72,9 +72,9 @@ CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHa
 	if (temp.size() == 2)
 		chessboard_pattern_size_ = cv::Size(temp[0], temp[1]);
 	std::cout << "pattern: " << chessboard_pattern_size_ << std::endl;
-	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "checkerboard_frame");
+	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "");
 	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
-	node_handle_.param<std::string>("camera_image_topic", camera_image_topic_, "/kinect/rgb/image_raw");
+	node_handle_.param<std::string>("camera_image_topic", camera_image_topic_, "");
 	std::cout << "camera_image_topic: " << camera_image_topic_ << std::endl;
 
 	// set up messages
@@ -111,9 +111,6 @@ void CameraBaseCalibrationCheckerboard::imageCallback(const sensor_msgs::ImageCo
 
 bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_images)
 {
-	// setup storage folder
-	//int return_value = system("mkdir -p robotino_calibration/camera_calibration");
-
 	// pre-cache images
 	if (load_images == false)
 	{
@@ -128,58 +125,47 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	// acquire images
 	int image_width=0, image_height=0;
 	std::vector< std::vector<cv::Point2f> > points_2d_per_image;
-	std::vector<cv::Mat> T_base_to_checkerboard_vector;
-	std::vector<cv::Mat> T_torso_lower_to_torso_upper_vector;
-	std::vector<cv::Mat> T_camera_to_camera_optical_vector;
-	acquireCalibrationImages(robot_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_base_to_checkerboard_vector,
-			T_torso_lower_to_torso_upper_vector, T_camera_to_camera_optical_vector);
+	std::vector<cv::Mat> T_gapfirst_to_marker_vector;
+	std::vector< std::vector<cv::Mat> > T_between_gaps_vector;
+	std::vector<cv::Mat> T_gaplast_to_camera_optical_vector;
+	acquireCalibrationImages(robot_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_gapfirst_to_marker_vector,
+			T_between_gaps_vector, T_gaplast_to_camera_optical_vector);
 
 	// prepare chessboard 3d points
 	std::vector< std::vector<cv::Point3f> > pattern_points_3d;
 	calibration_utilities::computeCheckerboard3dPoints(pattern_points_3d, chessboard_pattern_size_, chessboard_cell_size_, points_2d_per_image.size());
 
 	// intrinsic calibration for camera
-	std::vector<cv::Mat> rvecs, tvecs, T_camera_to_checkerboard_vector;
+	std::vector<cv::Mat> rvecs, tvecs, T_gaplast_to_marker_vector;
 	intrinsicCalibration(pattern_points_3d, points_2d_per_image, cv::Size(image_width, image_height), rvecs, tvecs);
 	for (size_t i=0; i<rvecs.size(); ++i)
 	{
 		cv::Mat R, t;
 		cv::Rodrigues(rvecs[i], R);
-		cv::Mat T_camera_to_checkerboard = T_camera_to_camera_optical_vector[i] * transform_utilities::makeTransform(R, tvecs[i]);
-		T_camera_to_checkerboard_vector.push_back(T_camera_to_checkerboard);
+		cv::Mat T_gaplast_to_marker = T_gaplast_to_camera_optical_vector[i] * transform_utilities::makeTransform(R, tvecs[i]);
+		T_gaplast_to_marker_vector.push_back(T_gaplast_to_marker);
 	}
 
-	// extrinsic calibration between base and torso_lower as well as torso_upper and camera
+	// extrinsic calibration optimization
 	for (int i=0; i<optimization_iterations_; ++i)
 	{
-//		std::cout << "\nExtrinsic optimization run " << i << ":" << std::endl;
-		extrinsicCalibrationBaseToTorsoLower(pattern_points_3d, T_base_to_checkerboard_vector, T_torso_lower_to_torso_upper_vector, T_camera_to_checkerboard_vector);
-//		cv::Vec3d ypr = YPRFromRotationMatrix(T_base_to_torso_lower_);
-//		std::cout << "T_base_to_torso_lower:\n" << T_base_to_torso_lower_ << std::endl;
-//		std::cout << "yaw=" << ypr.val[0] << "   pitch=" << ypr.val[1] << "   roll=" << ypr.val[2] << std::endl;
-		extrinsicCalibrationTorsoUpperToCamera(pattern_points_3d, T_base_to_checkerboard_vector, T_torso_lower_to_torso_upper_vector, T_camera_to_checkerboard_vector);
-//		ypr = YPRFromRotationMatrix(T_torso_upper_to_camera_);
-//		std::cout << "T_torso_upper_to_camera:\n" << T_torso_upper_to_camera_ << std::endl;
-//		std::cout << "yaw=" << ypr.val[0] << "   pitch=" << ypr.val[1] << "   roll=" << ypr.val[2] << std::endl;
+		for ( int j=0; j<transforms_to_calibrate_.size(); ++j )
+		{
+			extrinsicCalibration(pattern_points_3d, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector, calibration_order_[j]);
+		}
 	}
 
 	// display calibration parameters
-	std::vector<cv::Mat> calibrated_Transforms;
-	calibrated_Transforms.push_back(T_base_to_torso_lower_);
-	calibrated_Transforms.push_back(T_torso_upper_to_camera_);
-	displayAndSaveCalibrationResult(calibrated_Transforms);
+	displayAndSaveCalibrationResult();
 
-	// save calibration
-	saveCalibration();
 	calibrated_ = true;
-
 	return true;
 }
 
 bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
 		const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
-		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_base_to_checkerboard_vector,
-		std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector, std::vector<cv::Mat>& T_camera_to_camera_optical_vector)
+		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
+		std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_camera_optical_vector)
 {
 	// capture images from different perspectives
 	const int number_images_to_capture = (int)robot_configurations.size();
@@ -200,31 +186,26 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 			continue;
 
 		// retrieve transformations
-		cv::Mat T_base_to_checkerboard, T_torso_lower_to_torso_upper, T_camera_to_camera_optical;
 		std::stringstream path;
 		path << calibration_storage_path_ << image_counter << ".yml";
-		if (load_images)
-		{
-			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
-			if (fs.isOpened())
-			{
-				fs["T_base_to_checkerboard"] >> T_base_to_checkerboard;
-				fs["T_torso_lower_to_torso_upper"] >> T_torso_lower_to_torso_upper;
-				fs["T_camera_to_camera_optical"] >> T_camera_to_camera_optical;
-			}
-			else
-			{
-				ROS_WARN("Could not read transformations from file '%s'.", path.str().c_str());
-				continue;
-			}
-			fs.release();
-		}
-		else
+		cv::Mat T_gapfirst_to_marker, T_gaplast_to_camera_optical, T_camera_optical_to_marker, T_gaplast_to_marker;
+		std::vector<cv::Mat> T_between_gaps;
+		if ( load_images == false )
 		{
 			bool result = true;
-			result &= transform_utilities::getTransform(transform_listener_, base_frame_, checkerboard_frame_, T_base_to_checkerboard);
-			result &= transform_utilities::getTransform(transform_listener_, torso_lower_frame_, torso_upper_frame_, T_torso_lower_to_torso_upper);
-			result &= transform_utilities::getTransform(transform_listener_, camera_frame_, camera_optical_frame_, T_camera_to_camera_optical);
+			result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[0].parent_, checkerboard_frame_, T_gapfirst_to_marker);
+			result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[ transforms_to_calibrate_.size()-1 ].child_, camera_optical_frame_, T_gaplast_to_camera_optical);
+
+			for ( int i=0; i<transforms_to_calibrate_.size()-1; ++i )
+			{
+				if ( transforms_to_calibrate_[i].parent_ == transforms_to_calibrate_[i].child_ ) // several gaps in a row, no certain trafos in between
+					continue;
+
+				cv::Mat temp;
+				result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[i].child_, transforms_to_calibrate_[i+1].parent_, temp);
+				T_between_gaps.push_back(temp);
+				transforms_to_calibrate_[i].trafo_until_next_gap_idx_ = T_between_gaps.size()-1;
+			}
 
 			if (result == false)
 				continue;
@@ -233,23 +214,37 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::WRITE);
 			if (fs.isOpened())
 			{
-				fs << "T_base_to_checkerboard" << T_base_to_checkerboard;
-				fs << "T_torso_lower_to_torso_upper" << T_torso_lower_to_torso_upper;
-				fs << "T_camera_to_camera_optical" << T_camera_to_camera_optical;
+				fs << "T_gapfirst_to_marker" << T_gapfirst_to_marker;
+				fs << "T_gaplast_to_camera_optical" << T_gaplast_to_camera_optical;
+				fs << "T_between_gaps" << T_between_gaps;
 			}
 			else
 			{
 				ROS_WARN("Could not write transformations to file '%s'.", path.str().c_str());
-				continue;
+			}
+			fs.release();
+		}
+		else
+		{
+			// load data from file
+			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
+			if (fs.isOpened())
+			{
+				fs["T_gapfirst_to_marker"] >> T_gapfirst_to_marker;
+				fs["T_gaplast_to_camera_optical"] >> T_gaplast_to_camera_optical;
+				fs["T_between_gaps"] >> T_between_gaps;
+			}
+			else
+			{
+				ROS_WARN("Could not read transformations from file '%s'.", path.str().c_str());
 			}
 			fs.release();
 		}
 
 		points_2d_per_image.push_back(checkerboard_points_2d);
-		T_base_to_checkerboard_vector.push_back(T_base_to_checkerboard);
-		T_torso_lower_to_torso_upper_vector.push_back(T_torso_lower_to_torso_upper);
-		T_camera_to_camera_optical_vector.push_back(T_camera_to_camera_optical);
-
+		T_gapfirst_to_marker_vector.push_back(T_gapfirst_to_marker);
+		T_between_gaps_vector.push_back(T_between_gaps);
+		T_gaplast_to_camera_optical_vector.push_back(T_gaplast_to_camera_optical);
 		std::cout << "Captured perspectives: " << points_2d_per_image.size() << std::endl;
 	}
 
@@ -262,7 +257,7 @@ int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width,
 	int return_value = 0;
 
 	// acquire image
-	cv::Mat image;
+	cv::Mat image, gray;
 	if (load_images == false)
 	{
 		ros::Duration(3).sleep();
@@ -274,12 +269,15 @@ int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width,
 		{
 			boost::mutex::scoped_lock lock(camera_data_mutex_);
 
-			if ( ros::ok() )
-				std::cout << "Time diff: " << (ros::Time::now() - latest_image_time_).toSec() << std::endl;
+			std::cout << "Time diff: " << (ros::Time::now() - latest_image_time_).toSec() << std::endl;
 
 			if ((ros::Time::now() - latest_image_time_).toSec() < 20.0)
 			{
 				image = camera_image_.clone();
+
+				// convert to grayscale
+				gray = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
+				cv::cvtColor(image, gray, CV_BGR2GRAY);
 			}
 			else
 			{
@@ -294,21 +292,22 @@ int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width,
 		std::stringstream ss;
 		ss << calibration_storage_path_ << image_counter;
 		std::string image_name = ss.str() + ".png";
-		image = cv::imread(image_name.c_str(), 0);
-		if (image.empty())
+		gray = cv::imread(image_name.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
+		if (gray.empty())
 			return -2;
 	}
-	image_width = image.cols;
-	image_height = image.rows;
+	image_width = gray.cols;
+	image_height = gray.rows;
 
 	// find pattern in image
-	bool pattern_found = cv::findChessboardCorners(image, pattern_size, checkerboard_points_2d, cv::CALIB_CB_FAST_CHECK + cv::CALIB_CB_FILTER_QUADS);
+	bool pattern_found = cv::findChessboardCorners(gray, pattern_size, checkerboard_points_2d,
+								cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);
 
-	// display
-	cv::Mat display = image.clone();
-	cv::drawChessboardCorners(display, pattern_size, cv::Mat(checkerboard_points_2d), pattern_found);
-	cv::imshow("image", display);
-	cv::waitKey(50);
+	if ( pattern_found )
+	{
+        cv::cornerSubPix( gray, checkerboard_points_2d, cv::Size(11,11),
+        		cv::Size(-1,-1), cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 30, 0.1 ));
+	}
 
 	// collect 2d points
 	if (checkerboard_points_2d.size() == pattern_size.height*pattern_size.width)
@@ -340,75 +339,11 @@ void CameraBaseCalibrationCheckerboard::intrinsicCalibration(const std::vector< 
 	std::cout << "Intrinsic calibration:\nK:\n" << K_ << "\ndistortion:\n" << distortion_ << std::endl;
 }
 
-bool CameraBaseCalibrationCheckerboard::saveCalibration()
-{
-	bool success = true;
-
-	// save calibration
-	std::string filename = calibration_storage_path_ + "camera_calibration.yml";
-	cv::FileStorage fs(filename.c_str(), cv::FileStorage::WRITE);
-	if (fs.isOpened() == true)
-	{
-		fs << "K" << K_;
-		fs << "distortion" << distortion_;
-		fs << "T_base_to_torso_lower" << T_base_to_torso_lower_;
-		fs << "T_torso_upper_to_camera" << T_torso_upper_to_camera_;
-	}
-	else
-	{
-		std::cout << "Error: CameraBaseCalibrationCheckerboard::saveCalibration: Could not write calibration to file.";
-		success = false;
-	}
-	fs.release();
-
-	return success;
-}
-
-bool CameraBaseCalibrationCheckerboard::loadCalibration()
-{
-	bool success = true;
-
-	// load calibration
-	std::string filename = calibration_storage_path_ + "camera_calibration.yml";
-	cv::FileStorage fs(filename.c_str(), cv::FileStorage::READ);
-	if (fs.isOpened() == true)
-	{
-		fs["K"] >> K_;
-		fs["distortion"] >> distortion_;
-		fs["T_base_to_torso_lower"] >> T_base_to_torso_lower_;
-		fs["T_torso_upper_to_camera"] >> T_torso_upper_to_camera_;
-	}
-	else
-	{
-		std::cout << "Error: CameraBaseCalibrationCheckerboard::loadCalibration: Could not read calibration from file.";
-		success = false;
-	}
-	fs.release();
-
-	calibrated_ = true;
-
-	return success;
-}
-
-void CameraBaseCalibrationCheckerboard::getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera)
-{
-	if (calibrated_ == false && loadCalibration() == false)
-	{
-		std::cout << "Error: CameraBaseCalibrationCheckerboard not calibrated and no calibration data available on disk." << std::endl;
-		return;
-	}
-
-	K = K_.clone();
-	distortion = distortion_.clone();
-	T_base_to_torso_lower = T_base_to_torso_lower_.clone();
-	T_torso_upper_to_camera = T_torso_upper_to_camera_.clone();
-}
-
 void CameraBaseCalibrationCheckerboard::undistort(const cv::Mat& image, cv::Mat& image_undistorted)
 {
-	if (calibrated_ == false && loadCalibration() == false)
+	if ( calibrated_ == false )
 	{
-		std::cout << "Error: CameraBaseCalibrationCheckerboard not calibrated and no calibration data available on disk." << std::endl;
+		std::cout << "Error: CameraBaseCalibrationCheckerboard not calibrated." << std::endl;
 		return;
 	}
 

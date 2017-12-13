@@ -73,9 +73,6 @@ public:
 	CobInterface(ros::NodeHandle nh, bool bArmCalibration);
 	~CobInterface();
 
-	// general functions
-	void getParameterNames(std::vector<std::string>& parameter_names);
-
 	// camera calibration interface
 	void assignNewRobotVelocity(geometry_msgs::Twist newVelocity);
 	void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles);

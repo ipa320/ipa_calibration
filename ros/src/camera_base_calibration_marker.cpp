@@ -68,59 +68,24 @@
 // ToDo: Stop robot immediately if reference frame gets lost or jumps around!!!! [Done]
 // ToDo: Make that pitag/checkerboard/arm calibration calibration results will be stored to different subfolders [Done, as already possible]
 // ToDo: Change convention of rotations from RPY to YPR inside transformations_utilities! Function says YPR already, but it is wrong! [Done, by removing function]
-// ToDo: Port over more flexible calibration code to checkerboard calibration as well.
-// ToDo: Remove unused attributes
+// ToDo: Port over more flexible calibration code to checkerboard calibration as well. [Done]
+// ToDo: Remove unused attributes [Done]
 // ToDo: Move optimization_iterations to robot_calibration mother class and set its value to one if there is only one transform to be calibrated [Done]
 // ToDo: Add timer in moverobot/movearm and check if robots setup has changed since last time (maybe 1 sec), if not give a warning.
+// ToDo: Cleanup yaml files
+// ToDo: Port flexible calibration code over to arm calibration as well.
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
-			RobotCalibration(nh, false), counter(0), RefHistoryIndex_(0)
+			RobotCalibration(nh, false), RefHistoryIndex_(0)
 {
 	// load parameters
 	std::cout << "\n========== CameraBaseCalibrationMarker Parameters ==========\n";
+
 	// coordinate frame name parameters
-	//node_handle_.param<std::string>("torso_lower_frame", torso_lower_frame_, "base_pan_link");
-	//std::cout << "torso_lower_frame: " << torso_lower_frame_ << std::endl;
-	//node_handle_.param<std::string>("torso_upper_frame", torso_upper_frame_, "tilt_link");
-	//std::cout << "torso_upper_frame: " << torso_upper_frame_ << std::endl;
-	//node_handle_.param<std::string>("camera_frame", camera_frame_, "kinect_link");
-	//std::cout << "camera_frame: " << camera_frame_ << std::endl;
 	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "");
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
 	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "/landmark_reference_nav");
 	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
-
-	// initial parameters
-	/*bool success = transform_utilities::getTransform(transform_listener_, base_frame_, torso_lower_frame_, T_base_to_torso_lower_);
-	if ( success == false )
-	{
-		ROS_FATAL("Could not retrieve transform from %s to %s from TF!",base_frame_.c_str(),torso_lower_frame_.c_str());
-		throw std::exception();
-	}
-	else
-		std::cout << "T_base_to_torso_lower_initial:\n" << T_base_to_torso_lower_ << std::endl;
-
-	success = transform_utilities::getTransform(transform_listener_, torso_upper_frame_, camera_frame_, T_torso_upper_to_camera_);
-	if ( success == false )
-	{
-		ROS_FATAL("Could not retrieve transform from %s to %s from TF!",torso_upper_frame_.c_str(),camera_frame_.c_str());
-		throw std::exception();
-	}
-	else
-		std::cout << "T_torso_upper_to_camera_initial:\n" << T_torso_upper_to_camera_ << std::endl;*/
-
-	/*T_base_to_torso_lower_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.25, 0, 0.5)));
-	T_torso_upper_to_camera_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, -1.57), cv::Mat(cv::Vec3d(0.0, 0.065, 0.0)));
-	std::vector<double> temp;
-	node_handle_.getParam("T_base_to_torso_lower_initial", temp);
-	if (temp.size()==6)
-		T_base_to_torso_lower_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
-	std::cout << "T_base_to_torso_lower_initial:\n" << T_base_to_torso_lower_ << std::endl;
-	temp.clear();
-	node_handle_.getParam("T_torso_upper_to_camera_initial", temp);
-	if (temp.size()==6)
-		T_torso_upper_to_camera_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
-	std::cout << "T_torso_upper_to_camera_initial:\n" << T_torso_upper_to_camera_ << std::endl;*/
 
 	bool use_range = false;
 	node_handle_.param("use_range", use_range, false);
@@ -254,8 +219,6 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 {
 	const double k_base = 0.25;
 	const double k_phi = 0.25;
-	
-	//Avoid that robot moves, when there is an error with detecting the wall!
 
 	// move pan-tilt unit
 	std_msgs::Float64MultiArray angles;
@@ -288,7 +251,6 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	error_x = robot_configuration.pose_x_ - T.at<double>(0,3);
 	error_y = robot_configuration.pose_y_ - T.at<double>(1,3);
 
-	//std::cout << "Before control: error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
 	if (fabs(error_phi) > 0.03 || fabs(error_x) > 0.02 || fabs(error_y) > 0.02)
 	{
 		// control robot angle
@@ -331,8 +293,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 			error_y = robot_configuration.pose_y_ - T.at<double>(1,3);
 			if ((fabs(error_x) < 0.01 && fabs(error_y) < 0.01) || !ros::ok())
 				break;
-//			std::cout << "error_x: " << error_x << std::endl;
-//			std::cout << "error_y: " << error_y << std::endl;
+
 			tw.linear.x = std::min(0.05, k_base*error_x);
 			tw.linear.y = std::min(0.05, k_base*error_y);
 			calibration_interface_->assignNewRobotVelocity(tw);
@@ -393,18 +354,8 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	{
 		ros::Duration(1).sleep();
 	}
-
-	/*std::cout << "After control: error_x=" << error_x << "   error_y=" << error_y << "   error_phi=" << error_phi << std::endl;
-	std::cout << "Positioning successful: x=" << robot_configuration.pose_x_ << ", y=" << robot_configuration.pose_y_
-			<< ", phi=" << robot_configuration.pose_phi_ << ", pan=" << robot_configuration.pan_angle_
-			<< ", tilt=" << robot_configuration.tilt_angle_
-			<< "\n############################################################################### "
-			<< counter++ << ". " << elapsed_time_since_start_.getElapsedTimeInSec() << "s"
-			<< std::endl;*/
 			
 	ros::spinOnce();
-	//ros::Duration(1).sleep();
-
 	return true;
 }
 
@@ -415,69 +366,6 @@ void CameraBaseCalibrationMarker::turnOffBaseMotion()
 	tw.linear.y = 0;
 	tw.angular.z = 0;
 	calibration_interface_->assignNewRobotVelocity(tw);
-}
-
-void CameraBaseCalibrationMarker::extrinsicCalibrationBaseToTorsoLower(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-		std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
-		std::vector<cv::Mat>& T_camera_to_marker_vector)
-{
-	// transform 3d chessboard points to respective coordinates systems (base and torso_lower)
-	std::vector<cv::Point3d> points_3d_base, points_3d_torso_lower;
-	for (size_t i=0; i<pattern_points_3d.size(); ++i)
-	{
-		cv::Mat T_torso_lower_to_marker = T_torso_lower_to_torso_upper_vector[i] * T_torso_upper_to_camera_ * T_camera_to_marker_vector[i];
-//		std::cout << "T_base_to_marker_vector[" << i << "]:\n" << T_base_to_marker_vector[i] << std::endl;
-//		std::cout << "T_torso_lower_to_marker:\n" << T_torso_lower_to_marker << std::endl;
-//		std::cout << "T_torso_lower_to_torso_upper_vector[i]:\n" << T_torso_lower_to_torso_upper_vector[i] << std::endl;
-//		std::cout << "T_torso_upper_to_camera_:\n" << T_torso_upper_to_camera_ << std::endl;
-//		std::cout << "T_camera_to_marker_vector[i]:\n" << T_camera_to_marker_vector[i] << std::endl;
-		for (size_t j=0; j<pattern_points_3d[i].size(); ++j)
-		{
-			cv::Mat point = cv::Mat(cv::Vec4d(pattern_points_3d[i][j].x, pattern_points_3d[i][j].y, pattern_points_3d[i][j].z, 1.0));
-
-			// to base coordinate system
-			cv::Mat point_base = T_base_to_marker_vector[i] * point;
-			//std::cout << "point_base: " << pattern_points_3d[i][j].x <<", "<< pattern_points_3d[i][j].y <<", "<< pattern_points_3d[i][j].z << " --> " << point_base.at<double>(0,0) <<", "<< point_base.at<double>(1,0) << ", " << point_base.at<double>(2,0) << std::endl;
-			points_3d_base.push_back(cv::Point3d(point_base.at<double>(0), point_base.at<double>(1), point_base.at<double>(2)));
-
-			// to torso_lower coordinate
-			cv::Mat point_torso_lower = T_torso_lower_to_marker * point;
-			//std::cout << "point_torso_lower: " << pattern_points_3d[i][j].x <<", "<< pattern_points_3d[i][j].y <<", "<< pattern_points_3d[i][j].z << " --> " << point_torso_lower.at<double>(0) <<", "<< point_torso_lower.at<double>(1) << ", " << point_torso_lower.at<double>(2) << std::endl;
-			points_3d_torso_lower.push_back(cv::Point3d(point_torso_lower.at<double>(0), point_torso_lower.at<double>(1), point_torso_lower.at<double>(2)));
-		}
-	}
-
-	T_base_to_torso_lower_ = transform_utilities::computeExtrinsicTransform(points_3d_base, points_3d_torso_lower);
-}
-
-void CameraBaseCalibrationMarker::extrinsicCalibrationTorsoUpperToCamera(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-		std::vector<cv::Mat>& T_base_to_marker_vector, std::vector<cv::Mat>& T_torso_lower_to_torso_upper_vector,
-		std::vector<cv::Mat>& T_camera_to_marker_vector)
-{
-	// transform 3d marker points to respective coordinates systems (camera and torso_upper)
-	std::vector<cv::Point3d> points_3d_torso_upper, points_3d_camera;
-	for (size_t i=0; i<pattern_points_3d.size(); ++i)
-	{
-		cv::Mat T_torso_upper_to_marker = T_torso_lower_to_torso_upper_vector[i].inv() * T_base_to_torso_lower_.inv() * T_base_to_marker_vector[i];
-//		std::cout << "T_camera_to_marker_vector[i]:\n" << T_camera_to_marker_vector[i] << std::endl;
-//		std::cout << "T_torso_upper_to_marker:\n" << T_torso_upper_to_marker << std::endl;
-		for (size_t j=0; j<pattern_points_3d[i].size(); ++j)
-		{
-			cv::Mat point = cv::Mat(cv::Vec4d(pattern_points_3d[i][j].x, pattern_points_3d[i][j].y, pattern_points_3d[i][j].z, 1.0));
-
-			// to camera coordinate system
-			cv::Mat point_camera = T_camera_to_marker_vector[i] * point;
-			//std::cout << "point_camera=" << point_camera << std::endl;
-			points_3d_camera.push_back(cv::Point3d(point_camera.at<double>(0), point_camera.at<double>(1), point_camera.at<double>(2)));
-
-			// to torso_upper coordinate
-			cv::Mat point_torso_upper = T_torso_upper_to_marker * point;
-			//std::cout << "point_torso_upper=" << point_torso_upper << std::endl;
-			points_3d_torso_upper.push_back(cv::Point3d(point_torso_upper.at<double>(0), point_torso_upper.at<double>(1), point_torso_upper.at<double>(2)));
-		}
-	}
-
-	T_torso_upper_to_camera_ = transform_utilities::computeExtrinsicTransform(points_3d_torso_upper, points_3d_camera);
 }
 
 void CameraBaseCalibrationMarker::extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
@@ -519,79 +407,12 @@ void CameraBaseCalibrationMarker::extrinsicCalibration(std::vector< std::vector<
 
 			// to child coordinate system
 			cv::Mat point_child = T_child_to_marker * point;
-			//std::cout << "point_camera=" << point_camera << std::endl;
 			points_3d_child.push_back(cv::Point3d(point_child.at<double>(0), point_child.at<double>(1), point_child.at<double>(2)));
 
 			// to parent coordinate system
 			cv::Mat point_parent = T_parent_to_marker * point;
-			//std::cout << "point_torso_upper=" << point_torso_upper << std::endl;
 			points_3d_parent.push_back(cv::Point3d(point_parent.at<double>(0), point_parent.at<double>(1), point_parent.at<double>(2)));
 		}
-	}
-}
-
-void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult(const std::vector<cv::Mat>& calibratedTransforms)//const cv::Mat& T_base_to_torso_lower_, const cv::Mat& T_torso_upper_to_camera_)
-{
-	std::vector<std::string> parameter_names;
-
-	calibration_interface_->getParameterNames(parameter_names);
-
-	int ps = parameter_names.size();
-	int cs = calibratedTransforms.size();
-
-	if ( ps < cs )
-	{
-		ROS_WARN("Parameter name size is smaller than amount of calibrated transforms, inserting default names...");
-
-		for ( int i=0; i<(cs-ps); ++i )
-		{
-			std::stringstream ss;
-			ss << "Param_" << (i+1);
-			parameter_names.push_back(ss.str());
-		}
-	}
-	else if ( ps > cs )
-		ROS_WARN("Parameter name size is greater than amount of calibrated transforms, skipping those...");
-
-	// display calibration parameters
-	std::stringstream output;
-	output << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
-	for ( int i=0; i<calibratedTransforms.size(); ++i )
-	{
-		cv::Mat transform = calibratedTransforms[i];
-		cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(transform);
-
-			output << "  <!-- " << parameter_names[i] <<" mount positions | camera base calibration | relative to base_link -->\n"
-					<< "  <property name=\"" << parameter_names[i] << "_x\" value=\"" << transform.at<double>(0,3) << "\"/>\n"
-					<< "  <property name=\"" << parameter_names[i] << "_y\" value=\"" << transform.at<double>(1,3) << "\"/>\n"
-					<< "  <property name=\"" << parameter_names[i] << "_z\" value=\"" << transform.at<double>(2,3) << "\"/>\n"
-					<< "  <property name=\"" << parameter_names[i] << "_roll\" value=\"" << ypr.val[2] << "\"/>\n"
-					<< "  <property name=\"" << parameter_names[i] << "_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
-					<< "  <property name=\"" << parameter_names[i] << "_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
-	}
-	/*ypr = transform_utilities::YPRFromRotationMatrix(T_torso_upper_to_camera_);
-	output << "  <!-- kinect mount positions | camera base calibration | relative to neck_tilt_link -->\n"
-			  << "  <property name=\"kinect_x\" value=\"" << T_torso_upper_to_camera_.at<double>(0,3) << "\"/>\n"
-			  << "  <property name=\"kinect_y\" value=\"" << T_torso_upper_to_camera_.at<double>(1,3) << "\"/>\n"
-			  << "  <property name=\"kinect_z\" value=\"" << T_torso_upper_to_camera_.at<double>(2,3) << "\"/>\n"
-			  << "  <property name=\"kinect_roll\" value=\"" << ypr.val[2] << "\"/>\n"
-			  << "  <property name=\"kinect_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
-			  << "  <property name=\"kinect_yaw\" value=\"" << ypr.val[0] << "\"/>\n" << std::endl;*/
-
-	std::cout << output.str();
-
-	if ( ros::ok() )
-	{
-		std::string path_file = calibration_storage_path_ + "camera_calibration_urdf.txt";
-		std::fstream file_output;
-		file_output.open(path_file.c_str(), std::ios::out);
-		if (file_output.is_open())
-			file_output << output.str();
-		file_output.close();
-	}
-	else
-	{
-		ROS_INFO("Skipping to save calibration result.");
 	}
 }
 
