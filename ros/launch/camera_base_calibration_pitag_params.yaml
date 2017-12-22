@@ -2,6 +2,8 @@
 # insert the values as x, y, z, yaw (rot around z), pitch (rot around y), roll (rot around x)
 # the transform from base_frame to torso_lower_frame
 #T_base_to_torso_lower_initial: [0.0, 0.0, 0.676, 0.0, 0.0, 0.0]
+T_initial: [0.045, -0.129, -0.349, 2.955, -0.034, 0.023]
+
 
 # the transform from torso_upper_frame to camera_frame
 #T_torso_upper_to_camera_initial: [0.0, 0.0, 0.0, 0.0, 0.0, -1.57]

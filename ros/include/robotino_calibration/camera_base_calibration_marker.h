@@ -100,6 +100,9 @@ protected:
 			std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> > T_between_gaps_vector,
 			std::vector<cv::Mat>& T_gaplast_to_marker_vector, int trafo_to_calibrate);
 
+	bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat> T_between_gaps,
+			cv::Mat& T_gaplast_to_marker, std::string marker_frame);
+
 	// displays the calibration result in the urdf file's format and also stores the screen output to a file
 	void displayAndSaveCalibrationResult();
 

@@ -192,21 +192,7 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 		std::vector<cv::Mat> T_between_gaps;
 		if ( load_images == false )
 		{
-			bool result = true;
-			result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[0].parent_, checkerboard_frame_, T_gapfirst_to_marker);
-			result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[ transforms_to_calibrate_.size()-1 ].child_, camera_optical_frame_, T_gaplast_to_camera_optical);
-
-			for ( int i=0; i<transforms_to_calibrate_.size()-1; ++i )
-			{
-				if ( transforms_to_calibrate_[i].parent_ == transforms_to_calibrate_[i].child_ ) // several gaps in a row, no certain trafos in between
-					continue;
-
-				cv::Mat temp;
-				result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[i].child_, transforms_to_calibrate_[i+1].parent_, temp);
-				T_between_gaps.push_back(temp);
-				transforms_to_calibrate_[i].trafo_until_next_gap_idx_ = T_between_gaps.size()-1;
-			}
-
+			bool result = calculateTransformationChains(T_gapfirst_to_marker, T_between_gaps, T_gaplast_to_camera_optical, checkerboard_frame_);
 			if (result == false)
 				continue;
 

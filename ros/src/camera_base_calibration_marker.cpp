@@ -74,6 +74,7 @@
 // ToDo: Add timer in moverobot/movearm and check if robots setup has changed since last time (maybe 1 sec), if not give a warning.
 // ToDo: Cleanup yaml files
 // ToDo: Port flexible calibration code over to arm calibration as well.
+// ToDo: TF seems to use RPY convention instead of YPR. transform_utilities::rotationMatrixFromYPR is therefore wrong.
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 			RobotCalibration(nh, false), RefHistoryIndex_(0)
@@ -184,6 +185,21 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 		ROS_FATAL("RobotCalibration::RobotCalibration: Reference frame has not been set up for 10 seconds.");
 		throw std::exception();
 	}
+
+	cv::Mat T;
+
+	transform_utilities::getTransform(transform_listener_, "arm_link5", base_frame_, T);
+	std::cout << "TF: " << T << std::endl;
+	std::cout << transform_utilities::YPRFromRotationMatrix( (cv::Mat_<double>(3,3) << T.at<double>(0,0), T.at<double>(0,1), T.at<double>(0,2),
+				T.at<double>(1,0), T.at<double>(1,1), T.at<double>(1,2),
+				T.at<double>(2,0), T.at<double>(2,1), T.at<double>(2,2)) ) << std::endl;
+	std::vector<float> temp;
+	node_handle_.getParam("T_initial", temp);
+	T = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+	std::cout << "BUILT: " << T << std::endl;
+	std::cout << transform_utilities::YPRFromRotationMatrix( (cv::Mat_<double>(3,3) << T.at<double>(0,0), T.at<double>(0,1), T.at<double>(0,2),
+				T.at<double>(1,0), T.at<double>(1,1), T.at<double>(1,2),
+				T.at<double>(2,0), T.at<double>(2,1), T.at<double>(2,2)) ) << std::endl;
 
 	std::cout << "CameraBaseCalibrationMarker: init done." << std::endl;
 }
@@ -414,6 +430,27 @@ void CameraBaseCalibrationMarker::extrinsicCalibration(std::vector< std::vector<
 			points_3d_parent.push_back(cv::Point3d(point_parent.at<double>(0), point_parent.at<double>(1), point_parent.at<double>(2)));
 		}
 	}
+}
+
+bool CameraBaseCalibrationMarker::calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat> T_between_gaps,
+		cv::Mat& T_gaplast_to_camera_optical, std::string marker_frame)
+{
+	bool result = true;
+	result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[0].parent_, marker_frame, T_gapfirst_to_marker);
+	result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[ transforms_to_calibrate_.size()-1 ].child_, camera_optical_frame_, T_gaplast_to_camera_optical);
+
+	for ( int i=0; i<transforms_to_calibrate_.size()-1; ++i )
+	{
+		if ( transforms_to_calibrate_[i].parent_ == transforms_to_calibrate_[i].child_ ) // several gaps in a row, no certain trafos in between
+			continue;
+
+		cv::Mat temp;
+		result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[i].child_, transforms_to_calibrate_[i+1].parent_, temp);
+		T_between_gaps.push_back(temp);
+		transforms_to_calibrate_[i].trafo_until_next_gap_idx_ = T_between_gaps.size()-1;
+	}
+
+	return result;
 }
 
 void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult()
