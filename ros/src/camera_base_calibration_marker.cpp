@@ -72,9 +72,10 @@
 // ToDo: Remove unused attributes [Done]
 // ToDo: Move optimization_iterations to robot_calibration mother class and set its value to one if there is only one transform to be calibrated [Done]
 // ToDo: Add timer in moverobot/movearm and check if robots setup has changed since last time (maybe 1 sec), if not give a warning.
-// ToDo: Cleanup yaml files
+// ToDo: Cleanup yaml files [Done]
 // ToDo: Port flexible calibration code over to arm calibration as well.
 // ToDo: TF seems to use RPY convention instead of YPR. transform_utilities::rotationMatrixFromYPR is therefore wrong.
+// ToDo: Split up yaml files into a calibrtion yaml and an inferface yaml
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 			RobotCalibration(nh, false), RefHistoryIndex_(0)
