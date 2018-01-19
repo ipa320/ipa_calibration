@@ -1,5 +1,5 @@
 # debugging value
-T_initial: [0.045, -0.129, -0.349, 2.955, -0.034, 0.023]
+#T_initial: [0.045, -0.129, -0.349, 2.955, -0.034, 0.023]
 
 
 ### Observation positions for capturing calibration images of the pitags

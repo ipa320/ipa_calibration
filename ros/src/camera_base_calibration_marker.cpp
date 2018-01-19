@@ -52,7 +52,6 @@
 #include <robotino_calibration/camera_base_calibration_marker.h>
 #include <robotino_calibration/transformation_utilities.h>
 
-//#include <std_msgs/Float64.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <geometry_msgs/Twist.h>
 
@@ -187,7 +186,8 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 		throw std::exception();
 	}
 
-	cv::Mat T;
+	// Debug how RVIZ rotations are defined
+	/*cv::Mat T;
 
 	transform_utilities::getTransform(transform_listener_, "arm_link5", base_frame_, T);
 	std::cout << "TF: " << T << std::endl;
@@ -200,7 +200,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
 	std::cout << "BUILT: " << T << std::endl;
 	std::cout << transform_utilities::YPRFromRotationMatrix( (cv::Mat_<double>(3,3) << T.at<double>(0,0), T.at<double>(0,1), T.at<double>(0,2),
 				T.at<double>(1,0), T.at<double>(1,1), T.at<double>(1,2),
-				T.at<double>(2,0), T.at<double>(2,1), T.at<double>(2,2)) ) << std::endl;
+				T.at<double>(2,0), T.at<double>(2,1), T.at<double>(2,2)) ) << std::endl;*/
 
 	std::cout << "CameraBaseCalibrationMarker: init done." << std::endl;
 }
