@@ -59,7 +59,7 @@ class CameraBaseCalibrationCheckerboard : public CameraBaseCalibrationMarker
 {
 public:
 
-	CameraBaseCalibrationCheckerboard(ros::NodeHandle nh);
+	CameraBaseCalibrationCheckerboard(ros::NodeHandle nh, CalibrationInterface* interface);
 	~CameraBaseCalibrationCheckerboard();
 
 	// starts the calibration between camera and base including data acquisition

@@ -17,7 +17,7 @@ chessboard_pattern_size: [10,6]
 ### initial values for transformation estimates
 # insert the values as x, y, z, yaw (rot around z), pitch (rot around y'), roll (rot around x'')
 # transform from base to first link of arm.
-T_base_to_armbase_initial: [0.324, -0.191, 0.585, 0.785393, -3.14159, 3.14159]
+#T_base_to_armbase_initial: [0.324, -0.191, 0.585, 0.785393, -3.14159, 3.14159]
 
 
 ### checkerboard observation positions for capturing calibration images
@@ -163,29 +163,6 @@ checkerboard_frame: "checkerboard_frame"
 # string
 camera_optical_frame: "ensenso_frame"
 
-# Image topic
-# string
-camera_image_topic: "/camera/rgb"
-
-# Topic to control camera postion
-camera_joint_controller_command: "/torso/joint_group_position_controller/command"
-
-# Topic to control the arm joints.
-# string
-arm_joint_controller_command: "/arm/joint_trajectory_controller/command"
-
-# joint states topic for camera unit
-# string
-camera_joint_state_topic: "/joint_states"
-
-# Topic to retrieve the current arm state
-# string
-arm_state_topic: "/arm/joint_states"
-
-# storage folder that holds the calibration output
-# string
-calibration_storage_path: "raw3-1_calibration/calibration"
-
 
 ### program sequence
 # loads calibration images and transforms from disk if set to true, for offline calibration
@@ -195,7 +172,3 @@ load_images: false
 # max allowed deviation a target angle is allowed to have in terms of the current joint angle [rad]
 # double
 max_angle_deviation: 3
-
-# calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW
-# int
-calibration_ID: 1

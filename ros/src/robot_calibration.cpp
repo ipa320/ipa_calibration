@@ -60,8 +60,8 @@
 #include <tf/exceptions.h>
 
 
-RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) :
-		node_handle_(nh), transform_listener_(nh), calibrated_(false)
+RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface) :
+		node_handle_(nh), transform_listener_(nh), calibrated_(false), calibration_interface_(interface)
 {
 	// load parameters
 	std::cout << "\n========== Calibration Parameters ==========\n";
@@ -69,8 +69,6 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 	std::cout << "base_frame: " << base_frame_ << std::endl;
 	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/calibration");
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
-	node_handle_.param("calibration_ID", calibration_ID_, 0);
-	std::cout << "calibration_ID: " << calibration_ID_ << std::endl;
 
 	// load gaps including its initial values
 	std::vector<std::string> uncertainties_list;
@@ -128,12 +126,12 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration) 
 		}
 	}
 
-	calibration_interface_ = CalibrationInterface::createInterfaceByID(calibration_ID_, node_handle_, do_arm_calibration);
+	//calibration_interface_ = CalibrationInterface::createInterfaceByID(calibration_ID_, node_handle_, do_arm_calibration);
 	createStorageFolder();
 
 	if (calibration_interface_ == 0) // Throw exception, as we need an calibration interface in order to function properly!
 	{
-		ROS_FATAL("Could not create a calibration interface for calibration_ID: %d", calibration_ID_);
+		ROS_FATAL("Could not create a calibration interface.");
 		throw std::exception();
 	}
 }

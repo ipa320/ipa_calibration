@@ -65,8 +65,8 @@
 //ToDo: Add new setting to define the timeout time (move camera, move robot)
 //ToDo: Rename armbase_to_endeff to armbase_to_checkerboard
 
-ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh) :
-		RobotCalibration(nh, true), camera_dof_(2)
+ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh, CalibrationInterface* interface) :
+		RobotCalibration(nh, interface), camera_dof_(2)
 {
 	// load parameters
 	std::cout << "\n========== ArmBaseCalibration Parameters ==========\n";

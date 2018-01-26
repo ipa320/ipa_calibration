@@ -72,7 +72,7 @@ class RobotCalibration
 {
 public:
 
-	RobotCalibration(ros::NodeHandle nh, bool do_arm_calibration);
+	RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface);
 	virtual ~RobotCalibration();
 	//virtual bool saveCalibration() = 0;
 	//virtual bool loadCalibration() = 0;
@@ -82,7 +82,7 @@ protected:
 
 	void createStorageFolder();
 
-	int calibration_ID_;		// ID for identifying which calibration interface to use.
+	//int calibration_ID_;		// ID for identifying which calibration interface to use.
 	int optimization_iterations_;	// number of iterations for optimization
 	bool calibrated_;
 	tf::TransformListener transform_listener_;

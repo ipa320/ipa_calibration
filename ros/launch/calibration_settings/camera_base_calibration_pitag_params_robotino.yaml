@@ -1,3 +1,7 @@
+# debugging value
+#T_initial: [0.045, -0.129, -0.349, 2.955, -0.034, 0.023]
+
+
 ### Observation positions for capturing calibration images of the pitags
 # if this flag is true, then the robot configurations will be sampled on a equally spaced grid from the given ranges, if false, the user-provided configurations in robot_configurations will be used
 # bool
@@ -6,11 +10,13 @@ use_range: true
 # ranges for the degrees of freedom of the robot
 # each parameter is set as [min_value, step, max_value]
 # double
-x_range: [-2.2, 0.2, -1.6]       # in [m]
-y_range: [1.0, 0.4, 1.4]       # in [m], fixed y-coordinate
-phi_range: [0, 1.0, 0]         # in [rad], fixed phi-angle
-pan_range: [-2.4, 0.4, -1.6]     # in [rad]
-tilt_range: [0.4, 0.2, 0.8]    # in [rad]
+x_range: [-1.25, 0.25, -0.75]       # in [m]
+y_range: [-1.0, 0.2, -0.6]       # in [m], fixed y-coordinate
+phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
+pan_range: [-1.2, 0.2, 0.4]     # in [rad]
+tilt_range: [-0.8, 0.2, 0.2]    # in [rad]
+#pan_range: [-0.52, 0.02, 0.52]     # in [rad]
+#tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
 
 # list of robot configurations for observing the pitags measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker
 # includes 5 parameters per entry: robot pose: x, y, phi and torso: pan, tilt
@@ -50,19 +56,18 @@ robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
 
 
 ### Robot link and topic names
-
 # the robot base frame [the transformation between laser scanner and base should be accomplished before]
-base_frame: "base_link"
+base_frame: "base_linkz"
 
 # this is the camera coordinate system which refers to the color image sensor [the transformations between camera_frame and camera_optical_frame should be available from tf]
-camera_optical_frame: "ids_ueye_frame"
+camera_optical_frame: "kinect_rgb_optical_frame"
 
 # the transformations between base_frame and the first entry of the uncertainties list and the last entry and camera_optical_frame has to be be available from TF
 # the list contains couples from parent to child. Each couple defines an uncertainty in the kinematic chain which will be calibrated by the program
 # the list must be in order, i.e. uncertainties earlier in the list must also be earlier in the kinematic chain
 # take into account that the transformations between the uncertainties have to be available from TF as well
-uncertainties_list: ["base_link","torso_0_link",
-                     "torso_knob_link","ensenso_frame"]
+uncertainties_list: ["base_linkz","base_neck_link",
+                     "neck_tilt_link","kinect_link"]
 
 # defines the order in which the uncertainties will be calibrated
 # each couple or uncertainty in the uncertainties_list increases the calibration_order list
@@ -79,21 +84,6 @@ marker_frame_base_name: "tag"
 child_frame_name: "/landmark_reference_nav"
 
 
-### commands needed to move the robot and camera
-# Topic to control camera postion
-camera_joint_controller_command: "/torso/joint_group_position_controller/command"
-
-# joint states topic for camera unit
-# string
-camera_joint_state_topic: "/torso/joint_states" #/joint_states
-
-
-## topic names for commanding the robot base
-# topic name for the base controller
-# string
-base_controller_topic_name: "/base/twist_controller/command"
-
-
 ### Program sequence
 # loads calibration images and transforms from disk if set to true
 # bool
@@ -101,12 +91,12 @@ load_images: false
 
 # number of optimization iterations
 # int
-optimization_iterations: 10000
-
-# calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW
-# int
-calibration_ID: 1
+optimization_iterations: 1000
 
 # storage folder that holds the calibration output
 # string
-calibration_storage_path: "raw_calibration/calibration"
+calibration_storage_path: "robotino_calibration/camera_pitag_calibration"
+
+# fiducials topic
+# string
+get_fiducials: "/fiducials/get_fiducials"

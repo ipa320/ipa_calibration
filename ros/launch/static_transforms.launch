@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<!-- Further transforms needed for either arm or camera calibration -->
+
+	<!-- x,y,z y,p,r -->
+	<!-- RAW torso_knob_link to ensenso_frame, for camera calibration -->
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_robot2camera" output="screen" args="0.0272224 -0.119134 0.0515345 1.99021 1.57516 2.39222 torso_knob_link ensenso_frame 100"/>
+
+	<!-- transform between checkerboard_frame coordinate system and landmark_reference coordinate system
+		checkerboard_frame: for a checkerboard - starts in upper left corner of checkerboard pattern, x goes horizontal to the right, y goes downwards to gravity direction, z goes into the plane
+		landmark_reference: similar definition as checkerboard_frame, but located at the height of the laser scanner on the left edge of the box in front of the wall or in the corner of two walls
+		transform between them: no rotation, just a x and y offset (ATTENTION: y offset depends on mounting height of the laser scanner) -->
+	<!-- <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_checkerboard" output="screen" args="0.0 -0.8 0 0 0 0  landmark_reference checkerboard_frame 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 -1.57079632679  landmark_reference_nav landmark_reference 100"/> -->
+
+</launch>

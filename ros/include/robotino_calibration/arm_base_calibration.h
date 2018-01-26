@@ -82,7 +82,7 @@ class ArmBaseCalibration : public RobotCalibration
 {
 public:
 
-	ArmBaseCalibration(ros::NodeHandle nh);
+	ArmBaseCalibration(ros::NodeHandle nh, CalibrationInterface* interface);
 	~ArmBaseCalibration();
 	bool calibrateArmToBase(const bool load_images);
 	bool saveCalibration();

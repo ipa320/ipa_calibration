@@ -61,8 +61,8 @@
 #include <cob_object_detection_msgs/DetectObjects.h>
 
 
-CameraBaseCalibrationPiTag::CameraBaseCalibrationPiTag(ros::NodeHandle nh) :
-			CameraBaseCalibrationMarker(nh)
+CameraBaseCalibrationPiTag::CameraBaseCalibrationPiTag(ros::NodeHandle nh, CalibrationInterface* interface) :
+			CameraBaseCalibrationMarker(nh, interface)
 {
 	// load parameters
 	std::cout << "\n========== CameraBaseCalibrationPiTag Parameters ==========\n";

@@ -79,7 +79,7 @@ class CameraBaseCalibrationMarker : public RobotCalibration
 {
 public:
 
-	CameraBaseCalibrationMarker(ros::NodeHandle nh);
+	CameraBaseCalibrationMarker(ros::NodeHandle nh, CalibrationInterface* interface);
 	virtual ~CameraBaseCalibrationMarker();
 
 	// starts the calibration between camera and base including data acquisition

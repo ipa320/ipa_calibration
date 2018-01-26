@@ -57,6 +57,7 @@ INCLUDE_DIRS
 	common/include
 	ros/include
 LIBRARIES
+	CalibrationTools
 CATKIN_DEPENDS
 	${catkin_RUN_PACKAGES}
 DEPENDS
@@ -80,44 +81,29 @@ include_directories(
 	${PCL_INCLUDE_DIRS}
 )
 
-# calibration software
-add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
-										ros/src/robot_calibration.cpp
-										ros/src/calibration_interface.cpp
-										ros/src/robotino_interface.cpp
-										ros/src/raw_interface.cpp
-										ros/src/cob_interface.cpp
-										ros/src/camera_base_calibration_marker.cpp
-										ros/src/camera_base_calibration_checkerboard.cpp
-										ros/src/camera_base_calibration_pitag.cpp
-										common/src/transformation_utilities.cpp
-										common/src/calibration_utilities.cpp
+# calibration library
+add_library(CalibrationTools
+					ros/src/robot_calibration.cpp
+					ros/src/calibration_interface.cpp
+					ros/src/camera_base_calibration_marker.cpp
+					ros/src/camera_base_calibration_checkerboard.cpp
+					ros/src/camera_base_calibration_pitag.cpp
+					ros/src/arm_base_calibration.cpp
+					common/src/transformation_utilities.cpp
+					common/src/calibration_utilities.cpp
 )
-target_link_libraries(camera_base_calibration
-	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
-	${Boost_LIBRARIES}
-	${OpenCV_LIBS}
-	${PCL_LIBRARIES}
-)
-add_dependencies(camera_base_calibration	${catkin_EXPORTED_TARGETS})
 
-add_executable(arm_base_calibration  ros/src/arm_base_calibration_node.cpp
-										ros/src/robot_calibration.cpp
-										ros/src/calibration_interface.cpp
-										ros/src/robotino_interface.cpp
-										ros/src/raw_interface.cpp
-										ros/src/cob_interface.cpp
-										ros/src/arm_base_calibration.cpp
-										common/src/transformation_utilities.cpp
-										common/src/calibration_utilities.cpp
-)
-target_link_libraries(arm_base_calibration
+target_link_libraries(CalibrationTools
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
 	${OpenCV_LIBRARIES}
 	${PCL_LIBRARIES}
 )
-add_dependencies(arm_base_calibration	${catkin_EXPORTED_TARGETS})
+
+## Add cmake target dependencies of the library
+## as an example, code may need to be generated before libraries
+## either from message generation or dynamic reconfigure
+add_dependencies(CalibrationTools ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 #############
@@ -135,13 +121,7 @@ add_dependencies(arm_base_calibration	${catkin_EXPORTED_TARGETS})
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS camera_base_calibration
-	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(TARGETS arm_base_calibration
+install(TARGETS CalibrationTools
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

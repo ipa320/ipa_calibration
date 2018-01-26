@@ -66,7 +66,7 @@ public:
 	CalibrationInterface();
 	CalibrationInterface(ros::NodeHandle nh);
 	virtual ~CalibrationInterface();
-	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, bool bArmCalibration); //Create corresponding robot interface by a user-defined ID.
+	//static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, bool bArmCalibration); //Create corresponding robot interface by a user-defined ID.
 
 	// camera calibration interface
 	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;

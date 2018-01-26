@@ -76,8 +76,8 @@
 // ToDo: TF seems to use RPY convention instead of YPR. transform_utilities::rotationMatrixFromYPR is therefore wrong.
 // ToDo: Split up yaml files into a calibrtion yaml and an inferface yaml
 
-CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh) :
-			RobotCalibration(nh, false), RefHistoryIndex_(0)
+CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, CalibrationInterface* interface) :
+			RobotCalibration(nh, interface), RefHistoryIndex_(0)
 {
 	// load parameters
 	std::cout << "\n========== CameraBaseCalibrationMarker Parameters ==========\n";

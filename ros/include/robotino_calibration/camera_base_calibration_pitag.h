@@ -59,7 +59,7 @@ class CameraBaseCalibrationPiTag : public CameraBaseCalibrationMarker
 {
 public:
 
-	CameraBaseCalibrationPiTag(ros::NodeHandle nh);
+	CameraBaseCalibrationPiTag(ros::NodeHandle nh, CalibrationInterface* interface);
 	~CameraBaseCalibrationPiTag();
 
 	// starts the calibration between camera and base including data acquisition

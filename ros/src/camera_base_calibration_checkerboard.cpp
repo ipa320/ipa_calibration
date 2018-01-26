@@ -59,8 +59,8 @@
 #include <sstream>
 
 
-CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHandle nh) :
-			CameraBaseCalibrationMarker(nh)
+CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHandle nh, CalibrationInterface* interface) :
+			CameraBaseCalibrationMarker(nh, interface)
 {
 	// load parameters
 	std::cout << "========== CameraBaseCalibrationCheckerboard Parameters ==========\n";
