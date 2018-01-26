@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>jointstate_saver</name>
-  <version>0.0.0</version>
-  <description>Allows to save the joint states of arm and camera of robots to disk. This can be used to create calibration trajectories.</description>
+	<name>jointstate_saver</name>
+	<version>0.0.0</version>
+	<description>Allows to save the joint states of arm and camera of robots to disk. This can be used to create calibration trajectories.</description>
 
-  <maintainer email="m.riedlinger@live.de">Marc Riedlinger</maintainer>
+	<maintainer email="marc.riedlinger@ipa.fraunhofer.de">Marc Riedlinger</maintainer>
+	<license>LGPL</license>
 
-  <license>TODO</license>
+	<buildtool_depend>catkin</buildtool_depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  
-  <depend>roscpp</depend>
-  <depend>sensor_msgs</depend>
+	<depend>roscpp</depend>
+	<depend>sensor_msgs</depend>
+
 </package>
