@@ -4,8 +4,7 @@
 
 	<arg name="robot" default="robotino"/>	<!-- robot name, loads corresponding yaml file -->
 
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_robot2camera" output="screen" args="0.0 0.06 0.187 0 0 -1.57079632679 head_base_link ensenso_frame 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_gripper_checkerboard" output="screen" args="0.262 -0.135 0.032 1.57079632679 0 0 gripper_frame checkerboard_frame 100"/>
+	<include file="$(find robotino_calibration)/ros/launch/static_transforms.launch"/>
 
 	<node ns="arm_base_calibration" name="arm_base_calibration" pkg="robotino_calibration" type="arm_base_calibration" output="screen">
 		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/arm_base_params.yaml"/>
