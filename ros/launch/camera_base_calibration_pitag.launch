@@ -8,8 +8,8 @@
 	<include file="$(find robotino_calibration)/ros/launch/pitag_setup.launch"/>
 	<include file="$(find robotino_calibration)/ros/launch/pi_tag/fiducials.launch"/>
 
-	<node ns="camera_base_calibration_pitag" name="camera_base_calibration" pkg="robotino_calibration" type="camera_base_calibration" output="screen">
-		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/camera_base_calibration_pitag_params_$(arg robot).yaml"/>
-		<param name="marker_type" value="pitag" />
+	<node ns="camera_base_calibration_pitag" name="camera_base_calibration" pkg="calibration_interface" type="camera_base_calibration" output="screen">
+		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/calibration_settings/camera_base_calibration_pitag_params_$(arg robot).yaml"/>
+		<param name="marker_type" value="pitag"/>
 	</node>
 </launch>

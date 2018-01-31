@@ -4,8 +4,10 @@
 
 	<arg name="robot" default="robotino"/>	<!-- robot name, loads corresponding yaml file -->
 
-	<node ns="camera_base_calibration_checkerboard" name="camera_base_calibration" pkg="robotino_calibration" type="camera_base_calibration" output="screen">
-		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/camera_base_calibration_checkerboard_params.yaml"/>
+	<include file="$(find robotino_calibration)/ros/launch/static_transforms.launch"/>
+
+	<node ns="camera_base_calibration_checkerboard" name="camera_base_calibration" pkg="calibration_interface" type="camera_base_calibration" output="screen">
+		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/calibration_settings/camera_base_calibration_checkerboard_params_$(arg robot).yaml"/>
 		<rosparam command="load" file="$(find calibration_interface)/ros/launch/$(arg robot)_params.yaml"/>
 		<param name="marker_type" value="checkerboard" />
 	</node>
