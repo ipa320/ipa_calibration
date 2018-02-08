@@ -59,31 +59,30 @@ class CameraBaseCalibrationPiTag : public CameraBaseCalibrationMarker
 {
 public:
 
-	CameraBaseCalibrationPiTag(ros::NodeHandle nh, CalibrationInterface* interface);
-	~CameraBaseCalibrationPiTag();
+    CameraBaseCalibrationPiTag(ros::NodeHandle nh, CalibrationInterface* interface);
+    ~CameraBaseCalibrationPiTag();
 
-	// starts the calibration between camera and base including data acquisition
-	bool calibrateCameraToBase(const bool load_data);
+    // starts the calibration between camera and base including data acquisition
+    bool calibrateCameraToBase(const bool load_data);
 
-	// load/save calibration data from/to file
-	// not needed anymore
-	//bool saveCalibration();
-	//bool loadCalibration();
-	//void getCalibration(cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera);
+    // load/save calibration data from/to file
+    // not needed anymore
+    //bool saveCalibration();
+    //bool loadCalibration();
+    //void getCalibration(cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera);
 
 
 protected:
 
-	// acquires images automatically from all set up robot configurations and detects the pitags
-	// @param load_images loads calibration images and transformations from hard disk if set to true (transformations are stored automatically)
-	// retrieves all relevant transformations
-	bool acquireCalibrationData(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
-			const bool load_data, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
-			std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_marker_vector);
+    // acquires images automatically from all set up robot configurations and detects the pitags
+    // @param load_images loads calibration images and transformations from hard disk if set to true (transformations are stored automatically)
+    // retrieves all relevant transformations
+    bool acquireCalibrationData(const bool load_data, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
+                                std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_marker_vector);
 
-	ros::ServiceClient pitag_client_;
-	std::string marker_frame_base_name_;
-	std::string get_fiducials_topic_;
+    ros::ServiceClient pitag_client_;
+    std::string marker_frame_base_name_;
+    std::string get_fiducials_topic_;
 };
 
 #endif // __CAMERA_BASE_CALIBRATION_PITAG_H__

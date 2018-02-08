@@ -60,7 +60,7 @@
 
 
 CameraBaseCalibrationCheckerboard::CameraBaseCalibrationCheckerboard(ros::NodeHandle nh, CalibrationInterface* interface) :
-			CameraBaseCalibrationMarker(nh, interface)
+	CameraBaseCalibrationMarker(nh, interface)
 {
 	// load parameters
 	std::cout << "========== CameraBaseCalibrationCheckerboard Parameters ==========\n";
@@ -128,8 +128,8 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	std::vector<cv::Mat> T_gapfirst_to_marker_vector;
 	std::vector< std::vector<cv::Mat> > T_between_gaps_vector;
 	std::vector<cv::Mat> T_gaplast_to_camera_optical_vector;
-	acquireCalibrationImages(robot_configurations_, chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_gapfirst_to_marker_vector,
-			T_between_gaps_vector, T_gaplast_to_camera_optical_vector);
+	acquireCalibrationImages(chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_gapfirst_to_marker_vector,
+							 T_between_gaps_vector, T_gaplast_to_camera_optical_vector);
 
 	// prepare chessboard 3d points
 	std::vector< std::vector<cv::Point3f> > pattern_points_3d;
@@ -155,20 +155,19 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 		}
 	}
 
-	// display calibration parameters
-	displayAndSaveCalibrationResult();
+	// display and save calibration parameters
+	RobotCalibration::displayAndSaveCalibrationResult("camera_calibration_checkerboard_urdf.txt");
 
 	calibrated_ = true;
 	return true;
 }
 
-bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
-		const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
-		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
-		std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_camera_optical_vector)
+bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
+																 std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
+																 std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_camera_optical_vector)
 {
 	// capture images from different perspectives
-	const int number_images_to_capture = (int)robot_configurations.size();
+	const int number_images_to_capture = (int)camera_configurations_.size();
 	for (int image_counter = 0; image_counter < number_images_to_capture; ++image_counter)
 	{
 		if ( !ros::ok() )
@@ -176,8 +175,8 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 
 		std::cout << "Configuration " << (image_counter+1) << "/" << number_images_to_capture << std::endl;
 
-		if (!load_images)
-			moveRobot(robot_configurations[image_counter]);
+		if ( !load_images )
+			moveRobot(image_counter);
 
 		// acquire image and extract checkerboard points
 		std::vector<cv::Point2f> checkerboard_points_2d;
@@ -188,7 +187,7 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 		// retrieve transformations
 		std::stringstream path;
 		path << calibration_storage_path_ << image_counter << ".yml";
-		cv::Mat T_gapfirst_to_marker, T_gaplast_to_camera_optical, T_camera_optical_to_marker, T_gaplast_to_marker;
+		cv::Mat T_gapfirst_to_marker, T_gaplast_to_camera_optical;
 		std::vector<cv::Mat> T_between_gaps;
 		if ( load_images == false )
 		{
@@ -238,7 +237,7 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const std::vect
 }
 
 int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width, int& image_height,
-		std::vector<cv::Point2f>& checkerboard_points_2d, const cv::Size pattern_size, const bool load_images, int& image_counter)
+															   std::vector<cv::Point2f>& checkerboard_points_2d, const cv::Size pattern_size, const bool load_images, int& image_counter)
 {
 	int return_value = 0;
 
@@ -287,12 +286,12 @@ int CameraBaseCalibrationCheckerboard::acquireCalibrationImage(int& image_width,
 
 	// find pattern in image
 	bool pattern_found = cv::findChessboardCorners(gray, pattern_size, checkerboard_points_2d,
-								cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);
+												   cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);
 
 	if ( pattern_found )
 	{
-        cv::cornerSubPix( gray, checkerboard_points_2d, cv::Size(11,11),
-        		cv::Size(-1,-1), cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 30, 0.1 ));
+		cv::cornerSubPix( gray, checkerboard_points_2d, cv::Size(11,11),
+						  cv::Size(-1,-1), cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 30, 0.1 ));
 	}
 
 	// collect 2d points
@@ -323,6 +322,9 @@ void CameraBaseCalibrationCheckerboard::intrinsicCalibration(const std::vector< 
 	distortion_ = cv::Mat::zeros(8, 1, CV_64F);
 	cv::calibrateCamera(pattern_points, camera_points_2d_per_image, image_size, K_, distortion_, rvecs, tvecs);
 	std::cout << "Intrinsic calibration:\nK:\n" << K_ << "\ndistortion:\n" << distortion_ << std::endl;
+
+	double error = calibration_utilities::computeReprojectionError(pattern_points, camera_points_2d_per_image, rvecs, tvecs, K_, distortion_);
+	std::cout << "Total reprojection error: " << error << std::endl;
 }
 
 void CameraBaseCalibrationCheckerboard::undistort(const cv::Mat& image, cv::Mat& image_undistorted)

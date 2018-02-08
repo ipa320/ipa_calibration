@@ -58,9 +58,6 @@
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
 
-#include <sstream>
-#include <fstream>
-
 // ToDo: Remove static camera angle link count of 2
 // ToDo: Pan_Range and Tilt_Range needs to be stored in one 3*X vector (X number of camera links and 3: min, step, end)
 // ToDo: displayAndSaveCalibrationResult, alter behaviour so that it prints custom strings instead of hardcoded ones. [Done]
@@ -74,23 +71,26 @@
 // ToDo: Cleanup yaml files [Done]
 // ToDo: Port flexible calibration code over to arm calibration as well.
 // ToDo: TF seems to use RPY convention instead of YPR. transform_utilities::rotationMatrixFromYPR is therefore wrong.
-// ToDo: Split up yaml files into a calibrtion yaml and an inferface yaml
+// ToDo: Split up yaml files into a calibrtion yaml and an inferface yaml [Done]
+// ToDo: make moveCamera a method in base class as all calibration techniques need it [Done]
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, CalibrationInterface* interface) :
-			RobotCalibration(nh, interface), RefHistoryIndex_(0)
+	RobotCalibration(nh, interface), RefHistoryIndex_(0)
 {
 	// load parameters
 	std::cout << "\n========== CameraBaseCalibrationMarker Parameters ==========\n";
 
 	// coordinate frame name parameters
-	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "");
-	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
+	node_handle_.param<std::string>("base_frame", base_frame_, "");
+	std::cout << "base_frame: " << base_frame_ << std::endl;
 	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "/landmark_reference_nav");
 	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
 
 	bool use_range = false;
 	node_handle_.param("use_range", use_range, false);
 	std::cout << "use_range: " << use_range << std::endl;
+
+	const int base_dof = NUM_BASE_PARAMS; // coming from calibration_utilities.h
 	if (use_range == true)
 	{
 		// create robot configurations from regular grid
@@ -100,33 +100,131 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 		node_handle_.getParam("y_range", y_range);
 		std::vector<double> phi_range;
 		node_handle_.getParam("phi_range", phi_range);
-		std::vector<double> pan_range;
-		node_handle_.getParam("pan_range", pan_range);
-		std::vector<double> tilt_range;
-		node_handle_.getParam("tilt_range", tilt_range);
-		if (x_range.size()!=3 || y_range.size()!=3 || phi_range.size()!=3 || pan_range.size()!=3 || tilt_range.size()!=3)
+
+		if ( x_range.size()!=3 || y_range.size()!=3 || phi_range.size()!=3 )
 		{
-			ROS_ERROR("One of the range vectors has wrong size.");
+			ROS_ERROR("One of the position range vectors has wrong size.");
 			return;
 		}
+
+		std::vector<double> temp;
+		node_handle_.getParam("camera_ranges", temp);
+		if ( temp.size() % 3 != 0 || temp.size() != 3*camera_dof_ )
+		{
+			ROS_ERROR("The camera range vector has the wrong size, each DOF needs three entries (start,step,stop)");
+			return;
+		}
+
+		std::vector<std::vector<double>> cam_ranges;
+		for ( int i=0; i<camera_dof_; i++ )
+		{
+			std::vector<double> range;
+			for ( int j=0; i<3; j++ )
+			{
+				range.push_back(temp[camera_dof_*i + j]);
+			}
+			cam_ranges.push_back(range);
+		}
+
 		if (x_range[0] == x_range[2] || x_range[1] == 0.)		// this sets the step to something bigger than 0
 			x_range[1] = 1.0;
 		if (y_range[0] == y_range[2] || y_range[1] == 0.)
 			y_range[1] = 1.0;
 		if (phi_range[0] == phi_range[2] || phi_range[1] == 0.)
 			phi_range[1] = 1.0;
-		if (pan_range[0] == pan_range[2] || pan_range[1] == 0.)
-			pan_range[1] = 1.0;
-		if (tilt_range[0] == tilt_range[2] || tilt_range[1] == 0.)
-			tilt_range[1] = 1.0;
+		for ( int i=0; i<camera_dof_; ++i )
+		{
+			if ( cam_ranges[i][0] == cam_ranges[i][2] || cam_ranges[i][1] == 0. )
+				cam_ranges[i][1] = 1.0;
+		}
+
+		// Build configurations from ranges
+		// Create a vector that contains each value list of each parameter that's varied
+		std::vector<std::vector<double>> param_vector; // Contains all possible values of all parameters
+		std::vector<double> values; // Temporary container that stores all values of currently processed parameter
+
+		// Gather all possible values from user defined ranges
 		for (double x=x_range[0]; x<=x_range[2]; x+=x_range[1])
-			for (double y=y_range[0]; y<=y_range[2]; y+=y_range[1])
-				for (double phi=phi_range[0]; phi<=phi_range[2]; phi+=phi_range[1])
-					for (double pan=pan_range[0]; pan<=pan_range[2]; pan+=pan_range[1])
-						for (double tilt=tilt_range[0]; tilt<=tilt_range[2]; tilt+=tilt_range[1])
-							robot_configurations_.push_back(calibration_utilities::RobotConfiguration(x, y, phi, pan, tilt));
-		std::cout << "Generated " << (int)robot_configurations_.size() << " robot configurations for calibration." << std::endl;
-		if ((int)robot_configurations_.size() == 0)
+			values.push_back(x);
+		param_vector.push_back(values);
+
+		values.clear();
+		for (double y=y_range[0]; y<=y_range[2]; y+=y_range[1])
+			values.push_back(y);
+		param_vector.push_back(values);
+
+		values.clear();
+		for (double phi=phi_range[0]; phi<=phi_range[2]; phi+=phi_range[1])
+			values.push_back(phi);
+		param_vector.push_back(values);
+
+		for ( int i=0; i<camera_dof_; ++i )
+		{
+			values.clear();
+			for ( double value=cam_ranges[i][0]; value<=cam_ranges[i][2]; value+=cam_ranges[i][1] )
+				values.push_back(value);
+			param_vector.push_back(values);
+		}
+
+		// Preallocate memory for base and camera configurations
+		// Compute numbre of configs
+		int num_configs = 1;
+		const int num_params = param_vector.size();
+		for ( int i=0; i<num_params; ++i )
+			num_configs *= param_vector[i].size();
+
+		if ( num_configs == 0 || num_params == 0 )
+		{
+			ROS_ERROR("No base or camera configuration can be generated! Num. configs: %d, num. params per config: %d", num_configs, num_params);
+			return;
+		}
+
+		// Do actual preallocation
+		temp.clear();
+		temp.resize(base_dof);
+		base_configurations_.resize(num_configs, calibration_utilities::BaseConfiguration(temp));
+		temp.clear();
+		temp.resize(camera_dof_);
+		camera_configurations_.resize(num_configs, temp);
+		temp.clear();
+
+		// Create robot_configurations grid. Do this by pairing every parameter value with every other parameter value
+		// E.g. param_1={f}, param_2={d,e}, param_3={a,b,c}
+		// Resulting robot configurations (separated into two lists, one for camera and one for base):
+		// (param_1  param_2  param_3)
+		//  f        d        a
+		//  f        d        b
+		//  f        d        c
+		//  f        e        a
+		//  f        e        b
+		//  f        e        c
+		int repitition_pattern = 0; // Describes how often a value needs to be repeated, look at example param_2, d and e are there three times
+		for ( int i=num_params-1; i>=0; --i ) // Fill robot_configurations_ starting from last parameter in param_vector
+		{
+			int counter = 0;
+			for ( int j=0; j<num_configs; ++j )
+			{
+				if ( repitition_pattern == 0 ) // executed initially
+					counter = j % param_vector[i].size();
+				else if ( j % repitition_pattern == 0 )
+					counter = (counter+1) % param_vector[i].size();
+
+				// robot_configurations_[j][i] = param_vector[i][counter];
+				if ( i < base_dof )
+					//base_configurations_[j][i] = param_vector[i][counter]; // base_configurations_ is no vector anymore for better readability
+					base_configurations_[j].assign(i, param_vector[i][counter]);
+				else
+					camera_configurations_[j][i-base_dof] = param_vector[i][counter];
+			}
+
+			if ( repitition_pattern == 0 )
+				repitition_pattern = param_vector[i].size();
+			else
+				repitition_pattern *= param_vector[i].size();
+		}
+
+		std::cout << "Generated " << (int)camera_configurations_.size() << " robot configurations for calibration." << std::endl;
+		if ( (int)camera_configurations_.size() == 0 )
 			ROS_WARN("No robot configurations generated. Please check your ranges in the yaml file.");
 	}
 	else
@@ -134,18 +232,43 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 		// read out user-defined robot configurations
 		std::vector<double> temp;
 		node_handle_.getParam("robot_configurations", temp);
-		const int number_configurations = temp.size()/5;
-		if (temp.size()%5 != 0 || temp.size() < 3*5)
+
+		const int num_params = base_dof + camera_dof_;
+		const int num_configs = temp.size()/num_params;
+		if (temp.size()%num_params != 0 || temp.size() < 3*num_params)
 		{
-			ROS_ERROR("The robot_configurations vector should contain at least 3 configurations with 5 values each.");
+			ROS_ERROR("The robot_configurations vector should contain at least 3 configurations with %d values each.", num_params);
 			return;
 		}
-		std::cout << "Robot configurations:\n";
-		for (int i=0; i<number_configurations; ++i)
+
+		for ( int i=0; i<num_configs; ++i )
 		{
-			robot_configurations_.push_back(calibration_utilities::RobotConfiguration(temp[5*i], temp[5*i+1], temp[5*i+2], temp[5*i+3], temp[5*i+4]));
-			std::cout << temp[5*i] << "\t" << temp[5*i+1] << "\t" << temp[5*i+2] << "\t" << temp[5*i+3] << "\t" << temp[5*i+4] << std::endl;
+			std::vector<double> data;
+			for ( int j=0; j<base_dof; ++j )
+			{
+				data.push_back(temp[num_params*i + j]);
+			}
+			base_configurations_.push_back(calibration_utilities::BaseConfiguration(data));
+
+			data.clear();
+			for ( int j=base_dof; j<num_params; ++j ) // camera_dof_ iterations
+			{
+				data.push_back(temp[num_params*i + j]);
+			}
+			camera_configurations_.push_back(data);
 		}
+	}
+
+	// Display configurations
+	std::cout << "base configurations:" << std::endl;
+	for ( int i=0; i<base_dof; ++i )
+		std::cout << base_configurations_[i].get() << std::endl;
+	std::cout << "camera configurations:" << std::endl;
+	for ( int i=0; i<camera_dof_; ++i )
+	{
+		for ( int j=0; j<camera_configurations_[i].size(); ++j )
+			std::cout << camera_configurations_[i][j] << "/t";
+		std::cout << std::endl;
 	}
 
 	// Check whether relative_localization has initialized the reference frame yet.
@@ -163,7 +286,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 				cv::Mat T;
 				transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T);
 
-				for ( int i=0; i<RefFrameHistorySize; ++i ) // Initialize history array
+				for ( int i=0; i<REF_FRAME_HISTORY_SIZE; ++i ) // Initialize history array
 				{
 					RefFrameHistory_[i] = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3); // Squared norm is suffice here, no need to take root.
 				}
@@ -217,35 +340,36 @@ bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T) // Safety me
 	double currentSqNorm = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3);
 
 	double average = 0.0;
-	for ( int i=0; i<RefFrameHistorySize; ++i )
+	for ( int i=0; i<REF_FRAME_HISTORY_SIZE; ++i )
 		average += RefFrameHistory_[i];
-	average /= RefFrameHistorySize;
+	average /= REF_FRAME_HISTORY_SIZE;
 
-	RefFrameHistory_[ RefHistoryIndex_ < RefFrameHistorySize-1 ? RefHistoryIndex_++ : (RefHistoryIndex_ = 0) ] = currentSqNorm; // Update with new measurement
+	RefFrameHistory_[ RefHistoryIndex_ < REF_FRAME_HISTORY_SIZE-1 ? RefHistoryIndex_++ : (RefHistoryIndex_ = 0) ] = currentSqNorm; // Update with new measurement
 
 	if ( average == 0.0 || abs(1.0 - (currentSqNorm/average)) > 0.15  ) // Up to 15% deviation to average is allowed.
 	{
-		ROS_WARN("Reference frame can't be detected reliably. It's current deviation to average to too great.");
+		ROS_WARN("Reference frame can't be detected reliably. It's current deviation from the average is to too great.");
 		return false;
 	}
 
 	return true;
 }
 
-bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotConfiguration& robot_configuration)
+void CameraBaseCalibrationMarker::moveRobot(int config_index)
+{
+	RobotCalibration::moveRobot(config_index); // Call parent
+
+	while ( !moveBase(base_configurations_[config_index]) )
+	{
+		ROS_ERROR("CameraBaseCalibrationMarker::moveRobot: Could not execute moveBase, trying again in 0.5 secs.");
+		ros::Duration(0.5).sleep();
+	}
+}
+
+bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConfiguration &base_configuration)
 {
 	const double k_base = 0.25;
 	const double k_phi = 0.25;
-
-	// move pan-tilt unit
-	std_msgs::Float64MultiArray angles;
-	
-	// to do: make the number of camera angles in robot_configuration variable, i.e. std::vector<double> camera_joints; instead of pan_angle/tilt_angle
-	angles.data.resize(2);
-	angles.data[0] = robot_configuration.pan_angle_;
-	angles.data[1] = robot_configuration.tilt_angle_;
-
-	calibration_interface_->assignNewCameraAngles(angles);
 
 	// do not move if close to goal
 	double error_phi = 10;
@@ -260,13 +384,13 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 	double robot_yaw = ypr.val[0];
 	geometry_msgs::Twist tw;
-	error_phi = robot_configuration.pose_phi_ - robot_yaw;
+	error_phi = base_configuration.pose_phi_ - robot_yaw;
 	while (error_phi < -CV_PI*0.5)
 		error_phi += CV_PI;
 	while (error_phi > CV_PI*0.5)
 		error_phi -= CV_PI;
-	error_x = robot_configuration.pose_x_ - T.at<double>(0,3);
-	error_y = robot_configuration.pose_y_ - T.at<double>(1,3);
+	error_x = base_configuration.pose_x_ - T.at<double>(0,3);
+	error_y = base_configuration.pose_y_ - T.at<double>(1,3);
 
 	if (fabs(error_phi) > 0.03 || fabs(error_x) > 0.02 || fabs(error_y) > 0.02)
 	{
@@ -282,7 +406,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 			double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
-			error_phi = robot_configuration.pose_phi_ - robot_yaw;
+			error_phi = base_configuration.pose_phi_ - robot_yaw;
 			while (error_phi < -CV_PI*0.5)
 				error_phi += CV_PI;
 			while (error_phi > CV_PI*0.5)
@@ -306,8 +430,8 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 			}
 
 			geometry_msgs::Twist tw;
-			error_x = robot_configuration.pose_x_ - T.at<double>(0,3);
-			error_y = robot_configuration.pose_y_ - T.at<double>(1,3);
+			error_x = base_configuration.pose_x_ - T.at<double>(0,3);
+			error_y = base_configuration.pose_y_ - T.at<double>(1,3);
 			if ((fabs(error_x) < 0.01 && fabs(error_y) < 0.01) || !ros::ok())
 				break;
 
@@ -331,7 +455,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 			double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
-			error_phi = robot_configuration.pose_phi_ - robot_yaw;
+			error_phi = base_configuration.pose_phi_ - robot_yaw;
 			while (error_phi < -CV_PI*0.5)
 				error_phi += CV_PI;
 			while (error_phi > CV_PI*0.5)
@@ -346,32 +470,7 @@ bool CameraBaseCalibrationMarker::moveRobot(const calibration_utilities::RobotCo
 		// turn off robot motion
 		turnOffBaseMotion();
 	}
-	
-	// wait for pan tilt to arrive at goal position
-	if ( (*calibration_interface_->getCurrentCameraState()).size() > 0 )//calibration_interface_->getCurrentCameraPanAngle()!=0 && calibration_interface_->getCurrentCameraTiltAngle()!=0)
-	{
-		Timer timeout;
-		while (timeout.getElapsedTimeInSec()<5.0)
-		{
-			boost::mutex::scoped_lock(pan_tilt_joint_state_data_mutex_);
-			std::vector<double> cur_state = *calibration_interface_->getCurrentCameraState();
-			std::vector<double> difference(cur_state.size());
-			for (int i = 0; i<cur_state.size(); ++i)
-				difference[i] = angles.data[i]-cur_state[i];
 
-			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
-
-			if ( length < 0.01 ) //Close enough to goal configuration (~0.5° deviation allowed)
-				break;
-
-			ros::spinOnce();
-		}
-	}
-	else
-	{
-		ros::Duration(1).sleep();
-	}
-			
 	ros::spinOnce();
 	return true;
 }
@@ -383,108 +482,4 @@ void CameraBaseCalibrationMarker::turnOffBaseMotion()
 	tw.linear.y = 0;
 	tw.angular.z = 0;
 	calibration_interface_->assignNewRobotVelocity(tw);
-}
-
-void CameraBaseCalibrationMarker::extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-		std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> > T_between_gaps_vector,
-		std::vector<cv::Mat>& T_gaplast_to_marker_vector, int trafo_to_calibrate)
-{
-	// transform 3d marker points to respective coordinates systems (camera and torso_upper)
-	std::vector<cv::Point3d> points_3d_child, points_3d_parent;
-	for (size_t i=0; i<pattern_points_3d.size(); ++i)
-	{
-		cv::Mat T_child_to_marker;
-
-		// Iterate over uncertain trafos, add in between trafos as well
-		// Forwards in chain from child frame on
-		for ( int j=trafo_to_calibrate; j<transforms_to_calibrate_.size()-1; ++j )
-		{
-			if ( transforms_to_calibrate_[j].trafo_until_next_gap_idx_ > -1 )
-				T_child_to_marker *= T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_];
-
-			T_child_to_marker *= transforms_to_calibrate_[j+1].current_trafo_;
-		}
-		T_child_to_marker *= T_gaplast_to_marker_vector[i];
-
-		cv::Mat T_parent_to_marker;
-		// Backwards in chain from parent frame on
-		for ( int j=trafo_to_calibrate-1; j>=0; --j )
-		{
-			if ( transforms_to_calibrate_[j].trafo_until_next_gap_idx_ > -1 )
-				T_parent_to_marker *= T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_].inv();
-
-			T_parent_to_marker *= transforms_to_calibrate_[j].current_trafo_.inv();
-		}
-		T_parent_to_marker *= T_gapfirst_to_marker_vector[i];
-
-
-		for (size_t j=0; j<pattern_points_3d[i].size(); ++j)
-		{
-			cv::Mat point = cv::Mat(cv::Vec4d(pattern_points_3d[i][j].x, pattern_points_3d[i][j].y, pattern_points_3d[i][j].z, 1.0));
-
-			// to child coordinate system
-			cv::Mat point_child = T_child_to_marker * point;
-			points_3d_child.push_back(cv::Point3d(point_child.at<double>(0), point_child.at<double>(1), point_child.at<double>(2)));
-
-			// to parent coordinate system
-			cv::Mat point_parent = T_parent_to_marker * point;
-			points_3d_parent.push_back(cv::Point3d(point_parent.at<double>(0), point_parent.at<double>(1), point_parent.at<double>(2)));
-		}
-	}
-}
-
-bool CameraBaseCalibrationMarker::calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat> T_between_gaps,
-		cv::Mat& T_gaplast_to_camera_optical, std::string marker_frame)
-{
-	bool result = true;
-	result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[0].parent_, marker_frame, T_gapfirst_to_marker);
-	result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[ transforms_to_calibrate_.size()-1 ].child_, camera_optical_frame_, T_gaplast_to_camera_optical);
-
-	for ( int i=0; i<transforms_to_calibrate_.size()-1; ++i )
-	{
-		if ( transforms_to_calibrate_[i].parent_ == transforms_to_calibrate_[i].child_ ) // several gaps in a row, no certain trafos in between
-			continue;
-
-		cv::Mat temp;
-		result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[i].child_, transforms_to_calibrate_[i+1].parent_, temp);
-		T_between_gaps.push_back(temp);
-		transforms_to_calibrate_[i].trafo_until_next_gap_idx_ = T_between_gaps.size()-1;
-	}
-
-	return result;
-}
-
-void CameraBaseCalibrationMarker::displayAndSaveCalibrationResult()
-{
-	std::stringstream output;
-
-	output << "\n\n\n----- Replace the follwing parameters within the urdf file of your robot ----- \n\n";
-	for ( int i=0; i<transforms_to_calibrate_.size(); ++i )
-	{
-		cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(transforms_to_calibrate_[i].current_trafo_);
-
-		output << "<!-- " << transforms_to_calibrate_[i].child_ << " mount positions | camera_base_calibration | relative to " << transforms_to_calibrate_[i].parent_ << "-->\n"
-				<< "  <property name=\"" << transforms_to_calibrate_[i].child_ << "_x\" value=\"" << transforms_to_calibrate_[i].current_trafo_.at<double>(0,3) << "\"/>\n"
-				<< "  <property name=\"" << transforms_to_calibrate_[i].child_ << "_y\" value=\"" << transforms_to_calibrate_[i].current_trafo_.at<double>(1,3) << "\"/>\n"
-				<< "  <property name=\"" << transforms_to_calibrate_[i].child_ << "_z\" value=\"" << transforms_to_calibrate_[i].current_trafo_.at<double>(2,3) << "\"/>\n"
-				<< "  <property name=\"" << transforms_to_calibrate_[i].child_ << "_roll\" value=\"" << ypr.val[2] << "\"/>\n"
-				<< "  <property name=\"" << transforms_to_calibrate_[i].child_ << "_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
-				<< "  <property name=\"" << transforms_to_calibrate_[i].child_ << "_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
-	}
-
-	std::cout << output.str();
-
-	if ( ros::ok() )
-	{
-		std::string path_file = calibration_storage_path_ + "camera_calibration_urdf.txt";
-		std::fstream file_output;
-		file_output.open(path_file.c_str(), std::ios::out);
-		if (file_output.is_open())
-			file_output << output.str();
-		file_output.close();
-	}
-	else
-	{
-		ROS_INFO("Skipping to save calibration result.");
-	}
 }

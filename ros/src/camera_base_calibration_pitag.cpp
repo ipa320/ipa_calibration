@@ -62,7 +62,7 @@
 
 
 CameraBaseCalibrationPiTag::CameraBaseCalibrationPiTag(ros::NodeHandle nh, CalibrationInterface* interface) :
-			CameraBaseCalibrationMarker(nh, interface)
+	CameraBaseCalibrationMarker(nh, interface)
 {
 	// load parameters
 	std::cout << "\n========== CameraBaseCalibrationPiTag Parameters ==========\n";
@@ -87,8 +87,7 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 	std::vector<cv::Mat> T_gapfirst_to_marker_vector;
 	std::vector< std::vector<cv::Mat> > T_between_gaps_vector;
 	std::vector<cv::Mat> T_gaplast_to_marker_vector;
-	acquireCalibrationData(robot_configurations_, load_data,
-			T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector);
+	acquireCalibrationData(load_data, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector);
 
 	// prepare marker 3d points (actually only the point (0,0,0) in the marker coordinate system
 	std::vector< std::vector<cv::Point3f> > pattern_points_3d(T_gapfirst_to_marker_vector.size(), std::vector<cv::Point3f>(1, cv::Point3f(0.f, 0.f, 0.f)));
@@ -102,16 +101,15 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 		}
 	}
 
-	// display calibration parameters
-	displayAndSaveCalibrationResult();
+	// display and save calibration parameters
+	RobotCalibration::displayAndSaveCalibrationResult("camera_calibration_pitag_urdf.txt");
 
 	calibrated_ = true;
 	return true;
 }
 
-bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibration_utilities::RobotConfiguration>& robot_configurations,
-		const bool load_data, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
-		std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_marker_vector)
+bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
+														std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_marker_vector)
 {
 	std::stringstream path;
 	path << calibration_storage_path_ << "pitag_data.yml";
@@ -119,7 +117,7 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 	// capture images from different perspectives
 	if (load_data == false)
 	{
-		const int number_images_to_capture = (int)robot_configurations.size();
+		const int number_images_to_capture = (int)camera_configurations_.size();
 		for (int image_counter = 0; image_counter < number_images_to_capture; ++image_counter)
 		{
 			if ( !ros::ok() )
@@ -127,7 +125,8 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 
 			std::cout << "Configuration " << (image_counter+1) << "/" << number_images_to_capture << std::endl;
 
-			moveRobot(robot_configurations[image_counter]);
+			moveCamera(camera_configurations_[image_counter]);
+			moveBase(base_configurations_[image_counter]);
 
 			// wait a moment here to mitigate shaking camera effects.
 			ros::Duration(3).sleep();
@@ -204,92 +203,6 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const std::vector<calibr
 		}
 		fs.release();
 	}
-
-	// some testing code for checking the influence of different error sources on the calibration results
-	// does not work with recent code anymore
-	// set sim=true for using this verification method
-	/*bool sim = false;
-	if (sim==true)
-	{
-		std::cout << "=============================== using simulated data ==================================" << std::endl;
-		T_base_to_marker_vector.clear();
-		T_torso_lower_to_torso_upper_vector.clear();
-		T_camera_to_marker_vector.clear();
-
-		const double laser_scanner_yaw_err = 0.04;
-		const double laser_scanner_pitch_err = 0.04;
-
-		const double laser_scanner_height = 0.15;
-		cv::Mat T_base_to_laser = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(0.2, 0., laser_scanner_height)));
-		cv::Mat T_base_to_laser_err = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(laser_scanner_yaw_err, laser_scanner_pitch_err, 0.), cv::Mat(cv::Vec3d(0.2, 0., laser_scanner_height)));
-		cv::Mat points_3d_in_corner = (cv::Mat_<double>(9,3) << -0.34, 0., 0.758,
-																-0.481, 0., 0.65,
-																-0.34, 0., 0.533,
-																0., 0.612, 0.765,
-																0., 0.472, 0.658,
-																0., 0.612, 0.539,
-																-0.071, 0.293, 0.,
-																-0.21, 0.293, 0.,
-																-0.348, 0.293, 0.);
-		const double max_marker_measurement_err = 0.002;
-		cv::Mat points_3d_in_corner_err = (cv::Mat_<double>(9,3) << max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), 0., max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX),
-				max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), 0., max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX),
-				max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), 0., max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX),
-				0., max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX),
-				0., max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX),
-				0., max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX),
-				max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), 0.,
-				max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), 0.,
-				max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), max_marker_measurement_err*(-1.+2.*(double)rand()/(double)RAND_MAX), 0.);
-		cv::Mat T_base_to_torsolower = T_base_to_torso_lower_; //transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(0.3, 0., 0.69)));
-		cv::Mat T_torsoupper_to_camera = T_torso_upper_to_camera_; //transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., -1.57), cv::Mat(cv::Vec3d(0.015, 0.065, 0.)));
-
-
-		const int number_images_to_capture = (int)robot_configurations.size();
-		for (int image_counter = 0; image_counter < number_images_to_capture; ++image_counter)
-		{
-//				if (image_counter>0 && robot_configurations[image_counter-1].pose_x_==robot_configurations[image_counter].pose_x_ && robot_configurations[image_counter-1].pose_y_==robot_configurations[image_counter].pose_y_)
-//					continue;
-
-			cv::Mat T_laser_to_corner = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(robot_configurations[image_counter].pose_x_, robot_configurations[image_counter].pose_y_, -laser_scanner_height)));
-			cv::Mat T_laser_to_corner_err = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(robot_configurations[image_counter].pose_x_+0.005*(-1.+2.*(double)rand()/(double)RAND_MAX), robot_configurations[image_counter].pose_y_+0.005*(-1.+2.*(double)rand()/(double)RAND_MAX), -laser_scanner_height)));
-			for (int marker_index=0; marker_index<points_3d_in_corner.rows; ++marker_index)
-			{
-				// simulate ratio of found markers
-				if (((double)rand()/(double)RAND_MAX) > 0.2)
-					continue;
-
-				// base to marker
-				cv::Mat T_corner_to_marker = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.),
-						cv::Mat(cv::Vec3d(points_3d_in_corner.at<double>(marker_index,0), points_3d_in_corner.at<double>(marker_index,1), points_3d_in_corner.at<double>(marker_index,2))));
-				cv::Mat T_corner_to_marker_err = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.),
-						cv::Mat(cv::Vec3d(points_3d_in_corner.at<double>(marker_index,0)+points_3d_in_corner_err.at<double>(marker_index,0), points_3d_in_corner.at<double>(marker_index,1)+points_3d_in_corner_err.at<double>(marker_index,1), points_3d_in_corner.at<double>(marker_index,2)+points_3d_in_corner_err.at<double>(marker_index,2))));
-				cv::Mat T_base_to_marker = T_base_to_laser * T_laser_to_corner * T_corner_to_marker;
-				cv::Mat T_base_to_marker_err = T_base_to_laser_err * T_laser_to_corner_err * T_corner_to_marker_err;
-
-				// torso_lower to torso_upper
-				cv::Mat T_torsolower_to_pan = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(robot_configurations[image_counter].pan_angle_, 0., 0.), cv::Mat(cv::Vec3d(0., 0., 0.)));
-				cv::Mat T_pan_to_tilt1 = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 1.57), cv::Mat(cv::Vec3d(0., 0., 0.)));
-				cv::Mat T_tilt1_to_tilt = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(-robot_configurations[image_counter].tilt_angle_, 0., 0.), cv::Mat(cv::Vec3d(0., 0., 0.)));
-				cv::Mat T_torso_lower_to_torso_upper = T_torsolower_to_pan * T_pan_to_tilt1 * T_tilt1_to_tilt;
-
-				// camera to marker
-				cv::Mat T_base_to_camera = T_base_to_torsolower * T_torso_lower_to_torso_upper * T_torsoupper_to_camera;
-				cv::Mat T_camera_to_marker = T_base_to_camera.inv() * T_base_to_marker;
-				cv::Mat T_base_to_camera_err = T_base_to_torsolower * T_torso_lower_to_torso_upper
-						* transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., -0.07, 0.), cv::Mat(cv::Vec3d(0., 0., 0.)))
-						* T_torsoupper_to_camera;
-				const double marker_detection_max_offset = 0.02;
-				cv::Mat T_camera_to_marker_err = T_base_to_camera_err.inv() * T_base_to_marker
-						* transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0., 0., 0.), cv::Mat(cv::Vec3d(marker_detection_max_offset*(-1.+2.*(double)rand()/(double)RAND_MAX), marker_detection_max_offset*(-1.+2.*(double)rand()/(double)RAND_MAX), marker_detection_max_offset*(-1.+2.*(double)rand()/(double)RAND_MAX))));
-
-				// attach data to array
-				T_base_to_marker_vector.push_back(T_base_to_marker_err);
-				T_torso_lower_to_torso_upper_vector.push_back(T_torso_lower_to_torso_upper);
-				T_camera_to_marker_vector.push_back(T_camera_to_marker_err);
-			}
-		}
-	}*/
 
 	std::cout << "Captured markers: " << T_gaplast_to_marker_vector.size() << std::endl;
 	return true;

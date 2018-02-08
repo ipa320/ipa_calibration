@@ -51,36 +51,43 @@
 
 #include <robotino_calibration/calibration_utilities.h>
 #include <ros/ros.h>
+#include <iostream>
+#include <sstream>
 
 namespace calibration_utilities
 {
-	RobotConfiguration::RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle)
+	BaseConfiguration::BaseConfiguration(const std::vector<double> config) :
+					pose_x_(0.), pose_y_(0.), pose_phi_(0.)
 	{
-		pose_x_ = pose_x;
-		pose_y_ = pose_y;
-		pose_phi_ = pose_phi;
-		pan_angle_ = pan_angle;
-		tilt_angle_ = tilt_angle;
+		if ( config.size() != NUM_BASE_PARAMS )
+		{
+			std::cout << "RobotConfiguration::BaseConfiguration: Error, passed vector does not have the correct size to build a base configuration!" << std::endl;
+			return;
+		}
+
+		pose_x_ = config[0];
+		pose_y_ = config[1];
+		pose_phi_ = config[2];
 	}
 
-	/*EndeffectorConfiguration::EndeffectorConfiguration(const double pose_x, const double pose_y, const double pose_z)
+	void BaseConfiguration::assign(int idx, double value)
 	{
-		pose_x_ = pose_x;
-		pose_y_ = pose_y;
-		pose_z_ = pose_z;
-	}*/
-
-	AngleConfiguration::AngleConfiguration(const std::vector<double> angles)
-	{
-		angles_.clear();
-		angles_.insert(angles_.end(), angles.begin(), angles.end());
+		switch( idx )
+		{
+			case 0:	pose_x_ = value;
+					break;
+			case 1:	pose_y_ = value;
+					break;
+			case 2:	pose_phi_ = value;
+		}
 	}
 
-	/*CameraConfiguration::CameraConfiguration(const double pan_angle, const double tilt_angle)
+	std::string BaseConfiguration::get()
 	{
-		pan_angle_ = pan_angle;
-		tilt_angle_ = tilt_angle;
-	}*/
+		std::stringstream result;
+		result << pose_x_ << "/t" << pose_y_ << "/t" << pose_phi_;
+		return result.str();
+	}
 
 	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
 	{
@@ -109,6 +116,29 @@ namespace calibration_utilities
 			for (int u=0; u<pattern_size.width; ++u)
 				pattern_points[0][v*pattern_size.width+u] = cv::Point3f(u*chessboard_cell_size, v*chessboard_cell_size, 0.f);
 		pattern_points.resize(number_images, pattern_points[0]);
+	}
+
+	double computeReprojectionError( const std::vector<std::vector<cv::Point3f> >& objectPoints,
+														 const std::vector<std::vector<cv::Point2f> >& imagePoints,
+														 const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
+														 const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs)
+	{
+		std::vector<cv::Point2f> imagePoints2;
+		size_t totalPoints = 0;
+		double totalErr = 0, err = 0;
+
+		for(size_t i = 0; i < objectPoints.size(); ++i )
+		{
+			cv::projectPoints(objectPoints[i], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imagePoints2);
+
+			err = cv::norm(imagePoints[i], imagePoints2, cv::NORM_L2);
+			size_t n = objectPoints[i].size();
+			//double perViewError = (float) std::sqrt(err*err/n);
+			//std::cout << "View error " << (i+1) << ": " << perViewError << std::endl;
+			totalErr        += err*err;
+			totalPoints     += n;
+		}
+		return std::sqrt(totalErr/totalPoints);
 	}
 }
 

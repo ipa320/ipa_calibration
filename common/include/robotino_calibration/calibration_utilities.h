@@ -54,33 +54,33 @@
 #include <opencv2/opencv.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include <vector>
+
+#define NUM_BASE_PARAMS 3
 
 namespace calibration_utilities
 {
-	// struct for the configuration (x,y location + base rotation, torso links) of the robot
-	struct RobotConfiguration
-	{
-		double pose_x_;
-		double pose_y_;
-		double pose_phi_;
-		//AngleConfiguration camera_angles_; Not now, leave static camera link count of 2 for robotino
-		double pan_angle_; // todo: make it more general with a vector of angles or similar
-		double tilt_angle_;
+    // struct for the configuration (x,y location + base rotation) of the robot
+    struct BaseConfiguration
+    {
+        double pose_x_;
+        double pose_y_;
+        double pose_phi_;
 
-		RobotConfiguration(const double pose_x, const double pose_y, const double pose_phi, const double pan_angle, const double tilt_angle);
-	};
+        BaseConfiguration(const std::vector<double> config);
+        void assign(int idx, double value);
+        std::string get();
+    };
 
-	struct AngleConfiguration
-	{
-		std::vector<double> angles_;
+    bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image);
 
-		AngleConfiguration(const std::vector<double> angles);
-	};
+    // generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates
+    void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images);
 
-	bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image);
-
-	// generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates
-	void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images);
+    double computeReprojectionError( const std::vector<std::vector<cv::Point3f> >& objectPoints,
+                                    const std::vector<std::vector<cv::Point2f> >& imagePoints,
+                                    const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
+                                    const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs);
 }
 
 #endif	// CALIBRATION_UTILITIES_H

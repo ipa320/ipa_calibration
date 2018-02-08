@@ -66,7 +66,7 @@
 //ToDo: Rename armbase_to_endeff to armbase_to_checkerboard
 
 ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh, CalibrationInterface* interface) :
-		RobotCalibration(nh, interface), camera_dof_(2)
+	RobotCalibration(nh, interface)
 {
 	// load parameters
 	std::cout << "\n========== ArmBaseCalibration Parameters ==========\n";
@@ -89,89 +89,56 @@ ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh, CalibrationInterface*
 		arm_dof_ = 1;
 	}
 
-	node_handle_.param("camera_dof", camera_dof_, 5);
-	std::cout << "camera_dof: " << camera_dof_ << std::endl;
-
-	if ( camera_dof_ < 1 )
-	{
-		std::cout << "Error: Invalid camera_dof: " << camera_dof_ << ". Setting camera_dof to 1." << std::endl;
-		camera_dof_ = 1;
-	}
-
 	// coordinate frame name parameters
-	node_handle_.param<std::string>("armbase_frame", armbase_frame_, "");
-	std::cout << "armbase_frame: " << armbase_frame_ << std::endl;
 	node_handle_.param<std::string>("checkerboard_frame", checkerboard_frame_, "");
 	std::cout << "checkerboard_frame: " << checkerboard_frame_ << std::endl;
-	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "kinect_rgb_optical_frame");
-	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
-	node_handle_.param<std::string>("camera_image_topic", camera_image_topic_, "/kinect/rgb/image_raw");
+	node_handle_.param<std::string>("camera_image_topic", camera_image_topic_, "");
 	std::cout << "camera_image_topic: " << camera_image_topic_ << std::endl;
 	node_handle_.param("max_angle_deviation", max_angle_deviation_, 0.5);
 	std::cout << "max_angle_deviation: " << max_angle_deviation_ << std::endl;
 
-	// initial parameters
-	bool success = transform_utilities::getTransform(transform_listener_, base_frame_, armbase_frame_, T_base_to_armbase_);
-	if ( success == false )
-	{
-		ROS_FATAL("Could not retrieve transform from %s to %s from TF!",base_frame_.c_str(),armbase_frame_.c_str());
-		throw std::exception();
-	}
-	else
-		std::cout << "T_base_to_armbase_initial:\n" << T_base_to_armbase_ << std::endl;
-
-	/*temp.clear();
-	T_base_to_armbase_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(0.0, 0.0, 0.0), cv::Mat(cv::Vec3d(0.0, 0.0, 0.0)));
-	node_handle_.getParam("T_base_to_armbase_initial", temp);
-	if ( temp.size()==6 )
-		T_base_to_armbase_ = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
-	std::cout << "T_base_to_arm_initial:\n" << T_base_to_armbase_ << std::endl;
-	temp.clear();*/
-
-	// read out user-defined end effector configurations
 	temp.clear();
-	node_handle_.getParam("arm_configurations", temp);
-	const int number_configurations = temp.size()/arm_dof_;
+	node_handle_.getParam("robot_configurations", temp);
+	const int num_params = arm_dof_ + camera_dof_;
 
-	if (temp.size()%arm_dof_ != 0 || temp.size() < 3*arm_dof_)
+	if ( temp.size() % num_params != 0 || temp.size() < 3*num_params )
 	{
-		ROS_ERROR("The arm_configurations vector should contain at least 3 configurations with %d values each.", arm_dof_);
+		ROS_ERROR("The robot_configurations vector should contain at least 3 configurations with %d values each.", num_params);
 		return;
 	}
-	std::cout << "arm configurations:\n";
-	for ( int i=0; i<number_configurations; ++i )
+	const int num_configs = temp.size()/num_params;
+
+	for ( int i=0; i<num_configs; ++i )
 	{
 		std::vector<double> angles;
 		for ( int j=0; j<arm_dof_; ++j )
 		{
-			angles.push_back(temp[arm_dof_*i + j]);
-			std::cout << angles[angles.size()-1] << "\t";
+			angles.push_back(temp[num_params*i + j]);
 		}
-		std::cout << std::endl;
+		arm_configurations_.push_back(angles);
 
-		arm_configurations_.push_back(calibration_utilities::AngleConfiguration(angles));
-	}
-
-	temp.clear();
-	node_handle_.getParam("camera_configurations", temp);
-	double cam_configs = temp.size()/camera_dof_;
-	if ( cam_configs != number_configurations )
-	{
-		ROS_ERROR("The camera_configurations vector must hold as many configurations as the arm_configurations vector.");
-		return;
-	}
-	std::cout << "camera configurations:\n";
-	for ( int i=0; i<cam_configs; ++i )
-	{
-		std::vector<double> angles;
-		for ( int j=0; j<camera_dof_; ++j )
+		angles.clear();
+		for ( int j=arm_dof_; j<num_params; ++j ) // camera_dof_ iterations
 		{
-			angles.push_back(temp[camera_dof_*i + j]);
-			std::cout << angles[angles.size()-1] << "\t";
+			angles.push_back(temp[num_params*i + j]);
 		}
-		std::cout << std::endl;
+		camera_configurations_.push_back(angles);
+	}
 
-		camera_configurations_.push_back(calibration_utilities::AngleConfiguration(angles));
+	// Display configurations
+	std::cout << "arm configurations:" << std::endl;
+	for ( int i=0; i<arm_dof_; ++i )
+	{
+		for ( int j=0; j<arm_configurations_[i].size(); ++j )
+			std::cout << arm_configurations_[i][j] << "/t";
+		std::cout << std::endl;
+	}
+	std::cout << "camera configurations:" << std::endl;
+	for ( int i=0; i<camera_dof_; ++i )
+	{
+		for ( int j=0; j<camera_configurations_[i].size(); ++j )
+			std::cout << camera_configurations_[i][j] << "/t";
+		std::cout << std::endl;
 	}
 
 	// set up messages
@@ -225,41 +192,39 @@ bool ArmBaseCalibration::calibrateArmToBase(const bool load_images)
 	// acquire images
 	int image_width=0, image_height=0;
 	std::vector< std::vector<cv::Point2f> > points_2d_per_image;
-	std::vector<cv::Mat> T_armbase_to_checkerboard_vector;
-	std::vector<cv::Mat> T_base_to_camera_optical_vector;
-	acquireCalibrationImages(chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_armbase_to_checkerboard_vector,
-			T_base_to_camera_optical_vector);
-
-	if ( points_2d_per_image.size() == 0 )
-	{
-		ROS_WARN("Skipping calibration, as no calibration images are available.");
-		return false;
-	}
+	std::vector<cv::Mat> T_gapfirst_to_marker_vector;
+	std::vector< std::vector<cv::Mat> > T_between_gaps_vector;
+	std::vector<cv::Mat> T_gaplast_to_camera_optical_vector;
+	acquireCalibrationImages(chessboard_pattern_size_, load_images, image_width, image_height, points_2d_per_image, T_gapfirst_to_marker_vector,
+							 T_between_gaps_vector, T_gaplast_to_camera_optical_vector);
 
 	// prepare chessboard 3d points
 	std::vector< std::vector<cv::Point3f> > pattern_points_3d;
 	calibration_utilities::computeCheckerboard3dPoints(pattern_points_3d, chessboard_pattern_size_, chessboard_cell_size_, points_2d_per_image.size());
 
-	// intrinsic calibration for camera, get camera to checkerboard vector
-	std::vector<cv::Mat> rvecs, tvecs;
-	std::vector<cv::Mat> T_base_to_checkerboard_vector;
+	// intrinsic calibration for camera
+	std::vector<cv::Mat> rvecs, tvecs, T_gaplast_to_marker_vector;
 	intrinsicCalibration(pattern_points_3d, points_2d_per_image, cv::Size(image_width, image_height), rvecs, tvecs);
 	for (size_t i=0; i<rvecs.size(); ++i)
 	{
 		cv::Mat R, t;
 		cv::Rodrigues(rvecs[i], R);
-		cv::Mat T_base_to_checkerboard = T_base_to_camera_optical_vector[i] * transform_utilities::makeTransform(R, tvecs[i]);
-		T_base_to_checkerboard_vector.push_back(T_base_to_checkerboard);
+		cv::Mat T_gaplast_to_marker = T_gaplast_to_camera_optical_vector[i] * transform_utilities::makeTransform(R, tvecs[i]);
+		T_gaplast_to_marker_vector.push_back(T_gaplast_to_marker);
 	}
 
-	// extrinsic calibration between base and arm_base
-	extrinsicCalibrationBaseToArm(pattern_points_3d, T_base_to_checkerboard_vector, T_armbase_to_checkerboard_vector );
+	// extrinsic calibration optimization
+	for (int i=0; i<optimization_iterations_; ++i)
+	{
+		for ( int j=0; j<transforms_to_calibrate_.size(); ++j )
+		{
+			extrinsicCalibration(pattern_points_3d, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector, calibration_order_[j]);
+		}
+	}
 
-	// display calibration parameters
-	displayAndSaveCalibrationResult(T_base_to_armbase_);
+	// display and save calibration parameters
+	RobotCalibration::displayAndSaveCalibrationResult("arm_calibration_urdf.txt");
 
-	// save calibration
-	saveCalibration();
 	calibrated_ = true;
 	return true;
 }
@@ -272,43 +237,31 @@ void ArmBaseCalibration::intrinsicCalibration(const std::vector< std::vector<cv:
 	cv::calibrateCamera(pattern_points, camera_points_2d_per_image, image_size, K_, distortion_, rvecs, tvecs);
 	std::cout << "Intrinsic calibration:\nK:\n" << K_ << "\ndistortion:\n" << distortion_ << std::endl;
 
-	double error = computeReprojectionErrors(pattern_points, camera_points_2d_per_image, rvecs, tvecs, K_, distortion_);
+	double error = calibration_utilities::computeReprojectionError(pattern_points, camera_points_2d_per_image, rvecs, tvecs, K_, distortion_);
 	std::cout << "Total reprojection error: " << error << std::endl;
 }
 
-double ArmBaseCalibration::computeReprojectionErrors( const std::vector<std::vector<cv::Point3f> >& objectPoints,
-                                         const std::vector<std::vector<cv::Point2f> >& imagePoints,
-                                         const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
-                                         const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs)
+void ArmBaseCalibration::moveRobot(int config_index)
 {
-    std::vector<cv::Point2f> imagePoints2;
-    size_t totalPoints = 0;
-    double totalErr = 0, err = 0;
+	RobotCalibration::moveRobot(config_index); // Call parent
 
-    for(size_t i = 0; i < objectPoints.size(); ++i )
-    {
-        cv::projectPoints(objectPoints[i], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imagePoints2);
-
-        err = cv::norm(imagePoints[i], imagePoints2, cv::NORM_L2);
-        size_t n = objectPoints[i].size();
-        //double perViewError = (float) std::sqrt(err*err/n);
-        //std::cout << "View error " << (i+1) << ": " << perViewError << std::endl;
-        totalErr        += err*err;
-        totalPoints     += n;
-    }
-    return std::sqrt(totalErr/totalPoints);
+	while ( !moveArm(arm_configurations_[config_index]) )
+	{
+		ROS_ERROR("ArmBaseCalibration::moveRobot: Could not execute moveBase, trying again in 0.5 secs.");
+		ros::Duration(0.5).sleep();
+	}
 }
 
-bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration& arm_configuration)
+bool ArmBaseCalibration::moveArm(const std::vector<double>& arm_configuration)
 {
 	std_msgs::Float64MultiArray new_joint_config;
-	new_joint_config.data.resize(arm_configuration.angles_.size());
+	new_joint_config.data.resize(arm_configuration.size());
 
 	for ( int i=0; i<new_joint_config.data.size(); ++i )
-		new_joint_config.data[i] = arm_configuration.angles_[i];
+		new_joint_config.data[i] = arm_configuration[i];
 
 	std::vector<double> cur_state = *calibration_interface_->getCurrentArmState();
-	if ( cur_state.size() != arm_configuration.angles_.size() )
+	if ( cur_state.size() != arm_configuration.size() )
 	{
 		ROS_ERROR("Size of target arm configuration and count of arm joints do not match! Please adjust the yaml file.");
 		return false;
@@ -322,7 +275,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 		do
 		{
 			cur_state = *calibration_interface_->getCurrentArmState();
-			delta_angle = arm_configuration.angles_[i] - cur_state[i];
+			delta_angle = arm_configuration[i] - cur_state[i];
 
 			while (delta_angle < -CV_PI)
 				delta_angle += 2*CV_PI;
@@ -332,13 +285,13 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 			if ( abs(delta_angle) > max_angle_deviation_ )
 			{
 				ROS_WARN("%d. target angle exceeds max allowed deviation of %f!\n"
-						"Please move the arm manually closer to the target position to avoid collision issues. Waiting 5 seconds...", (int)(i+1), max_angle_deviation_);
+						 "Please move the arm manually closer to the target position to avoid collision issues. Waiting 5 seconds...", (int)(i+1), max_angle_deviation_);
 				std::cout << "Current arm state: ";
 				for ( size_t j=0; j<cur_state.size(); ++j )
 					std::cout << cur_state[j] << (j<cur_state.size()-1 ? "\t" : "\n");
 				std::cout << "Target arm state: ";
 				for ( size_t j=0; j<cur_state.size(); ++j )
-					std::cout << arm_configuration.angles_[j] << (j<cur_state.size()-1 ? "\t" : "\n");
+					std::cout << arm_configuration[j] << (j<cur_state.size()-1 ? "\t" : "\n");
 				ros::Duration(5).sleep();
 				ros::spinOnce();
 			}
@@ -359,7 +312,7 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 			cur_state = *calibration_interface_->getCurrentArmState();
 			std::vector<double> difference(cur_state.size());
 			for (int i = 0; i<cur_state.size(); ++i)
-				difference[i] = arm_configuration.angles_[i]-cur_state[i];
+				difference[i] = arm_configuration[i]-cur_state[i];
 
 			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
 
@@ -375,80 +328,24 @@ bool ArmBaseCalibration::moveArm(const calibration_utilities::AngleConfiguration
 		if ( timeout.getElapsedTimeInSec()>=10.0 )
 		{
 			ROS_WARN("Could not reach following arm configuration in time:");
-			for (int i = 0; i<arm_configuration.angles_.size(); ++i)
-				std::cout << arm_configuration.angles_[i] << "\t";
+			for (int i = 0; i<arm_configuration.size(); ++i)
+				std::cout << arm_configuration[i] << "\t";
 			std::cout << std::endl;
 		}
 	}
 	else
 		ros::Duration(1).sleep();
-
-	ros::spinOnce();
-	return true;
-}
-
-bool ArmBaseCalibration::moveCamera(const calibration_utilities::AngleConfiguration& cam_configuration)
-{
-	std_msgs::Float64MultiArray angles;
-	angles.data.resize(cam_configuration.angles_.size());
-
-	for ( int i=0; i<angles.data.size(); ++i )
-		angles.data[i] = cam_configuration.angles_[i];
-
-	std::vector<double> cur_state = *calibration_interface_->getCurrentCameraState();
-	if ( cur_state.size() != cam_configuration.angles_.size() )
-	{
-		ROS_ERROR("Size of target camera configuration and count of camera joints do not match! Please adjust the yaml file.");
-		return false;
-	}
-
-	calibration_interface_->assignNewCameraAngles(angles);
-
-	// wait for pan tilt to arrive at goal position
-	if ( cur_state.size() > 0 )
-	{
-		Timer timeout;
-		while (timeout.getElapsedTimeInSec()<10.0)
-		{
-			cur_state = *calibration_interface_->getCurrentCameraState();
-			std::vector<double> difference(cur_state.size());
-			for (int i = 0; i<cur_state.size(); ++i)
-				difference[i] = cam_configuration.angles_[i]-cur_state[i];
-
-			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
-
-			if ( length < 0.02 ) //Close enough to goal configuration (~0.5° deviation allowed)
-			{
-				std::cout << "Camera configuration reached, deviation: " << length << std::endl;
-				break;
-			}
-
-			ros::spinOnce();
-		}
-
-		if ( timeout.getElapsedTimeInSec()>=10.0 )
-		{
-			ROS_WARN("Could not reach following camera configuration in time:");
-			for (int i = 0; i<cam_configuration.angles_.size(); ++i)
-				std::cout << cam_configuration.angles_[i] << "\t";
-			std::cout << std::endl;
-		}
-	}
-	else
-	{
-		ros::Duration(1).sleep();
-	}
 
 	ros::spinOnce();
 	return true;
 }
 
 bool ArmBaseCalibration::acquireCalibrationImages(const cv::Size pattern_size, const bool load_images, int& image_width, int& image_height,
-		std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_armbase_to_checkerboard_vector,
-		std::vector<cv::Mat>& T_base_to_camera_optical_vector)
+												  std::vector< std::vector<cv::Point2f> >& points_2d_per_image, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
+												  std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_camera_optical_vector)
 {
 	// capture images from different perspectives
-	const int number_images_to_capture = (int)arm_configurations_.size();
+	const int number_images_to_capture = (int)camera_configurations_.size();
 	for (int image_counter = 0; image_counter < number_images_to_capture; ++image_counter)
 	{
 		if ( !ros::ok() )
@@ -456,11 +353,8 @@ bool ArmBaseCalibration::acquireCalibrationImages(const cv::Size pattern_size, c
 
 		std::cout << "Configuration " << (image_counter+1) << "/" << number_images_to_capture << std::endl;
 
-		if (!load_images)
-		{
-			moveCamera(camera_configurations_[image_counter]);
-			moveArm(arm_configurations_[image_counter]);
-		}
+		if ( !load_images )
+			moveRobot(image_counter);
 
 		// acquire image and extract checkerboard points
 		std::vector<cv::Point2f> checkerboard_points_2d;
@@ -469,30 +363,13 @@ bool ArmBaseCalibration::acquireCalibrationImages(const cv::Size pattern_size, c
 			continue;
 
 		// retrieve transformations
-		cv::Mat T_armbase_to_checkerboard, T_base_to_camera_optical;
 		std::stringstream path;
 		path << calibration_storage_path_ << image_counter << ".yml";
-		if (load_images)
+		cv::Mat T_gapfirst_to_marker, T_gaplast_to_camera_optical;
+		std::vector<cv::Mat> T_between_gaps;
+		if ( load_images == false )
 		{
-			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
-			if (fs.isOpened())
-			{
-				fs["T_armbase_to_checkerboard"] >> T_armbase_to_checkerboard;
-				fs["T_base_to_camera_optical"] >> T_base_to_camera_optical;
-			}
-			else
-			{
-				ROS_WARN("Could not read transformations from file '%s'.", path.str().c_str());
-				continue;
-			}
-			fs.release();
-		}
-		else
-		{
-			bool result = true;
-			result &= transform_utilities::getTransform(transform_listener_, armbase_frame_, checkerboard_frame_, T_armbase_to_checkerboard);
-			result &= transform_utilities::getTransform(transform_listener_, base_frame_, camera_optical_frame_, T_base_to_camera_optical);
-
+			bool result = calculateTransformationChains(T_gapfirst_to_marker, T_between_gaps, T_gaplast_to_camera_optical, checkerboard_frame_);
 			if (result == false)
 				continue;
 
@@ -500,20 +377,37 @@ bool ArmBaseCalibration::acquireCalibrationImages(const cv::Size pattern_size, c
 			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::WRITE);
 			if (fs.isOpened())
 			{
-				fs << "T_armbase_to_checkerboard" << T_armbase_to_checkerboard;
-				fs << "T_base_to_camera_optical" << T_base_to_camera_optical;
+				fs << "T_gapfirst_to_marker" << T_gapfirst_to_marker;
+				fs << "T_gaplast_to_camera_optical" << T_gaplast_to_camera_optical;
+				fs << "T_between_gaps" << T_between_gaps;
 			}
 			else
 			{
 				ROS_WARN("Could not write transformations to file '%s'.", path.str().c_str());
-				continue;
+			}
+			fs.release();
+		}
+		else
+		{
+			// load data from file
+			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
+			if (fs.isOpened())
+			{
+				fs["T_gapfirst_to_marker"] >> T_gapfirst_to_marker;
+				fs["T_gaplast_to_camera_optical"] >> T_gaplast_to_camera_optical;
+				fs["T_between_gaps"] >> T_between_gaps;
+			}
+			else
+			{
+				ROS_WARN("Could not read transformations from file '%s'.", path.str().c_str());
 			}
 			fs.release();
 		}
 
 		points_2d_per_image.push_back(checkerboard_points_2d);
-		T_armbase_to_checkerboard_vector.push_back(T_armbase_to_checkerboard);
-		T_base_to_camera_optical_vector.push_back(T_base_to_camera_optical);
+		T_gapfirst_to_marker_vector.push_back(T_gapfirst_to_marker);
+		T_between_gaps_vector.push_back(T_between_gaps);
+		T_gaplast_to_camera_optical_vector.push_back(T_gaplast_to_camera_optical);
 		std::cout << "Captured perspectives: " << points_2d_per_image.size() << std::endl;
 	}
 
@@ -521,7 +415,7 @@ bool ArmBaseCalibration::acquireCalibrationImages(const cv::Size pattern_size, c
 }
 
 int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_height,
-		std::vector<cv::Point2f>& checkerboard_points_2d, const cv::Size pattern_size, const bool load_images, int& image_counter)
+												std::vector<cv::Point2f>& checkerboard_points_2d, const cv::Size pattern_size, const bool load_images, int& image_counter)
 {
 	int return_value = 0;
 
@@ -570,12 +464,12 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 
 	// find pattern in image
 	bool pattern_found = cv::findChessboardCorners(gray, pattern_size, checkerboard_points_2d,
-								cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);
+												   cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);
 
 	if ( pattern_found )
 	{
-        cv::cornerSubPix( gray, checkerboard_points_2d, cv::Size(11,11),
-        		cv::Size(-1,-1), cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 30, 0.1 ));
+		cv::cornerSubPix( gray, checkerboard_points_2d, cv::Size(11,11),
+						  cv::Size(-1,-1), cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 30, 0.1 ));
 	}
 
 	// collect 2d points
@@ -598,113 +492,3 @@ int ArmBaseCalibration::acquireCalibrationImage(int& image_width, int& image_hei
 
 	return return_value;
 }
-
-void ArmBaseCalibration::extrinsicCalibrationBaseToArm(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-		std::vector<cv::Mat>& T_base_to_checkerboard_vector, std::vector<cv::Mat>& T_armbase_to_checkerboard_vector )
-{
-	// transform 3d chessboard points to respective coordinates systems (base and arm base)
-	std::vector<cv::Point3d> points_3d_base, points_3d_armbase;
-	for (size_t i=0; i<pattern_points_3d.size(); ++i)
-	{
-		for (size_t j=0; j<pattern_points_3d[i].size(); ++j)
-		{
-			cv::Mat point = cv::Mat(cv::Vec4d(pattern_points_3d[i][j].x, pattern_points_3d[i][j].y, pattern_points_3d[i][j].z, 1.0));
-
-			// to base coordinate system
-			cv::Mat point_base = T_base_to_checkerboard_vector[i] * point; // from base to camera to checkerboard corners
-			points_3d_base.push_back(cv::Point3d(point_base.at<double>(0), point_base.at<double>(1), point_base.at<double>(2)));
-
-			// to armbase coordinate
-			cv::Mat point_armbase = T_armbase_to_checkerboard_vector[i] * point; // from arm base to checkerboard corners
-			points_3d_armbase.push_back(cv::Point3d(point_armbase.at<double>(0), point_armbase.at<double>(1), point_armbase.at<double>(2)));
-		}
-	}
-
-	T_base_to_armbase_ = transform_utilities::computeExtrinsicTransform(points_3d_base, points_3d_armbase);
-}
-
-bool ArmBaseCalibration::saveCalibration()
-{
-	bool success = true;
-
-	// save calibration
-	std::string filename = calibration_storage_path_ + "arm_calibration_result.yml";
-	cv::FileStorage fs(filename.c_str(), cv::FileStorage::WRITE);
-	if (fs.isOpened() == true)
-	{
-		fs << "T_base_to_armbase" << T_base_to_armbase_;
-	}
-	else
-	{
-		std::cout << "Error: ArmBaseCalibration::saveCalibration: Could not write calibration to file.";
-		success = false;
-	}
-	fs.release();
-
-	return success;
-}
-
-bool ArmBaseCalibration::loadCalibration()
-{
-	bool success = true;
-
-	// load calibration
-	std::string filename = calibration_storage_path_ + "arm_calibration_result.yml";
-	cv::FileStorage fs(filename.c_str(), cv::FileStorage::READ);
-	if (fs.isOpened() == true)
-	{
-		fs["T_base_armbase"] >> T_base_to_armbase_;
-	}
-	else
-	{
-		std::cout << "Error: ArmBaseCalibration::loadCalibration: Could not read calibration from file.";
-		success = false;
-	}
-	fs.release();
-
-	calibrated_ = true;
-
-	return success;
-}
-
-void ArmBaseCalibration::getCalibration(cv::Mat& T_base_to_armbase)
-{
-	if (calibrated_ == false && loadCalibration() == false)
-	{
-		std::cout << "Error: ArmBaseCalibration not calibrated and no calibration data available on disk." << std::endl;
-		return;
-	}
-
-	T_base_to_armbase = T_base_to_armbase_.clone();
-}
-
-void ArmBaseCalibration::displayAndSaveCalibrationResult(const cv::Mat& T_base_to_arm)
-{
-	// display calibration parameters
-	std::stringstream output;
-	output << "\n\n\n----- Replace these parameters in your 'squirrel_robotino/robotino_bringup/robots/xyz_robotino/urdf/properties.urdf.xacro' file -----\n\n";
-	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T_base_to_arm);
-	output << "  <!-- arm mount positions | handeye calibration | relative to base_link -->\n"
-			  << "  <property name=\"arm_base_x\" value=\"" << T_base_to_arm.at<double>(0,3) << "\"/>\n"
-			  << "  <property name=\"arm_base_y\" value=\"" << T_base_to_arm.at<double>(1,3) << "\"/>\n"
-			  << "  <property name=\"arm_base_z\" value=\"" << T_base_to_arm.at<double>(2,3) << "\"/>\n"
-			  << "  <property name=\"arm_base_roll\" value=\"" << ypr.val[2] << "\"/>\n"
-			  << "  <property name=\"arm_base_pitch\" value=\"" << ypr.val[1] << "\"/>\n"
-			  << "  <property name=\"arm_base_yaw\" value=\"" << ypr.val[0] << "\"/>\n\n";
-	std::cout << output.str();
-
-	if ( ros::ok() )
-	{
-		std::string path_file = calibration_storage_path_ + "arm_calibration_urdf.txt";
-		std::fstream file_output;
-		file_output.open(path_file.c_str(), std::ios::out);
-		if (file_output.is_open())
-			file_output << output.str();
-		file_output.close();
-	}
-	else
-	{
-		ROS_INFO("Skipping to save calibration result.");
-	}
-}
-

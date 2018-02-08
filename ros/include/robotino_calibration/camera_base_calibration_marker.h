@@ -72,45 +72,38 @@
 #include <robotino_calibration/timer.h>
 #include <robotino_calibration/robot_calibration.h>
 
-#define RefFrameHistorySize 10 // 10 entries used to build the average upon
+#define REF_FRAME_HISTORY_SIZE 10 // 10 entries used to build the average upon
 
 
 class CameraBaseCalibrationMarker : public RobotCalibration
 {
 public:
 
-	CameraBaseCalibrationMarker(ros::NodeHandle nh, CalibrationInterface* interface);
-	virtual ~CameraBaseCalibrationMarker();
+    CameraBaseCalibrationMarker(ros::NodeHandle nh, CalibrationInterface* interface);
+    virtual ~CameraBaseCalibrationMarker();
 
-	// starts the calibration between camera and base including data acquisition
-	virtual bool calibrateCameraToBase(const bool load_images) = 0;
+    // starts the calibration between camera and base including data acquisition
+    virtual bool calibrateCameraToBase(const bool load_images) = 0;
 
 
 protected:
 
-	// moves the robot to a desired location and adjusts the torso joints
-	bool moveRobot(const calibration_utilities::RobotConfiguration& robot_configuration);
+    // moves the robot to a desired location and adjusts the torso joints
+    void moveRobot(int config_index); // derived from parent
+    bool moveBase(const calibration_utilities::BaseConfiguration &base_configuration);
 
-	// Turn off base movement
-	void turnOffBaseMotion();
+    // Turn off base movement
+    void turnOffBaseMotion();
 
-	bool isReferenceFrameValid(cv::Mat &T); // Returns wether reference frame is valid -> if so, it is save to move the robot base, otherwise stop!
+    bool isReferenceFrameValid(cv::Mat &T); // Returns wether reference frame is valid -> if so, it is save to move the robot base, otherwise stop!
 
-	void extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-			std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> > T_between_gaps_vector,
-			std::vector<cv::Mat>& T_gaplast_to_marker_vector, int trafo_to_calibrate);
+    std::string base_frame_;  // Name of base frame, needed for security measures
 
-	bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat> T_between_gaps,
-			cv::Mat& T_gaplast_to_marker, std::string marker_frame);
+    //std::vector<calibration_utilities::RobotConfiguration> robot_configurations_;  // wished robot configurations used for calibration
+    double RefFrameHistory_[REF_FRAME_HISTORY_SIZE]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <REF_FRAME_HISTORY_SIZE> measurements.
+    int RefHistoryIndex_; // Current index of history building
 
-	// displays the calibration result in the urdf file's format and also stores the screen output to a file
-	void displayAndSaveCalibrationResult();
-
-	std::string camera_optical_frame_;
-
-	std::vector<calibration_utilities::RobotConfiguration> robot_configurations_;  // wished robot configurations used for calibration
-	double RefFrameHistory_[RefFrameHistorySize]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <RefFrameHistorySize> measurements.
-	int RefHistoryIndex_; // Current index of history building
+    std::vector<calibration_utilities::BaseConfiguration> base_configurations_;  // wished base configurations used for calibration
 };
 
 

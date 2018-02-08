@@ -62,37 +62,50 @@
 
 struct CalibrationInfo
 {
-	std::string parent_;
-	std::string child_;
-	cv::Mat current_trafo_;
-	int trafo_until_next_gap_idx_; // index to between_gaps trafo
+    std::string parent_;
+    std::string child_;
+    cv::Mat current_trafo_;
+    int trafo_until_next_gap_idx_; // index to between_gaps trafo
 };
 
 class RobotCalibration
 {
 public:
 
-	RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface);
-	virtual ~RobotCalibration();
-	//virtual bool saveCalibration() = 0;
-	//virtual bool loadCalibration() = 0;
+    RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface);
+    virtual ~RobotCalibration();
 
 
 protected:
 
-	void createStorageFolder();
+    void createStorageFolder();
 
-	//int calibration_ID_;		// ID for identifying which calibration interface to use.
-	int optimization_iterations_;	// number of iterations for optimization
-	bool calibrated_;
-	tf::TransformListener transform_listener_;
-	ros::NodeHandle node_handle_;
-	std::string base_frame_;  // name of base frame
-	std::string calibration_storage_path_;  // path to data
-	std::string child_frame_name_;  // name of reference frame
-	CalibrationInterface *calibration_interface_;
-	std::vector<CalibrationInfo> transforms_to_calibrate_;
-	std::vector<int> calibration_order_;
+    // displays the calibration result in the urdf file's format and also stores the screen output to a file
+    void displayAndSaveCalibrationResult(std::string output_file_name);
+
+    void extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
+                              std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> > T_between_gaps_vector,
+                              std::vector<cv::Mat>& T_gaplast_to_marker_vector, int trafo_to_calibrate);
+
+    bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat> T_between_gaps,
+                                       cv::Mat& T_gaplast_to_marker, std::string marker_frame);
+
+    virtual void moveRobot(int config_index);
+    bool moveCamera(const std::vector<double>& cam_configuration);
+
+    int camera_dof_;		// degrees of freedom the camera has
+    int optimization_iterations_;	// number of iterations for optimization
+    bool calibrated_;
+    tf::TransformListener transform_listener_;
+    ros::NodeHandle node_handle_;
+    std::string camera_optical_frame_;  // name of camera optical frame
+    std::string calibration_storage_path_;  // path to data
+    std::string child_frame_name_;  // name of reference frame
+    CalibrationInterface *calibration_interface_;
+    std::vector<CalibrationInfo> transforms_to_calibrate_;
+    std::vector<int> calibration_order_;
+    std::vector< std::vector<double> > camera_configurations_; // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
+
 };
 
 
