@@ -20,6 +20,14 @@ pan_joint_name: "neck_pan_joint"
 # string
 tilt_joint_name: "neck_tilt_joint"
 
+# Topic to retrieve the current arm state
+# string
+arm_state_topic: "/arm_controller/joint_states"
+
+# topic to control the arm joints
+# string
+arm_joint_controller_command: "/arm_controller/joint_trajectory_controller/command"
+
 ## topic names for commanding the robot base
 # topic name for the base controller
 # string
