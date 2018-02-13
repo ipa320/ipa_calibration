@@ -61,7 +61,8 @@ namespace calibration_utilities
 	{
 		if ( config.size() != NUM_BASE_PARAMS )
 		{
-			std::cout << "RobotConfiguration::BaseConfiguration: Error, passed vector does not have the correct size to build a base configuration!" << std::endl;
+			std::cout << "RobotConfiguration::BaseConfiguration: Error, passed vector does not have the correct size ("
+					  << config.size() << ", needed" << NUM_BASE_PARAMS << ") to build a base configuration!" << std::endl;
 			return;
 		}
 
@@ -119,9 +120,9 @@ namespace calibration_utilities
 	}
 
 	double computeReprojectionError( const std::vector<std::vector<cv::Point3f> >& objectPoints,
-														 const std::vector<std::vector<cv::Point2f> >& imagePoints,
-														 const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
-														 const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs)
+										const std::vector<std::vector<cv::Point2f> >& imagePoints,
+										const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
+										const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs)
 	{
 		std::vector<cv::Point2f> imagePoints2;
 		size_t totalPoints = 0;

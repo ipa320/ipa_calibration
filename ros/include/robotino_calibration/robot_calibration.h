@@ -59,6 +59,8 @@
 #include <opencv2/opencv.hpp>
 #include <cv_bridge/cv_bridge.h>
 
+#define NUM_MOVE_TRIES 5
+
 
 struct CalibrationInfo
 {

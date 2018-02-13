@@ -359,10 +359,21 @@ void CameraBaseCalibrationMarker::moveRobot(int config_index)
 {
 	RobotCalibration::moveRobot(config_index); // Call parent
 
-	while ( !moveBase(base_configurations_[config_index]) )
+	for ( short i=0; i<NUM_MOVE_TRIES; ++i )
 	{
-		ROS_ERROR("CameraBaseCalibrationMarker::moveRobot: Could not execute moveBase, trying again in 0.5 secs.");
-		ros::Duration(0.5).sleep();
+		if ( !moveBase(base_configurations_[config_index]) )
+		{
+			ROS_ERROR("CameraBaseCalibrationMarker::moveRobot: Could not execute moveBase, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
+			if ( i<NUM_MOVE_TRIES-1 )
+			{
+				ROS_INFO("CameraBaseCalibrationMarker::moveRobot: Trying again in 0.5 secs.");
+				ros::Duration(0.5).sleep();
+			}
+			else
+				ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Skipping base configuration %d.", config_index);
+		}
+		else
+			break;
 	}
 }
 

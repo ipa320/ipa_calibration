@@ -274,10 +274,21 @@ bool RobotCalibration::calculateTransformationChains(cv::Mat& T_gapfirst_to_mark
 
 void RobotCalibration::moveRobot(int config_index)
 {
-	while ( !moveCamera(camera_configurations_[config_index]) )
+	for ( short i=0; i<NUM_MOVE_TRIES; ++i )
 	{
-		ROS_ERROR("RobotCalibration::moveRobot: Could not execute moveCamera, trying again in 0.5 secs.");
-		ros::Duration(0.5).sleep();
+		if ( !moveCamera(camera_configurations_[config_index]) )
+		{
+			ROS_ERROR("RobotCalibration::moveRobot: Could not execute moveCamera, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
+			if ( i<NUM_MOVE_TRIES-1 )
+			{
+				ROS_INFO("RobotCalibration::moveRobot: Trying again in 0.5 secs.");
+				ros::Duration(0.5).sleep();
+			}
+			else
+				ROS_WARN("RobotCalibration::moveRobot: Skipping camera configuration %d.", config_index);
+		}
+		else
+			break;
 	}
 }
 

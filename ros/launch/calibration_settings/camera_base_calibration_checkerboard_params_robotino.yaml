@@ -16,9 +16,9 @@ use_range: true
 # double
 x_range: [-1.5, 0.25, -0.75]       # in [m]
 y_range: [-0.09, 1.0, -0.09]       # in [m], fixed y-coordinate
-phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle
-pan_range: [-0.52, 0.02, 0.52]     # in [rad]
-tilt_range: [-0.44, 0.02, 0.44]    # in [rad]
+phi_range: [0.0, 1.0, 0.0]         # in [rad], fixed phi-angle here
+camera_ranges: [-0.52, 0.02, 0.52,
+                -0.44, 0.02, 0.44] # first pan then tilt in [rad]
 
 
 ### checkerboard observation positions for capturing calibration images
@@ -60,7 +60,7 @@ robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
 
 
 ### Robot link and topic names
-# the robot base frame [the transformation between laser scanner and base should be accomplished before]
+# the robot base frame, needed for security measure (it's the reference frame to check the child_frame against before moving the robot)
 base_frame: "base_linkz"
 
 # this is the camera coordinate system which refers to the color image sensor [the transformations between camera_frame and camera_optical_frame should be available from tf]
