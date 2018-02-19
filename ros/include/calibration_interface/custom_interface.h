@@ -68,16 +68,6 @@ public:
 	CustomInterface(ros::NodeHandle nh);
 	virtual ~CustomInterface();
 	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration); //Create corresponding robot interface by a user-defined ID.
-/*
-	// camera calibration interface
-	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;
-	virtual void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles) = 0;
-	virtual std::vector<double>* getCurrentCameraState() = 0;
-
-	// arm calibration interface
-	virtual void assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig) = 0;
-	virtual std::vector<double>* getCurrentArmState() = 0;
-*/
 };
 
 

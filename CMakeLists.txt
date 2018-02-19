@@ -17,19 +17,15 @@ endif()
 ## End C++11
 
 set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is system dependency --> sudo apt-get install)
-	#cob_fiducials
-	#cob_object_detection_msgs
 	control_msgs
-	#cv_bridge
 	geometry_msgs
-	#image_transport
 	roscpp
-	#roslib
+	roslib
 	sensor_msgs
 	std_msgs
-	#tf
 	trajectory_msgs
 	actionlib
+	tf
 )
 
 set(catkin_BUILD_PACKAGES 

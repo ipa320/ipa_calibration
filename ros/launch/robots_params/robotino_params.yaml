@@ -40,3 +40,4 @@ camera_image_topic: "/kinect/rgb/image_raw"
 # calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW
 # int
 calibration_ID: 0
+

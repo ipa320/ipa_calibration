@@ -53,8 +53,6 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <control_msgs/FollowJointTrajectoryGoal.h>
-
-
 #include <actionlib/client/simple_action_client.h>
 
 
@@ -143,7 +141,6 @@ void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray new_angles)
 
 	camGoal.trajectory = jointTraj;
 	ac.sendGoal(camGoal);
-	//camera_joint_controller_.publish(new_angles/*jointTraj*/);
 }
 
 std::vector<double>* RAWInterface::getCurrentCameraState()
@@ -162,10 +159,10 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray new_joint_conf
 	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("/arm/joint_trajectory_controller/follow_joint_trajectory", true);
 	control_msgs::FollowJointTrajectoryGoal armGoal;
 	ac.waitForServer();
-	jointTraj.joint_names = {"arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_joint", "arm_wrist_1_joint", "arm_wrist_2_joint", "arm_wrist_3_joint"};
-			//{"arm_elbow_joint", "arm_shoulder_lift_joint", "arm_shoulder_pan_joint", "arm_wrist_1_joint", "arm_wrist_2_joint", "arm_wrist_3_joint"};
+	jointTraj.joint_names = {"arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_joint", "arm_wrist_1_joint", "arm_wrist_2_joint",
+							 "arm_wrist_3_joint"};
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), new_joint_config.data.begin(), new_joint_config.data.end());
-	jointTrajPoint.time_from_start = ros::Duration(2);
+	jointTrajPoint.time_from_start = ros::Duration(2); // Quick and dirty, should actually be calculated by max angular speed and travel distance
 	currentPoint.positions.insert(currentPoint.positions.end(), arm_state_current_->position.begin(), arm_state_current_->position.end());
 	currentPoint.velocities = {0,0,0,0,0,0};
 	currentPoint.accelerations = {0,0,0,0,0,0};
@@ -175,11 +172,8 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray new_joint_conf
 	jointTraj.points.push_back(jointTrajPoint);
 	jointTraj.header.stamp = ros::Time::now();
 	armGoal.trajectory = jointTraj;
-	//bool success = ac.isServerConnected();
+
 	ac.sendGoal(armGoal);
-	//control_msgs::FollowJointTrajectoryResultConstPtr success2 = ac.getResult();
-	//std::cout << "Success " << success << " " << success2->error_string << "\n";
-	//arm_joint_controller_.publish(jointTraj); // RAW3-1
 }
 
 std::vector<double>* RAWInterface::getCurrentArmState()

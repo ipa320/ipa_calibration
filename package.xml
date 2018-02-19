@@ -10,6 +10,7 @@
 	<buildtool_depend>catkin</buildtool_depend>
 
 	<depend>roscpp</depend>
+	<depend>roslib</depend>
 	<depend>robotino_calibration</depend>
 	<depend>std_msgs</depend>
 	<depend>geometry_msgs</depend>
@@ -18,5 +19,6 @@
 	<depend>trajectory_msgs</depend>
 	<depend>sensor_msgs</depend>
 	<depend>control_msgs</depend>
+	<depend>tf</depend>
 
 </package>
