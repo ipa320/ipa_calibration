@@ -52,18 +52,12 @@
 #include <robotino_calibration/arm_base_calibration.h>
 #include <robotino_calibration/transformation_utilities.h>
 #include <std_msgs/Float64MultiArray.h>
-#include <geometry_msgs/Point.h>
-#include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
 #include <sstream>
-#include <fstream>
-#include <numeric>
+#include <numeric>  // std::inner_product
 #include <robotino_calibration/timer.h>
+#include <robotino_calibration/calibration_utilities.h>
+#include <cv_bridge/cv_bridge.h>
 
-
-//ToDo: Adjust displayAndSaveCalibrationResult() for new EndeffToChecker or remove the optimization for it.
-//ToDo: Add new setting to define the timeout time (move camera, move robot)
-//ToDo: Rename armbase_to_endeff to armbase_to_checkerboard
 
 ArmBaseCalibration::ArmBaseCalibration(ros::NodeHandle nh, CalibrationInterface* interface) :
 	RobotCalibration(nh, interface)
@@ -252,8 +246,8 @@ void ArmBaseCalibration::moveRobot(int config_index)
 			ROS_ERROR("ArmBaseCalibration::moveRobot: Could not execute moveArm, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
 			if ( i<NUM_MOVE_TRIES-1 )
 			{
-				ROS_INFO("ArmBaseCalibration::moveRobot: Trying again in 0.5 secs.");
-				ros::Duration(0.5).sleep();
+				ROS_INFO("ArmBaseCalibration::moveRobot: Trying again in 1 sec.");
+				ros::Duration(1.f).sleep();
 			}
 			else
 				ROS_WARN("ArmBaseCalibration::moveRobot: Skipping arm configuration %d.", config_index);

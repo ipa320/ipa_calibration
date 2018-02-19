@@ -51,12 +51,10 @@
 
 #include <robotino_calibration/camera_base_calibration_marker.h>
 #include <robotino_calibration/transformation_utilities.h>
+#include <robotino_calibration/timer.h>
 
-#include <std_msgs/Float64MultiArray.h>
 #include <geometry_msgs/Twist.h>
 
-#include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
 
 // ToDo: Remove static camera angle link count of 2
 // ToDo: Pan_Range and Tilt_Range needs to be stored in one 3*X vector (X number of camera links and 3: min, step, end)
@@ -77,6 +75,22 @@
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, CalibrationInterface* interface) :
 	RobotCalibration(nh, interface), RefHistoryIndex_(0)
 {
+	// Debug how RVIZ rotations are defined
+	/*cv::Mat T;
+
+	transform_utilities::getTransform(transform_listener_, "arm_link5", base_frame_, T);
+	std::cout << "TF: " << T << std::endl;
+	std::cout << transform_utilities::YPRFromRotationMatrix( (cv::Mat_<double>(3,3) << T.at<double>(0,0), T.at<double>(0,1), T.at<double>(0,2),
+				T.at<double>(1,0), T.at<double>(1,1), T.at<double>(1,2),
+				T.at<double>(2,0), T.at<double>(2,1), T.at<double>(2,2)) ) << std::endl;
+	std::vector<float> temp;
+	node_handle_.getParam("T_initial", temp);
+	T = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
+	std::cout << "BUILT: " << T << std::endl;
+	std::cout << transform_utilities::YPRFromRotationMatrix( (cv::Mat_<double>(3,3) << T.at<double>(0,0), T.at<double>(0,1), T.at<double>(0,2),
+				T.at<double>(1,0), T.at<double>(1,1), T.at<double>(1,2),
+				T.at<double>(2,0), T.at<double>(2,1), T.at<double>(2,2)) ) << std::endl;*/
+
 	// load parameters
 	std::cout << "\n========== CameraBaseCalibrationMarker Parameters ==========\n";
 
@@ -112,6 +126,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 		if ( temp.size() % 3 != 0 || temp.size() != 3*camera_dof_ )
 		{
 			ROS_ERROR("The camera range vector has the wrong size, each DOF needs three entries (start,step,stop)");
+			std::cout << "size: " << temp.size() << " " << camera_dof_ << std::endl;
 			return;
 		}
 
@@ -284,7 +299,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 			if (result) // Everything is fine, exit loop
 			{
 				cv::Mat T;
-				transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T);
+				transform_utilities::getTransform(transform_listener_, base_frame_, child_frame_name_, T);
 
 				for ( int i=0; i<REF_FRAME_HISTORY_SIZE; ++i ) // Initialize history array
 				{
@@ -309,22 +324,6 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 		throw std::exception();
 	}
 
-	// Debug how RVIZ rotations are defined
-	/*cv::Mat T;
-
-	transform_utilities::getTransform(transform_listener_, "arm_link5", base_frame_, T);
-	std::cout << "TF: " << T << std::endl;
-	std::cout << transform_utilities::YPRFromRotationMatrix( (cv::Mat_<double>(3,3) << T.at<double>(0,0), T.at<double>(0,1), T.at<double>(0,2),
-				T.at<double>(1,0), T.at<double>(1,1), T.at<double>(1,2),
-				T.at<double>(2,0), T.at<double>(2,1), T.at<double>(2,2)) ) << std::endl;
-	std::vector<float> temp;
-	node_handle_.getParam("T_initial", temp);
-	T = transform_utilities::makeTransform(transform_utilities::rotationMatrixFromYPR(temp[3], temp[4], temp[5]), cv::Mat(cv::Vec3d(temp[0], temp[1], temp[2])));
-	std::cout << "BUILT: " << T << std::endl;
-	std::cout << transform_utilities::YPRFromRotationMatrix( (cv::Mat_<double>(3,3) << T.at<double>(0,0), T.at<double>(0,1), T.at<double>(0,2),
-				T.at<double>(1,0), T.at<double>(1,1), T.at<double>(1,2),
-				T.at<double>(2,0), T.at<double>(2,1), T.at<double>(2,2)) ) << std::endl;*/
-
 	std::cout << "CameraBaseCalibrationMarker: init done." << std::endl;
 }
 
@@ -334,7 +333,7 @@ CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 
 bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T) // Safety measure, to avoid undetermined motion
 {
-	if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
+	if (!transform_utilities::getTransform(transform_listener_, base_frame_, child_frame_name_, T))
 		return false;
 
 	double currentSqNorm = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3);
@@ -366,8 +365,8 @@ void CameraBaseCalibrationMarker::moveRobot(int config_index)
 			ROS_ERROR("CameraBaseCalibrationMarker::moveRobot: Could not execute moveBase, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
 			if ( i<NUM_MOVE_TRIES-1 )
 			{
-				ROS_INFO("CameraBaseCalibrationMarker::moveRobot: Trying again in 0.5 secs.");
-				ros::Duration(0.5).sleep();
+				ROS_INFO("CameraBaseCalibrationMarker::moveRobot: Trying again in 1 sec.");
+				ros::Duration(1.f).sleep();
 			}
 			else
 				ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Skipping base configuration %d.", config_index);

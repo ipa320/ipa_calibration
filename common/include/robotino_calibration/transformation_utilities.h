@@ -51,11 +51,10 @@
 #ifndef _TRANSFORMATION_UTILITIES_H_
 #define _TRANSFORMATION_UTILITIES_H_
 
-// OpenCV
-#include <opencv2/opencv.hpp>
-//#include <opencv2/highgui/highgui.hpp>
 
+#include <opencv2/opencv.hpp>
 #include <tf/transform_listener.h>
+
 
 namespace transform_utilities
 {

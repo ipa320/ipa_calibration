@@ -51,11 +51,7 @@
 #include <robotino_calibration/camera_base_calibration_checkerboard.h>
 #include <robotino_calibration/transformation_utilities.h>
 
-#include <std_msgs/Float64.h>
-
-#include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
-
+#include <cv_bridge/cv_bridge.h>
 #include <sstream>
 
 

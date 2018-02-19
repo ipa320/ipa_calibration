@@ -49,26 +49,28 @@
  ****************************************************************/
 
 
-#include <ros/ros.h>
 #include <robotino_calibration/robot_calibration.h>
-#include <boost/filesystem.hpp>
-#include <exception>
 #include <robotino_calibration/timer.h>
 #include <robotino_calibration/transformation_utilities.h>
+#include <std_msgs/Float64MultiArray.h>
 
 //Exception
+#include <exception>
 #include <tf/exceptions.h>
 
 // File writing
 #include <sstream>
 #include <fstream>
 
+// Boost
+#include <boost/filesystem.hpp>
+
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface) :
 	node_handle_(nh), transform_listener_(nh), calibrated_(false), calibration_interface_(interface)
 {
 	// load parameters
-	std::cout << "\n========== Calibration Parameters ==========\n";
+	std::cout << "\n========== RobotCalibration Parameters ==========\n";
 	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "");
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
 	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/calibration");
@@ -281,8 +283,8 @@ void RobotCalibration::moveRobot(int config_index)
 			ROS_ERROR("RobotCalibration::moveRobot: Could not execute moveCamera, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
 			if ( i<NUM_MOVE_TRIES-1 )
 			{
-				ROS_INFO("RobotCalibration::moveRobot: Trying again in 0.5 secs.");
-				ros::Duration(0.5).sleep();
+				ROS_INFO("RobotCalibration::moveRobot: Trying again in 1 sec.");
+				ros::Duration(1.f).sleep();
 			}
 			else
 				ROS_WARN("RobotCalibration::moveRobot: Skipping camera configuration %d.", config_index);

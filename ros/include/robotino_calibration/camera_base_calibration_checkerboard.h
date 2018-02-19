@@ -54,6 +54,13 @@
 
 #include <robotino_calibration/camera_base_calibration_marker.h>
 
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
+
+// image transport
+#include <image_transport/image_transport.h>
+#include <image_transport/subscriber_filter.h>
+
 
 class CameraBaseCalibrationCheckerboard : public CameraBaseCalibrationMarker
 {
@@ -64,11 +71,6 @@ public:
 
     // starts the calibration between camera and base including data acquisition
     bool calibrateCameraToBase(const bool load_images);
-
-    // load/save calibration data from/to file
-    //bool saveCalibration();
-    //bool loadCalibration();
-    //void getCalibration(cv::Mat& K, cv::Mat& distortion, cv::Mat& T_base_to_torso_lower, cv::Mat& T_torso_upper_to_camera);
 
     void undistort(const cv::Mat& image, cv::Mat& image_undistorted);
 

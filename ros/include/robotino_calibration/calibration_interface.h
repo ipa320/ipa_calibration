@@ -57,6 +57,8 @@
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Twist.h>
 
+#include <vector>
+
 class CalibrationInterface
 {
 protected:
@@ -66,7 +68,6 @@ public:
 	CalibrationInterface();
 	CalibrationInterface(ros::NodeHandle nh);
 	virtual ~CalibrationInterface();
-	//static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, bool bArmCalibration); //Create corresponding robot interface by a user-defined ID.
 
 	// camera calibration interface
 	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;

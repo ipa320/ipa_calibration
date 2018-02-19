@@ -3,6 +3,10 @@
 # bool
 use_range: true
 
+# Degrees of freedom of camera
+# int
+camera_dof: 2
+
 # ranges for the degrees of freedom of the robot
 # each parameter is set as [min_value, step, max_value]
 # double

@@ -51,28 +51,11 @@
 #ifndef CAMERA_BASE_CALIBRATION_MARKER_H_
 #define CAMERA_BASE_CALIBRATION_MARKER_H_
 
-// ROS
-#include <ros/ros.h>
-
-#include <tf/transform_listener.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/image_encodings.h>
-#include <std_msgs/Float64MultiArray.h>
-#include <geometry_msgs/Twist.h>
-
-// image transport
-#include <image_transport/image_transport.h>
-#include <image_transport/subscriber_filter.h>
-
-// PCL
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 
 #include <robotino_calibration/calibration_utilities.h>
-#include <robotino_calibration/timer.h>
 #include <robotino_calibration/robot_calibration.h>
 
-#define REF_FRAME_HISTORY_SIZE 10 // 10 entries used to build the average upon
+#define REF_FRAME_HISTORY_SIZE 10 // 10 entries used to build the moving average upon
 
 
 class CameraBaseCalibrationMarker : public RobotCalibration
@@ -97,7 +80,8 @@ protected:
 
     bool isReferenceFrameValid(cv::Mat &T); // Returns wether reference frame is valid -> if so, it is save to move the robot base, otherwise stop!
 
-    std::string base_frame_;  // Name of base frame, needed for security measures
+    std::string base_frame_;        // Name of base frame, needed for security measure
+    std::string child_frame_name_;  // name of reference frame, needed for security measure
 
     //std::vector<calibration_utilities::RobotConfiguration> robot_configurations_;  // wished robot configurations used for calibration
     double RefFrameHistory_[REF_FRAME_HISTORY_SIZE]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <REF_FRAME_HISTORY_SIZE> measurements.

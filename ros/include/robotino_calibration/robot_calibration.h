@@ -52,14 +52,14 @@
 #define ROBOT_CALIBRATION_H_
 
 
+// ROS
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
-#include <robotino_calibration/calibration_utilities.h>
 #include <robotino_calibration/calibration_interface.h>
 #include <opencv2/opencv.hpp>
-#include <cv_bridge/cv_bridge.h>
+#include <vector>
 
-#define NUM_MOVE_TRIES 5
+#define NUM_MOVE_TRIES 4
 
 
 struct CalibrationInfo
@@ -102,7 +102,6 @@ protected:
     ros::NodeHandle node_handle_;
     std::string camera_optical_frame_;  // name of camera optical frame
     std::string calibration_storage_path_;  // path to data
-    std::string child_frame_name_;  // name of reference frame
     CalibrationInterface *calibration_interface_;
     std::vector<CalibrationInfo> transforms_to_calibrate_;
     std::vector<int> calibration_order_;

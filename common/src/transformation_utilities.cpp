@@ -51,13 +51,14 @@
 #include <robotino_calibration/transformation_utilities.h>
 
 // Eigen
-#include <Eigen/Core>
+//#include <Eigen/Core>
 
 //Exception
 #include <tf/exceptions.h>
 
 #include <string>
 #include <ros/ros.h>
+#include <tf/LinearMath/Matrix3x3.h>
 
 namespace transform_utilities
 {
@@ -85,12 +86,20 @@ namespace transform_utilities
 	// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
 	cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot)
 	{
-		Eigen::Matrix3f rot_eigen;
+		tf::Matrix3x3 r_mat(rot.at<double>(0,0), rot.at<double>(0,1), rot.at<double>(0,2),
+							rot.at<double>(1,0), rot.at<double>(1,1), rot.at<double>(1,2),
+							rot.at<double>(2,0), rot.at<double>(2,1), rot.at<double>(2,2));
+
+		double yaw, pitch, roll;
+		r_mat.getEulerYPR(yaw, pitch, roll, 1);
+		return cv::Vec3d(yaw, pitch, roll);
+
+		/*Eigen::Matrix3f rot_eigen;
 		for (int i=0; i<3; ++i)
 			for (int j=0; j<3; ++j)
 				rot_eigen(i,j) = rot.at<double>(i,j);
 		Eigen::Vector3f euler_angles = rot_eigen.eulerAngles(2,1,0);
-		return cv::Vec3d(euler_angles(0), euler_angles(1), euler_angles(2));
+		return cv::Vec3d(euler_angles(0), euler_angles(1), euler_angles(2));*/
 	}
 
 	cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
@@ -137,7 +146,7 @@ namespace transform_utilities
 		}
 	}*/
 
-	// computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
+	// computes the transform from source_frame to target_frame (i.e. transform arrow is pointing from source_frame to target_frame)
 	bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
 	{
 		try

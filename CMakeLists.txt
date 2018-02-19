@@ -19,7 +19,6 @@ endif()
 set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is system dependency --> sudo apt-get install)
 	cob_fiducials
 	cob_object_detection_msgs
-	control_msgs
 	cv_bridge
 	geometry_msgs
 	image_transport
@@ -28,7 +27,6 @@ set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is 
 	sensor_msgs
 	std_msgs
 	tf
-	trajectory_msgs
 )
 
 set(catkin_BUILD_PACKAGES 
@@ -46,7 +44,6 @@ find_package(catkin REQUIRED
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(OpenCV REQUIRED)	# name identical to FindOpenCV.cmake in cmake_modules
-find_package(PCL REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -63,7 +60,6 @@ CATKIN_DEPENDS
 DEPENDS
 	Boost
 	OpenCV
-	PCL
 )
 
 ###########
@@ -78,7 +74,6 @@ include_directories(
 	${catkin_INCLUDE_DIRS} 		# same name as find_package
 	${Boost_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
-	${PCL_INCLUDE_DIRS}
 )
 
 # calibration library
@@ -97,7 +92,6 @@ target_link_libraries(CalibrationTools
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
 	${OpenCV_LIBRARIES}
-	${PCL_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the library

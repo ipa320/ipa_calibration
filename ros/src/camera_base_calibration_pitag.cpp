@@ -51,13 +51,7 @@
 #include <robotino_calibration/camera_base_calibration_pitag.h>
 #include <robotino_calibration/transformation_utilities.h>
 
-#include <std_msgs/Float64.h>
-
-#include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
-
 #include <sstream>
-
 #include <cob_object_detection_msgs/DetectObjects.h>
 
 
@@ -71,9 +65,7 @@ CameraBaseCalibrationPiTag::CameraBaseCalibrationPiTag(ros::NodeHandle nh, Calib
 	node_handle_.param<std::string>("get_fiducials_topic", get_fiducials_topic_, "/fiducials/get_fiducials");
 	std::cout << "get_fiducials_topic: " << get_fiducials_topic_ << std::endl;
 
-
 	pitag_client_ = node_handle_.serviceClient<cob_object_detection_msgs::DetectObjects>(get_fiducials_topic_);
-
 	ROS_INFO("CameraBaseCalibrationPiTag initialized.");
 }
 

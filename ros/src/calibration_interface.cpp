@@ -48,8 +48,8 @@
  *
  ****************************************************************/
 
-/* This class represents the interface between your robot and the calibration code.
- * Adjust the interface functions so that the calibration code will work correctly with your robot environment.
+/* This class represents the static interface between your robot and the calibration code.
+ * Adjust the interface functions in a subclass so that the calibration code will work correctly with your robot environment.
 */
 
 #include <robotino_calibration/calibration_interface.h>

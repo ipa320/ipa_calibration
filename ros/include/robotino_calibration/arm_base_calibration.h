@@ -51,31 +51,18 @@
 #ifndef ARM_BASE_CALIBRATION_H_
 #define ARM_BASE_CALIBRATION_H_
 
-// ROS
-#include <ros/ros.h>
 
-#include <tf/transform_listener.h>
-#include <sensor_msgs/Image.h>
-//#include <sensor_msgs/JointState.h>
+#include <robotino_calibration/robot_calibration.h>
 
 // image transport
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 
-// PCL
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-
-// opencv
-#include <opencv2/opencv.hpp>
-#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
 
 // Boost
 #include <boost/thread/mutex.hpp>
-
-//#include <robotino_calibration/calibration_utilities.h>
-#include <robotino_calibration/robot_calibration.h>
 
 
 class ArmBaseCalibration : public RobotCalibration
@@ -85,9 +72,6 @@ public:
     ArmBaseCalibration(ros::NodeHandle nh, CalibrationInterface* interface);
     ~ArmBaseCalibration();
     bool calibrateArmToBase(const bool load_images);
-    /*bool saveCalibration();
-        bool loadCalibration();
-        void getCalibration(cv::Mat& T_base_to_armbase);*/
 
 
 protected:
@@ -114,11 +98,7 @@ protected:
     void displayAndSaveCalibrationResult();
 
     // TF frames
-    std::string armbase_frame_;
     std::string checkerboard_frame_;
-    std::string camera_optical_frame_;
-
-    cv::Mat T_base_to_armbase_;		// transformation to estimate from base to first link of arm
 
     image_transport::ImageTransport* it_;
     image_transport::SubscriberFilter color_image_sub_; // Color camera image input topic
@@ -136,7 +116,7 @@ protected:
     std::vector< std::vector<double> > arm_configurations_;  // wished arm configurations used for calibration
 
     cv::Mat K_;             // intrinsic matrix for camera
-    cv::Mat distortion_;	// distortion parameters for camera
+    cv::Mat distortion_;    // distortion parameters for camera
 };
 
 
