@@ -62,11 +62,11 @@
 #include <vector>
 
 #include <opencv2/opencv.hpp>
-//#include <opencv2/highgui/highgui.hpp>
 
 // ROS
 #include "ros/ros.h"
 #include "visualization_msgs/Marker.h"
+#include "geometry_msgs/Point.h"
 
 class VisualizationUtilities
 {

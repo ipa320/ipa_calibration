@@ -7,6 +7,7 @@ set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is 
 	roscpp
 	roslib
 	sensor_msgs
+	std_msgs
 	tf
 	visualization_msgs
 )

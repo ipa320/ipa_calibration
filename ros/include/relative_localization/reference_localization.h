@@ -67,7 +67,7 @@
 // messages
 #include <sensor_msgs/LaserScan.h>
 #include <visualization_msgs/Marker.h>
-#include <std_msgs/Bool.h>
+#include <std_msgs/Header.h>
 
 // tf
 #include <tf/tf.h>
@@ -80,7 +80,6 @@
 
 // OpenCV
 #include <opencv2/opencv.hpp>
-//#include <opencv2/highgui/highgui.hpp>
 
 
 class ReferenceLocalization
