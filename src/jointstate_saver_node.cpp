@@ -58,33 +58,33 @@
 #include <boost/filesystem.hpp>
 
 
-// Global variables
-std::vector<double> currentArmState;
-std::vector<double> currentCamState;
+// Global variables to store results of callbacks
+std::vector<double> current_arm_state;
+std::vector<double> current_cam_state;
 
 // Callbacks
 void armStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-	if ( currentArmState.size() != msg->position.size())
+	if ( current_arm_state.size() != msg->position.size())
 	{
-		currentArmState.clear();
-		currentArmState.resize(msg->position.size());
+		current_arm_state.clear();
+		current_arm_state.resize(msg->position.size());
 	}
 
-	for ( size_t i=0; i<currentArmState.size(); ++i )
-		currentArmState[i] = msg->position[i];
+	for ( size_t i=0; i<current_arm_state.size(); ++i )
+		current_arm_state[i] = msg->position[i];
 }
 
 void cameraStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-	if ( currentCamState.size() != msg->position.size())
+	if ( current_cam_state.size() != msg->position.size())
 	{
-		currentCamState.clear();
-		currentCamState.resize(msg->position.size());
+		current_cam_state.clear();
+		current_cam_state.resize(msg->position.size());
 	}
 
-	for ( size_t i=0; i<currentCamState.size(); ++i )
-		currentCamState[i] = msg->position[i];
+	for ( size_t i=0; i<current_cam_state.size(); ++i )
+		current_cam_state[i] = msg->position[i];
 }
 
 int main(int argc, char **argv)
@@ -94,32 +94,32 @@ int main(int argc, char **argv)
 	ros::NodeHandle n("~");
 
 	std::cout << "---------------- Joint Saver ----------------" << std::endl;
-	std::string storagePath = "";
-	n.param<std::string>("storage_path", storagePath, "jointstate_saver/output");
-	std::cout << "storage_path: " << storagePath << std::endl;
+	std::string storage_path = "";
+	n.param<std::string>("storage_path", storage_path, "jointstate_saver/output");
+	std::cout << "storage_path: " << storage_path << std::endl;
 
 	std::string file_name = "";
-	n.param<std::string>("file_name", file_name, "JointStates.txt");
+	n.param<std::string>("file_name", file_name, "RobotConfig.txt");
 	std::cout << "file_name: " << file_name << std::endl;
 
 	std::string jointstate_topic_arm = "";
-	n.param<std::string>("jointstate_topic_arm", jointstate_topic_arm, "/arm/joint_states");
+	n.param<std::string>("jointstate_topic_arm", jointstate_topic_arm, "");
 	std::cout << "jointstate_topic_arm: " << jointstate_topic_arm << std::endl;
 
 	std::string jointstate_topic_camera = "";
-	n.param<std::string>("jointstate_topic_camera", jointstate_topic_camera, "/torso/joint_states");
+	n.param<std::string>("jointstate_topic_camera", jointstate_topic_camera, "");
 	std::cout << "jointstate_topic_camera: " << jointstate_topic_camera << std::endl;
 	std::cout << "---------------------------------------------" << std::endl << std::endl;
 
 	ros::Subscriber arm_state = n.subscribe<sensor_msgs::JointState>(jointstate_topic_arm, 1, armStateCallback);
 	ros::Subscriber cam_state = n.subscribe<sensor_msgs::JointState>(jointstate_topic_camera, 1, cameraStateCallback);
 
-	std::string path_file = storagePath + "/" + file_name;
+	std::string path_file = storage_path + "/" + file_name;
 
-	boost::filesystem::path storage_path(storagePath);
-	if (boost::filesystem::exists(storage_path) == false)
+	boost::filesystem::path boost_storage_path(storage_path);
+	if (boost::filesystem::exists(boost_storage_path) == false)
 	{
-		if (boost::filesystem::create_directories(storage_path) == false && boost::filesystem::exists(storage_path) == false)
+		if (boost::filesystem::create_directories(boost_storage_path) == false && boost::filesystem::exists(boost_storage_path) == false)
 		{
 			std::cout << "Error: Could not create storage directory " << storage_path << std::endl;
 			return -1;
@@ -128,122 +128,107 @@ int main(int argc, char **argv)
 
 	while (ros::ok())
 	{
-		char c = '0';
+		char input = '0';
 
 		std::cout << "Press 'e' to exit, any other key will append the current states to the storage file." << std::endl;
-		std::cin >> c;
+		std::cin >> input;
 		std::cin.clear();
-		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard further inputs to guarantee a halt at next cin
 		std::cout << std::endl;
 
-		if ( c == 'e' ) // Exit program
+		if ( input == 'e' ) // Exit program
 			break;
 
 		ros::spinOnce(); // Get new data from callbacks
 
-		// Append current states to text file
-		std::fstream file_output;
-		std::string filecontent = "";
-		bool bWriteToFile = false;
-
-		// First, read current data from file
-		file_output.open(path_file.c_str(), std::ios::in );
-		if ( file_output.is_open() )
+		if ( current_arm_state.size() > 0 && current_cam_state.size() > 0 ) // Append current states to text file
 		{
-			while ( !file_output.eof() )
+			std::fstream file_output;
+			std::string filecontent = "";
+
+			// First, read current data from file
+			file_output.open(path_file.c_str(), std::ios::in );
+			if ( file_output.is_open() )
 			{
-				std::string line;
-				std::getline(file_output,line);
-				filecontent += line;
-				if ( !file_output.eof() )
-					filecontent += "\n";
+				while ( !file_output.eof() )
+				{
+					std::string line;
+					std::getline(file_output,line);
+					filecontent += line;
+					if ( !file_output.eof() ) // Restore newline characters which became lost by calling getline()
+						filecontent += "\n";
+				}
+
+				file_output.close(); // Data has been read, now close
+			}
+			else
+			{
+				std::cout << "Warning, couldn't open storage file for reading! If it had not existed before, it will be created now." << std::endl << std::endl;
 			}
 
-			file_output.close(); // Data has been read, now close
-		}
-		else
-		{
-			std::cout << "Warning, couldn't open storage file for reading! If it had not existed before, it will be created now." << std::endl << std::endl;
-		}
+			bool is_empty = filecontent.empty();
 
-		bool bIsEmpty = filecontent.empty();
+			if ( is_empty ) // Initialize file content
+				filecontent = "robot_configurations: []";
 
-		// Clear text file and write whole data to it
-		file_output.open(path_file.c_str(), std::ios::out | std::ios::trunc);
-		if ( !file_output.is_open() )
-		{
-			std::cout << "Error, cannot open storage file!" << std::endl;
-			if ( !bIsEmpty )
-			{
-				std::cout << "Printing all data to screen to prevent data loss:" << std::endl;
-				std::cout << filecontent << std::endl;
-			}
+			std::vector<double> robot_config;
+			robot_config.insert(robot_config.begin(), current_arm_state.begin(), current_arm_state.end()); // First add arm configs
+			robot_config.insert(robot_config.end(), current_cam_state.begin(), current_cam_state.end());   // Append camera configs to the end
 
-			continue;
-		}
+			// Write current robot config to stringstream
+			std::stringstream new_data("");
+			if ( !is_empty )
+				new_data << ",\n";
 
-		if ( bIsEmpty ) // Initialize file content
-			filecontent = "ArmJointStates: []\n\nCameraJointStates: []";
-
-		if ( currentArmState.size() > 0 )
-		{
-			std::stringstream newData("");
-			if ( !bIsEmpty )
-				newData << ",\n";
-
-			for ( size_t i=0; i<currentArmState.size(); ++i )
-				newData << currentArmState[i] << (i == currentArmState.size()-1 ? "]" : ", ");
+			for ( size_t i=0; i<robot_config.size(); ++i )
+				new_data << robot_config[i] << (i == robot_config.size()-1 ? "]" : ", ");
 
 			size_t idx = filecontent.find("]");
 
-			if ( idx != std::string::npos )
+			if ( idx != std::string::npos ) // ] has been found
 			{
-				filecontent.replace(idx,1,newData.str());
-				bWriteToFile = true;
+				filecontent.replace(idx,1,new_data.str()); // Update content
+
+				// Clear text file and write whole updated data to it afterwards
+				file_output.open(path_file.c_str(), std::ios::out | std::ios::trunc);
+				if ( !file_output.is_open() )
+				{
+					std::cout << "Error, cannot open storage file " << file_name << "!" << std::endl;
+					if ( !is_empty )
+					{
+						std::cout << "Printing all data to screen to prevent data loss:" << std::endl;
+						std::cout << filecontent << std::endl;
+					}
+
+					continue;
+				}
+
+				// Write to file
+				file_output << filecontent;
+				file_output.close();
+
+				// Print to screen
+				std::cout << "robot_config: [";
+					for (size_t i=0; i<robot_config.size(); ++i)
+						std::cout << robot_config[i] << (i==robot_config.size()-1 ? "]\n" : ", ");
+				std::cout << "arm: [";
+				for (size_t i=0; i<current_arm_state.size(); ++i)
+					std::cout << current_arm_state[i] << (i==current_arm_state.size()-1 ? "]\n" : ", ");
+				std::cout << "camera: [";
+					for (size_t i=0; i<current_cam_state.size(); ++i)
+						std::cout << current_cam_state[i] << (i==current_cam_state.size()-1 ? "]\n" : ", ");
+				std::cout << std::endl;
 			}
 			else
 			{
-				std::cout << "Output file is corrupted, please delete it!" << std::endl;
-				file_output.close();
+				std::cout << "Output file " << file_name << " is corrupted, please delete it!" << std::endl;
 				return -1;
 			}
 		}
-		if ( currentCamState.size() > 0 )
+		else
 		{
-			std::stringstream newData("");
-			if ( !bIsEmpty )
-				newData << ",\n";
-
-			for ( size_t i=0; i<currentCamState.size(); ++i )
-				newData << currentCamState[i] << (i == currentCamState.size()-1 ? "]" : ", ");
-
-			size_t idx = filecontent.rfind("]");
-
-			if ( idx != std::string::npos )
-			{
-				filecontent.replace(idx,1,newData.str());
-				bWriteToFile = true;
-			}
-			else
-			{
-				std::cout << "Output file is corrupted, please delete it!" << std::endl;
-				file_output.close();
-				return -1;
-			}
+			std::cout << "Error, either camera or arm state vector is empty!" << std::endl;
 		}
-
-		if ( bWriteToFile )
-			file_output << filecontent;
-
-		file_output.close();
-
-		std::cout << "arm: [";
-		for (size_t i=0; i<currentArmState.size(); ++i)
-			std::cout << currentArmState[i] << (i==currentArmState.size()-1 ? "]\n" : ", ");
-		std::cout << "camera: [";
-			for (size_t i=0; i<currentCamState.size(); ++i)
-				std::cout << currentCamState[i] << (i==currentCamState.size()-1 ? "]\n" : ", ");
-		std::cout << std::endl;
 	}
 
 	return 0;
