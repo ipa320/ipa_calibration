@@ -14,9 +14,9 @@ use_range: true
 # each parameter is set as [min_value, step, max_value]
 # double
 x_range: [-1.25, 0.25, -0.75]       # in [m]
-y_range: [-1.0, 0.2, -0.6]          # in [m], fixed y-coordinate
+y_range: [-1.0, 0.4, -0.6]          # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]          # in [rad], fixed phi-angle
-camera_ranges: [-1.2, 0.2, 0.4,
+camera_ranges: [-1.2, 0.4, 0.4,
                 -0.8, 0.2, 0.2]     # first pan then tilt in [rad]
 
 # list of robot configurations for observing the pitags measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker

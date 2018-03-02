@@ -126,7 +126,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 		if ( temp.size() % 3 != 0 || temp.size() != 3*camera_dof_ )
 		{
 			ROS_ERROR("The camera range vector has the wrong size, each DOF needs three entries (start,step,stop)");
-			std::cout << "size: " << temp.size() << " " << camera_dof_ << std::endl;
+			std::cout << "size: " << temp.size() << ", needed: " << (3*camera_dof_) << std::endl;
 			return;
 		}
 
@@ -134,9 +134,9 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 		for ( int i=0; i<camera_dof_; i++ )
 		{
 			std::vector<double> range;
-			for ( int j=0; i<3; j++ )
+			for ( int j=0; j<3; j++ )
 			{
-				range.push_back(temp[camera_dof_*i + j]);
+				range.push_back(temp[3*i + j]);
 			}
 			cam_ranges.push_back(range);
 		}
@@ -147,6 +147,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 			y_range[1] = 1.0;
 		if (phi_range[0] == phi_range[2] || phi_range[1] == 0.)
 			phi_range[1] = 1.0;
+
 		for ( int i=0; i<camera_dof_; ++i )
 		{
 			if ( cam_ranges[i][0] == cam_ranges[i][2] || cam_ranges[i][1] == 0. )
@@ -182,7 +183,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 		}
 
 		// Preallocate memory for base and camera configurations
-		// Compute numbre of configs
+		// Compute number of configs
 		int num_configs = 1;
 		const int num_params = param_vector.size();
 		for ( int i=0; i<num_params; ++i )
@@ -213,18 +214,18 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 		//  f        e        a
 		//  f        e        b
 		//  f        e        c
-		int repitition_pattern = 0; // Describes how often a value needs to be repeated, look at example param_2, d and e are there three times
+		int repetition_pattern = 0; // Describes how often a value needs to be repeated, look at example param_2, d and e are there three times
 		for ( int i=num_params-1; i>=0; --i ) // Fill robot_configurations_ starting from last parameter in param_vector
 		{
 			int counter = 0;
 			for ( int j=0; j<num_configs; ++j )
 			{
-				if ( repitition_pattern == 0 ) // executed initially
-					counter = j % param_vector[i].size();
-				else if ( j % repitition_pattern == 0 )
+				if ( repetition_pattern == 0 ) // executed initially
+					counter = j % param_vector[i].size(); // repeat parameters over and over again
+				else if ( j > 0 && (j % repetition_pattern == 0) )
 					counter = (counter+1) % param_vector[i].size();
 
-				// robot_configurations_[j][i] = param_vector[i][counter];
+				// robot_configurations_[j][i] = param_vector[i][counter]; -> is now split into two lists
 				if ( i < base_dof )
 					//base_configurations_[j][i] = param_vector[i][counter]; // base_configurations_ is no vector anymore for better readability
 					base_configurations_[j].assign(i, param_vector[i][counter]);
@@ -232,10 +233,10 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 					camera_configurations_[j][i-base_dof] = param_vector[i][counter];
 			}
 
-			if ( repitition_pattern == 0 )
-				repitition_pattern = param_vector[i].size();
+			if ( repetition_pattern == 0 )
+				repetition_pattern = param_vector[i].size();
 			else
-				repitition_pattern *= param_vector[i].size();
+				repetition_pattern *= param_vector[i].size();
 		}
 
 		std::cout << "Generated " << (int)camera_configurations_.size() << " robot configurations for calibration." << std::endl;
@@ -276,13 +277,13 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 
 	// Display configurations
 	std::cout << "base configurations:" << std::endl;
-	for ( int i=0; i<base_dof; ++i )
+	for ( int i=0; i<base_configurations_.size(); ++i )
 		std::cout << base_configurations_[i].get() << std::endl;
-	std::cout << "camera configurations:" << std::endl;
-	for ( int i=0; i<camera_dof_; ++i )
+	std::cout << std::endl << "camera configurations:" << std::endl;
+	for ( int i=0; i<camera_configurations_.size(); ++i )
 	{
 		for ( int j=0; j<camera_configurations_[i].size(); ++j )
-			std::cout << camera_configurations_[i][j] << "/t";
+			std::cout << camera_configurations_[i][j] << "\t";
 		std::cout << std::endl;
 	}
 

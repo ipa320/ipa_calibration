@@ -86,7 +86,7 @@ namespace calibration_utilities
 	std::string BaseConfiguration::get()
 	{
 		std::stringstream result;
-		result << pose_x_ << "/t" << pose_y_ << "/t" << pose_phi_;
+		result << pose_x_ << "\t" << pose_y_ << "\t" << pose_phi_;
 		return result.str();
 	}
 

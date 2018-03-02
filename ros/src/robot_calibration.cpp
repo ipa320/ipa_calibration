@@ -71,6 +71,19 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 {
 	// load parameters
 	std::cout << "\n========== RobotCalibration Parameters ==========\n";
+
+	// hack to fix tf::waitForTransform throwing error that transforms do not exist
+	ROS_INFO("Waiting for TF listener to initialize...");
+	Timer timeout;
+	while ( timeout.getElapsedTimeInSec() < 10.f )
+	{
+		if ( ros::Time::now().isValid() )
+			break;
+
+		ros::Duration(0.2f).sleep();
+	}
+	ROS_INFO("End waiting for TF to initialize.");
+
 	node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "");
 	std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
 	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/calibration");
