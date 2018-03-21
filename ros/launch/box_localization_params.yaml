@@ -39,7 +39,7 @@ front_wall_polygon: [0.3, 0.75,
                      0.3, -0.75,
                      0.3, 0.75]
 
-# Polygon points that defaine the area which is used to find the box inside.
+# Polygon points that define the area which is used to find the box inside.
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points.
 # vector<Point2f>
 box_search_polygon: [0.3, 0.5,
