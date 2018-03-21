@@ -72,7 +72,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 	// load parameters
 	std::cout << "\n========== RobotCalibration Parameters ==========\n";
 
-	// hack to fix tf::waitForTransform throwing error that transforms do not exist
+	// hack to fix tf::waitForTransform throwing error that transforms do not exist when now() == 0 at startup
 	ROS_INFO("Waiting for TF listener to initialize...");
 	Timer timeout;
 	while ( timeout.getElapsedTimeInSec() < 10.f )

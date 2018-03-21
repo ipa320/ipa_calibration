@@ -56,8 +56,8 @@
 #include <geometry_msgs/Twist.h>
 
 
-// ToDo: Remove static camera angle link count of 2
-// ToDo: Pan_Range and Tilt_Range needs to be stored in one 3*X vector (X number of camera links and 3: min, step, end)
+// ToDo: Remove static camera angle link count of 2 [Done]
+// ToDo: Pan_Range and Tilt_Range needs to be stored in one 3*X vector (X number of camera links and 3: min, step, end) [Done]
 // ToDo: displayAndSaveCalibrationResult, alter behaviour so that it prints custom strings instead of hardcoded ones. [Done]
 // ToDo: Stop robot immediately if reference frame gets lost or jumps around!!!! [Done]
 // ToDo: Make that pitag/checkerboard/arm calibration calibration results will be stored to different subfolders [Done, as already possible]
@@ -65,9 +65,9 @@
 // ToDo: Port over more flexible calibration code to checkerboard calibration as well. [Done]
 // ToDo: Remove unused attributes [Done]
 // ToDo: Move optimization_iterations to robot_calibration mother class and set its value to one if there is only one transform to be calibrated [Done]
-// ToDo: Add timer in moverobot/movearm and check if robots setup has changed since last time (maybe 1 sec), if not give a warning.
+// ToDo: Add timer in moverobot/movearm and check if robots setup has changed since last time (maybe 1 sec), if not give a warning. [Discarded]
 // ToDo: Cleanup yaml files [Done]
-// ToDo: Port flexible calibration code over to arm calibration as well.
+// ToDo: Port flexible calibration code over to arm calibration as well. [Done]
 // ToDo: TF seems to use RPY convention instead of YPR. transform_utilities::rotationMatrixFromYPR is therefore wrong.
 // ToDo: Split up yaml files into a calibrtion yaml and an inferface yaml [Done]
 // ToDo: make moveCamera a method in base class as all calibration techniques need it [Done]

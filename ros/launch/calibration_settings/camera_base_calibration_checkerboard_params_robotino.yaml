@@ -5,6 +5,9 @@ chessboard_cell_size: 0.018
 # number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
 chessboard_pattern_size: [9,6]
 
+# Degrees of freedom of camera
+# int
+camera_dof: 2
 
 ### Observation positions for capturing calibration images of the marker
 # if this flag is true, then the robot configurations will be sampled on a equally spaced grid from the given ranges, if false, the user-provided configurations in robot_configurations will be used
@@ -23,7 +26,7 @@ camera_ranges: [-0.52, 0.02, 0.52,
 
 ### checkerboard observation positions for capturing calibration images
 # list of robot configurations for observing the checkerboard measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker (e.g. checkerboard)
-# includes 5 parameters per entry: robot pose: x, y, phi and torso: pan, tilt
+# includes 5 parameters per entry: robot pose: x, y, phi and camera angles at the end
 robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
                        -1.5, -0.17, 0, 0.0, 0.3,
                        -1.5, -0.17, 0, -0.15, 0.3,
@@ -59,7 +62,6 @@ robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
                        -0.85, -0.17, 0, 0.15, -0.1]
 
 
-### Robot link and topic names
 # the robot base frame, needed for security measure (it's the reference frame to check the child_frame against before moving the robot)
 base_frame: "base_linkz"
 
