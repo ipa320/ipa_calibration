@@ -10,6 +10,7 @@
 
 	<node ns="camera_base_calibration_pitag" name="camera_base_calibration" pkg="calibration_interface" type="camera_base_calibration" output="screen">
 		<rosparam command="load" file="$(find robotino_calibration)/ros/launch/calibration_settings/camera_base_calibration_pitag_params_$(arg robot).yaml"/>
+		<rosparam command="load" file="$(find calibration_interface)/ros/launch/robots_params/$(arg robot)_params.yaml"/>
 		<param name="marker_type" value="pitag"/>
 	</node>
 </launch>

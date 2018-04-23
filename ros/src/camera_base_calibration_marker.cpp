@@ -97,7 +97,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 	// coordinate frame name parameters
 	node_handle_.param<std::string>("base_frame", base_frame_, "");
 	std::cout << "base_frame: " << base_frame_ << std::endl;
-	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "/landmark_reference_nav");
+	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "");
 	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
 
 	bool use_range = false;
