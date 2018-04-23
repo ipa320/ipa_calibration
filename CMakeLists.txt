@@ -52,7 +52,6 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
 INCLUDE_DIRS
-	common/include
 	ros/include
 LIBRARIES
 CATKIN_DEPENDS
