@@ -69,9 +69,9 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	std::cout << "update_rate: " << update_rate_ << std::endl;
 	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "");
 	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
-	node_handle_.param<std::string>("laser_scanner_topic_in", laser_scanner_topic_in_, "/scan");
+	node_handle_.param<std::string>("laser_scanner_topic_in", laser_scanner_topic_in_, "");
 	std::cout << "laser_scanner_topic_in: " << laser_scanner_topic_in_ << std::endl;
-	node_handle_.param<std::string>("base_frame", base_frame_, "base_link");
+	node_handle_.param<std::string>("base_frame", base_frame_, "");
 	std::cout << "base_frame: " << base_frame_ << std::endl;
 	node_handle_.param("base_height", base_height_, 0.0);
 	std::cout << "base_height: " << base_height_ << std::endl;
