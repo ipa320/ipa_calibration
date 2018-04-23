@@ -6,25 +6,13 @@ update_rate: 0.75
 # string
 child_frame_name: "/landmark_reference_nav"
 
-# the (minimum) length of the frontal wall segment left of the laser scanner's origin (assuming the robot faces the wall), in [m]
-# double, deprecated
-# wall_length_left: 0.8
-
-# the (minimum) length of the frontal wall segment right of the laser scanner's origin (assuming the robot faces the wall), in [m]
-# double, deprecated
-# wall_length_right: 0.8
-
-# the maximum +/-y coordinate in laser scan to search for the localization box, in[m]
-# double, deprecated
-# box_search_width: 0.6
-
 # height above ground of base frame
 # double
 base_height: 0.0
 
 # base link of robot
 # string
-base_frame: "base_link"
+base_frame: "base_linkz"
 
 # laser scanner topic
 # string
