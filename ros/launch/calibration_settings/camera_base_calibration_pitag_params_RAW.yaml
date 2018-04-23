@@ -7,6 +7,10 @@ use_range: true
 # int
 camera_dof: 2
 
+# max distance (radius) the referenece frame is allowed to be away in terms of the robot's base.
+# double
+max_ref_frame_distance: 2.5
+
 # ranges for the degrees of freedom of the robot
 # each parameter is set as [min_value, step, max_value]
 # double

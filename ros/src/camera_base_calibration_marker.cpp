@@ -73,7 +73,7 @@
 // ToDo: make moveCamera a method in base class as all calibration techniques need it [Done]
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, CalibrationInterface* interface) :
-	RobotCalibration(nh, interface), RefHistoryIndex_(0)
+	RobotCalibration(nh, interface), ref_history_index_(0)
 {
 	// Debug how RVIZ rotations are defined
 	/*cv::Mat T;
@@ -99,6 +99,9 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 	std::cout << "base_frame: " << base_frame_ << std::endl;
 	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "");
 	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
+
+	node_handle_.param("max_ref_frame_distance", max_ref_frame_distance_, 1.0);
+	std::cout << "max_ref_frame_distance: " << max_ref_frame_distance_ << std::endl;
 
 	bool use_range = false;
 	node_handle_.param("use_range", use_range, false);
@@ -304,7 +307,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 
 				for ( int i=0; i<REF_FRAME_HISTORY_SIZE; ++i ) // Initialize history array
 				{
-					RefFrameHistory_[i] = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3); // Squared norm is suffice here, no need to take root.
+					ref_frame_history_[i] = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3); // Squared norm is suffice here, no need to take root.
 				}
 				break;
 			}
@@ -335,16 +338,27 @@ CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T) // Safety measure, to avoid undetermined motion
 {
 	if (!transform_utilities::getTransform(transform_listener_, base_frame_, child_frame_name_, T))
+	{
+		ROS_WARN("Can't retrieve transform between base of robot and reference frame.");
 		return false;
+	}
 
 	double currentSqNorm = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3);
 
+	// Avoid robot movement if reference frame is too far away
+	if ( max_ref_frame_distance_ > 0.0 && currentSqNorm > max_ref_frame_distance_*max_ref_frame_distance_ )
+	{
+		 ROS_WARN("Reference frame is too far away from current position of the robot.");
+		 return false;
+	}
+
+	// Avoid robot movement if reference frame is jumping around
 	double average = 0.0;
 	for ( int i=0; i<REF_FRAME_HISTORY_SIZE; ++i )
-		average += RefFrameHistory_[i];
+		average += ref_frame_history_[i];
 	average /= REF_FRAME_HISTORY_SIZE;
 
-	RefFrameHistory_[ RefHistoryIndex_ < REF_FRAME_HISTORY_SIZE-1 ? RefHistoryIndex_++ : (RefHistoryIndex_ = 0) ] = currentSqNorm; // Update with new measurement
+	ref_frame_history_[ ref_history_index_ < REF_FRAME_HISTORY_SIZE-1 ? ref_history_index_++ : (ref_history_index_ = 0) ] = currentSqNorm; // Update with new measurement
 
 	if ( average == 0.0 || abs(1.0 - (currentSqNorm/average)) > 0.15  ) // Up to 15% deviation to average is allowed.
 	{
@@ -371,6 +385,8 @@ void CameraBaseCalibrationMarker::moveRobot(int config_index)
 			}
 			else
 				ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Skipping base configuration %d.", config_index);
+
+			ros::spinOnce();
 		}
 		else
 			break;
@@ -390,7 +406,10 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 	cv::Mat T;
 
 	if (!isReferenceFrameValid(T))
+	{
+		turnOffBaseMotion();
 		return false;
+	}
 
 	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
 	double robot_yaw = ypr.val[0];

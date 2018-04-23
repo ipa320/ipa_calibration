@@ -9,6 +9,10 @@ chessboard_pattern_size: [9,6]
 # int
 camera_dof: 2
 
+# max distance (radius) the referenece frame is allowed to be away in terms of the robot's base.
+# double
+max_ref_frame_distance: 2.5
+
 ### Observation positions for capturing calibration images of the marker
 # if this flag is true, then the robot configurations will be sampled on a equally spaced grid from the given ranges, if false, the user-provided configurations in robot_configurations will be used
 # bool

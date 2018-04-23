@@ -84,8 +84,9 @@ protected:
     std::string child_frame_name_;  // name of reference frame, needed for security measure
 
     //std::vector<calibration_utilities::RobotConfiguration> robot_configurations_;  // wished robot configurations used for calibration
-    double RefFrameHistory_[REF_FRAME_HISTORY_SIZE]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <REF_FRAME_HISTORY_SIZE> measurements.
-    int RefHistoryIndex_; // Current index of history building
+    double ref_frame_history_[REF_FRAME_HISTORY_SIZE]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <REF_FRAME_HISTORY_SIZE> measurements.
+    int ref_history_index_; // Current index of history building
+    double max_ref_frame_distance_;
 
     std::vector<calibration_utilities::BaseConfiguration> base_configurations_;  // wished base configurations used for calibration
 };
