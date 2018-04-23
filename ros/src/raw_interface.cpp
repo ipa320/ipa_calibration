@@ -62,11 +62,11 @@ RAWInterface::RAWInterface(ros::NodeHandle nh, bool do_arm_calibration) :
 	std::cout << "\n========== RAWInterface Parameters ==========\n";
 
 	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
-	node_handle_.param<std::string>("camera_joint_controller_command", camera_joint_controller_command_, "/torso/joint_trajectory_controller/command");
+	node_handle_.param<std::string>("camera_joint_controller_command", camera_joint_controller_command_, "");
 	std::cout << "camera_joint_controller_command: " << camera_joint_controller_command_ << std::endl;
 	camera_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray/*trajectory_msgs::JointTrajectory*/>(camera_joint_controller_command_, 1, false);
 
-	node_handle_.param<std::string>("camera_joint_state_topic", camera_joint_state_topic_, "/torso/joint_states");
+	node_handle_.param<std::string>("camera_joint_state_topic", camera_joint_state_topic_, "");
 	std::cout << "camera_joint_state_topic: " << camera_joint_state_topic_ << std::endl;
 	camera_state_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &RAWInterface::cameraStateCallback, this);
 
@@ -74,17 +74,17 @@ RAWInterface::RAWInterface(ros::NodeHandle nh, bool do_arm_calibration) :
 
 	if (do_arm_calibration)
 	{
-		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "/arm/joint_trajectory_controller/command");
+		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
 		std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
 		arm_joint_controller_ = node_handle_.advertise<trajectory_msgs::JointTrajectory>(arm_joint_controller_command_, 1, false);
 
-		node_handle_.param<std::string>("arm_state_topic", arm_state_topic_, "/arm/joint_states");
+		node_handle_.param<std::string>("arm_state_topic", arm_state_topic_, "");
 		std::cout << "arm_state_topic: " << arm_state_topic_ << std::endl;
 		arm_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_state_topic_, 0, &RAWInterface::armStateCallback, this);
 	}
 	else
 	{
-		node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "/cmd_vel");
+		node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "");
 		std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
 		base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
 	}
