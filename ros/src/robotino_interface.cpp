@@ -66,9 +66,9 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool do_arm_calibration
 
 	node_handle_.param<std::string>("/camera_base_calibration_pitag/camera_base_calibration/camera_joint_state_topic", camera_joint_state_topic_, "");
 	std::cout << "camera_joint_state_topic: " << camera_joint_state_topic_ << std::endl;
-	node_handle_.param<std::string>("pan_joint_name", pan_joint_name_, "");
+	node_handle_.param<std::string>("/camera_base_calibration_pitag/camera_base_calibration/pan_joint_name", pan_joint_name_, "");
 	std::cout << "pan_joint_name: " << pan_joint_name_ << std::endl;
-	node_handle_.param<std::string>("tilt_joint_name", tilt_joint_name_, "");
+	node_handle_.param<std::string>("/camera_base_calibration_pitag/camera_base_calibration/tilt_joint_name", tilt_joint_name_, "");
 	std::cout << "tilt_joint_name: " << tilt_joint_name_ << std::endl;
 
 	camera_joint_state_sub_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &RobotinoInterface::cameraJointStateCallback, this);
