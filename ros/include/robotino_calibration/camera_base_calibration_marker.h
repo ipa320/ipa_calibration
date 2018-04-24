@@ -55,7 +55,7 @@
 #include <robotino_calibration/calibration_utilities.h>
 #include <robotino_calibration/robot_calibration.h>
 
-#define REF_FRAME_HISTORY_SIZE 10 // 10 entries used to build the moving average upon
+#define REF_FRAME_HISTORY_SIZE 15 // 15 entries used to build the moving average upon
 
 
 class CameraBaseCalibrationMarker : public RobotCalibration
@@ -89,6 +89,11 @@ protected:
     double max_ref_frame_distance_;
 
     std::vector<calibration_utilities::BaseConfiguration> base_configurations_;  // wished base configurations used for calibration
+
+
+private:
+
+    double last_ref_history_update_;  // used to update the ref_frame_history_ array cyclically and not upon every call of isReferenceFrameValid()
 };
 
 

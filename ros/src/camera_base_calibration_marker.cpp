@@ -73,7 +73,7 @@
 // ToDo: make moveCamera a method in base class as all calibration techniques need it [Done]
 
 CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, CalibrationInterface* interface) :
-	RobotCalibration(nh, interface), ref_history_index_(0)
+	RobotCalibration(nh, interface), ref_history_index_(0), last_ref_history_update_(0.0)
 {
 	// Debug how RVIZ rotations are defined
 	/*cv::Mat T;
@@ -358,7 +358,12 @@ bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T) // Safety me
 		average += ref_frame_history_[i];
 	average /= REF_FRAME_HISTORY_SIZE;
 
-	ref_frame_history_[ ref_history_index_ < REF_FRAME_HISTORY_SIZE-1 ? ref_history_index_++ : (ref_history_index_ = 0) ] = currentSqNorm; // Update with new measurement
+	double current_time = ros::Time::now().toSec();
+	if ( last_ref_history_update_ - current_time >= 0.5f )  // every sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
+	{
+		last_ref_history_update_ = current_time;
+		ref_frame_history_[ ref_history_index_ < REF_FRAME_HISTORY_SIZE-1 ? ref_history_index_++ : (ref_history_index_ = 0) ] = currentSqNorm; // Update with new measurement
+	}
 
 	if ( average == 0.0 || abs(1.0 - (currentSqNorm/average)) > 0.15  ) // Up to 15% deviation to average is allowed.
 	{
@@ -443,7 +448,7 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 				error_phi -= CV_PI;
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
-			tw.angular.z = std::min(0.05, k_phi*error_phi);
+			tw.angular.z = std::max(-0.05, std::min(0.05, k_phi*error_phi));
 			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
 		}
@@ -465,8 +470,8 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 			if ((fabs(error_x) < 0.01 && fabs(error_y) < 0.01) || !ros::ok())
 				break;
 
-			tw.linear.x = std::min(0.05, k_base*error_x);
-			tw.linear.y = std::min(0.05, k_base*error_y);
+			tw.linear.x = std::max(-0.05, std::min(0.05, k_base*error_x));
+			tw.linear.y = std::max(-0.05, std::min(0.05, k_base*error_y));
 			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
 		}
@@ -492,7 +497,7 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 				error_phi -= CV_PI;
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
-			tw.angular.z = std::min(0.05, k_phi*error_phi);
+			tw.angular.z = std::max(-0.05, std::min(0.05, k_phi*error_phi));
 			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
 		}
