@@ -57,14 +57,14 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool do_arm_calibration
 	std::cout << "\n========== RobotinoInterface Parameters ==========\n";
 
 	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
-	node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "");
+	node_handle_.param<std::string>("/camera_base_calibration_pitag/camera_base_calibration/pan_controller_command", pan_controller_command_, "");
 	std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
-	node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "");
+	node_handle_.param<std::string>("/camera_base_calibration_pitag/camera_base_calibration/tilt_controller_command", tilt_controller_command_, "");
 	std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
 	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
 
-	node_handle_.param<std::string>("camera_joint_state_topic", camera_joint_state_topic_, "");
+	node_handle_.param<std::string>("/camera_base_calibration_pitag/camera_base_calibration/camera_joint_state_topic", camera_joint_state_topic_, "");
 	std::cout << "camera_joint_state_topic: " << camera_joint_state_topic_ << std::endl;
 	node_handle_.param<std::string>("pan_joint_name", pan_joint_name_, "");
 	std::cout << "pan_joint_name: " << pan_joint_name_ << std::endl;
@@ -75,17 +75,17 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool do_arm_calibration
 
 	if (do_arm_calibration)
 	{
-		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
+		node_handle_.param<std::string>("/camera_base_calibration_pitag/camera_base_calibration/arm_joint_controller_command", arm_joint_controller_command_, "");
 		std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
 		arm_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_joint_controller_command_, 1, false);
 
-		node_handle_.param<std::string>("arm_state_topic", arm_state_topic_, "");
+		node_handle_.param<std::string>("/camera_base_calibration_pitag/camera_base_calibration/arm_state_topic", arm_state_topic_, "");
 		std::cout << "arm_state_topic: " << arm_state_topic_ << std::endl;
 		arm_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_state_topic_, 0, &RobotinoInterface::armStateCallback, this);
 	}
 	else
 	{
-		node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "");
+		node_handle_.param<std::string>("/camera_base_calibration_pitag/camera_base_calibration/base_controller_topic_name", base_controller_topic_name_, "");
 		std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
 		base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
 	}
