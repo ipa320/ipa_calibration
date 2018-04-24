@@ -304,11 +304,10 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 			{
 				cv::Mat T;
 				transform_utilities::getTransform(transform_listener_, base_frame_, child_frame_name_, T);
-
+				double start_dist = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3); // Squared norm is suffice here, no need to take root.
 				for ( int i=0; i<REF_FRAME_HISTORY_SIZE; ++i ) // Initialize history array
-				{
-					ref_frame_history_[i] = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3); // Squared norm is suffice here, no need to take root.
-				}
+					ref_frame_history_[i] = start_dist; 
+
 				break;
 			}
 		}
@@ -337,7 +336,7 @@ CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 
 bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T) // Safety measure, to avoid undetermined motion
 {
-	if (!transform_utilities::getTransform(transform_listener_, base_frame_, child_frame_name_, T))
+	if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
 	{
 		ROS_WARN("Can't retrieve transform between base of robot and reference frame.");
 		return false;
@@ -359,7 +358,7 @@ bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T) // Safety me
 	average /= REF_FRAME_HISTORY_SIZE;
 
 	double current_time = ros::Time::now().toSec();
-	if ( last_ref_history_update_ - current_time >= 0.5f )  // every sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
+	if ( last_ref_history_update_ - current_time >= 0.1f )  // every 0.1 sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
 	{
 		last_ref_history_update_ = current_time;
 		ref_frame_history_[ ref_history_index_ < REF_FRAME_HISTORY_SIZE-1 ? ref_history_index_++ : (ref_history_index_ = 0) ] = currentSqNorm; // Update with new measurement
@@ -403,10 +402,9 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 	const double k_base = 0.25;
 	const double k_phi = 0.25;
 
-	// do not move if close to goal
-	double error_phi = 10;
-	double error_x = 10;
-	double error_y = 10;
+	double error_phi = 0;
+	double error_x = 0;
+	double error_y = 0;
 
 	cv::Mat T;
 
@@ -427,6 +425,7 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 	error_x = base_configuration.pose_x_ - T.at<double>(0,3);
 	error_y = base_configuration.pose_y_ - T.at<double>(1,3);
 
+	// do not move if close to goal
 	if (fabs(error_phi) > 0.03 || fabs(error_x) > 0.02 || fabs(error_y) > 0.02)
 	{
 		// control robot angle
@@ -442,10 +441,12 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 			double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
 			error_phi = base_configuration.pose_phi_ - robot_yaw;
+
 			while (error_phi < -CV_PI*0.5)
 				error_phi += CV_PI;
 			while (error_phi > CV_PI*0.5)
 				error_phi -= CV_PI;
+
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
 			tw.angular.z = std::max(-0.05, std::min(0.05, k_phi*error_phi));

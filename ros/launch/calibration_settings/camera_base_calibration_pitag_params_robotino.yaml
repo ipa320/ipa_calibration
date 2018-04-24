@@ -102,4 +102,4 @@ calibration_storage_path: "robotino_calibration/camera_pitag_calibration"
 
 # fiducials topic
 # string
-get_fiducials: "/fiducials/get_fiducials"
+get_fiducials_topic: "/fiducials/get_fiducials"

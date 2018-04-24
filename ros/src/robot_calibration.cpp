@@ -289,7 +289,9 @@ bool RobotCalibration::calculateTransformationChains(cv::Mat& T_gapfirst_to_mark
 
 void RobotCalibration::moveRobot(int config_index)
 {
-	for ( short i=0; i<NUM_MOVE_TRIES; ++i )
+	moveCamera(camera_configurations_[config_index]);
+	// Does not make too much sense here for now, as it only returns false in case of an dimension error
+	/*for ( short i=0; i<NUM_MOVE_TRIES; ++i )
 	{
 		if ( !moveCamera(camera_configurations_[config_index]) )
 		{
@@ -306,7 +308,7 @@ void RobotCalibration::moveRobot(int config_index)
 		}
 		else
 			break;
-	}
+	}*/
 }
 
 bool RobotCalibration::moveCamera(const std::vector<double> &cam_configuration)

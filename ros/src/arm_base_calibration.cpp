@@ -238,8 +238,9 @@ void ArmBaseCalibration::intrinsicCalibration(const std::vector< std::vector<cv:
 void ArmBaseCalibration::moveRobot(int config_index)
 {
 	RobotCalibration::moveRobot(config_index); // Call parent
-
-	for ( short i=0; i<NUM_MOVE_TRIES; ++i )
+	moveArm(arm_configurations_[config_index]);
+	// Does not make too much sense here for now, as it only returns false in case of an dimension error
+	/*for ( short i=0; i<NUM_MOVE_TRIES; ++i )
 	{
 		if ( !moveArm(arm_configurations_[config_index]) )
 		{
@@ -256,7 +257,7 @@ void ArmBaseCalibration::moveRobot(int config_index)
 		}
 		else
 			break;
-	}
+	}*/
 }
 
 bool ArmBaseCalibration::moveArm(const std::vector<double>& arm_configuration)

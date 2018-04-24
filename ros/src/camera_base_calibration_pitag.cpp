@@ -117,8 +117,7 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, st
 
 			std::cout << "Configuration " << (image_counter+1) << "/" << number_images_to_capture << std::endl;
 
-			moveCamera(camera_configurations_[image_counter]);
-			moveBase(base_configurations_[image_counter]);
+			moveRobot(image_counter);
 
 			// wait a moment here to mitigate shaking camera effects.
 			ros::Duration(3).sleep();
