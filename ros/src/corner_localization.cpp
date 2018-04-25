@@ -166,6 +166,16 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 		if (scan_side.size() < 2)
 		{
 			ROS_WARN("CornerLocalization::callback: no points left for estimating side wall.");
+
+			// experimental code to deactivate child frame when it cannot be detected reliably anymore -> move it 10 m under robot
+			/*tf::Vector3 translation(0, 0, -10);
+			tf::Quaternion orientation(tf::Vector3(0,0,1), 0);
+			tf::StampedTransform transform_table_reference;
+			transform_table_reference.setOrigin(translation);
+			transform_table_reference.setRotation(orientation);
+			tf::StampedTransform tf_msg(transform_table_reference, laser_scan_msg->header.stamp, base_frame_, child_frame_name_);
+			transform_broadcaster_.sendTransform(tf_msg);*/
+
 			return;
 		}
 
