@@ -74,6 +74,8 @@ protected:
     // moves the robot to a desired location and adjusts the torso joints
     void moveRobot(int config_index); // derived from parent
     bool moveBase(const calibration_utilities::BaseConfiguration &base_configuration);
+    bool divergenceDetectedRotation(double error_phi, bool start_value);
+    bool divergenceDetectedLocation(double error_x, double error_y, bool start_value);
 
     // Turn off base movement
     void turnOffBaseMotion();
@@ -82,6 +84,11 @@ protected:
 
     std::string base_frame_;        // Name of base frame, needed for security measure
     std::string child_frame_name_;  // name of reference frame, needed for security measure
+
+    bool start_value_set_;
+    double start_error_phi_;	// Used for divergence detection
+    double start_error_x_;	// Used for divergence detection
+    double start_error_y_;
 
     //std::vector<calibration_utilities::RobotConfiguration> robot_configurations_;  // wished robot configurations used for calibration
     double ref_frame_history_[REF_FRAME_HISTORY_SIZE]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <REF_FRAME_HISTORY_SIZE> measurements.

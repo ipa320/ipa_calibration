@@ -110,7 +110,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		tmp.parent_ = uncertainties_list[i];
 		tmp.child_ = uncertainties_list[i+1];
 		tmp.trafo_until_next_gap_idx_ = -1;
-		bool success = transform_utilities::getTransform(transform_listener_, tmp.parent_, tmp.child_, tmp.current_trafo_);
+		bool success = transform_utilities::getTransform(transform_listener_, tmp.child_, tmp.parent_, tmp.current_trafo_);
 
 		if ( success == false )
 		{
@@ -270,8 +270,8 @@ bool RobotCalibration::calculateTransformationChains(cv::Mat& T_gapfirst_to_mark
 													 cv::Mat& T_gaplast_to_camera_optical, std::string marker_frame)
 {
 	bool result = true;
-	result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[0].parent_, marker_frame, T_gapfirst_to_marker);
-	result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[ transforms_to_calibrate_.size()-1 ].child_, camera_optical_frame_, T_gaplast_to_camera_optical);
+	result &= transform_utilities::getTransform(transform_listener_, marker_frame, transforms_to_calibrate_[0].parent_, T_gapfirst_to_marker);
+	result &= transform_utilities::getTransform(transform_listener_, camera_optical_frame_, transforms_to_calibrate_[ transforms_to_calibrate_.size()-1 ].child_, T_gaplast_to_camera_optical);
 
 	for ( int i=0; i<transforms_to_calibrate_.size()-1; ++i )
 	{
@@ -279,7 +279,7 @@ bool RobotCalibration::calculateTransformationChains(cv::Mat& T_gapfirst_to_mark
 			continue;
 
 		cv::Mat temp;
-		result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[i].child_, transforms_to_calibrate_[i+1].parent_, temp);
+		result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[i+1].parent_, transforms_to_calibrate_[i].child_, temp);
 		T_between_gaps.push_back(temp);
 		transforms_to_calibrate_[i].trafo_until_next_gap_idx_ = T_between_gaps.size()-1;
 	}

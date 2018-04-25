@@ -303,7 +303,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 			if (result) // Everything is fine, exit loop
 			{
 				cv::Mat T;
-				transform_utilities::getTransform(transform_listener_, base_frame_, child_frame_name_, T);
+				transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T); // from base frame to reference frame, used to check whether there is an error in detecting the reference frame
 				double start_dist = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3); // Squared norm is suffice here, no need to take root.
 				for ( int i=0; i<REF_FRAME_HISTORY_SIZE; ++i ) // Initialize history array
 					ref_frame_history_[i] = start_dist; 
@@ -426,6 +426,7 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 	error_y = base_configuration.pose_y_ - T.at<double>(1,3);
 
 	// do not move if close to goal
+	bool start_value = true;
 	if (fabs(error_phi) > 0.03 || fabs(error_x) > 0.02 || fabs(error_y) > 0.02)
 	{
 		// control robot angle
@@ -449,6 +450,14 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
+
+			if ( divergenceDetectedRotation(error_phi, start_value) )
+			{
+				turnOffBaseMotion();
+				return false;
+			}
+			start_value = false;
+
 			tw.angular.z = std::max(-0.05, std::min(0.05, k_phi*error_phi));
 			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
@@ -457,6 +466,7 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 		turnOffBaseMotion();
 
 		// control position
+		start_value = true;
 		while(true)
 		{
 			if (!isReferenceFrameValid(T))
@@ -471,6 +481,13 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 			if ((fabs(error_x) < 0.01 && fabs(error_y) < 0.01) || !ros::ok())
 				break;
 
+			if ( divergenceDetectedLocation(error_x, error_y, start_value) )
+			{
+				turnOffBaseMotion();
+				return false;
+			}
+			start_value = false;
+
 			tw.linear.x = std::max(-0.05, std::min(0.05, k_base*error_x));
 			tw.linear.y = std::max(-0.05, std::min(0.05, k_base*error_y));
 			calibration_interface_->assignNewRobotVelocity(tw);
@@ -480,6 +497,7 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 		turnOffBaseMotion();
 
 		// control robot angle
+		start_value = true;
 		while (true)
 		{
 			if (!isReferenceFrameValid(T))
@@ -492,12 +510,22 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 			double robot_yaw = ypr.val[0];
 			geometry_msgs::Twist tw;
 			error_phi = base_configuration.pose_phi_ - robot_yaw;
+
 			while (error_phi < -CV_PI*0.5)
 				error_phi += CV_PI;
 			while (error_phi > CV_PI*0.5)
 				error_phi -= CV_PI;
+
 			if (fabs(error_phi) < 0.02 || !ros::ok())
 				break;
+
+			if ( divergenceDetectedRotation(error_phi, start_value) )
+			{
+				turnOffBaseMotion();
+				return false;
+			}
+			start_value = false;
+
 			tw.angular.z = std::max(-0.05, std::min(0.05, k_phi*error_phi));
 			calibration_interface_->assignNewRobotVelocity(tw);
 			ros::Rate(20).sleep();
@@ -518,4 +546,27 @@ void CameraBaseCalibrationMarker::turnOffBaseMotion()
 	tw.linear.y = 0;
 	tw.angular.z = 0;
 	calibration_interface_->assignNewRobotVelocity(tw);
+}
+
+bool CameraBaseCalibrationMarker::divergenceDetectedRotation(double error_phi, bool start_value)
+{
+	if ( start_value )
+		start_error_phi_ = error_phi;
+	else if ( abs(start_error_phi_ - error_phi) > 0.1 ) // ~5° deviation allowed
+		return true;
+
+	return false;
+}
+
+bool CameraBaseCalibrationMarker::divergenceDetectedLocation(double error_x, double error_y, bool start_value)
+{
+	if ( start_value )
+	{
+		start_error_x_ = error_x;
+		start_error_y_ = error_y;
+	}
+	else if ( abs(start_error_x_ - error_x) > 0.1 || abs(start_error_y_ - error_y) > 0.1 ) // 0.1 m deviation allowed
+		return true;
+
+	return false;
 }
