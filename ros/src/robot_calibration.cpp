@@ -303,8 +303,6 @@ void RobotCalibration::moveRobot(int config_index)
 			}
 			else
 				ROS_WARN("RobotCalibration::moveRobot: Skipping camera configuration %d.", config_index);
-
-			ros::spinOnce();
 		}
 		else
 			break;

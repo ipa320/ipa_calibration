@@ -323,7 +323,7 @@ CameraBaseCalibrationMarker::CameraBaseCalibrationMarker(ros::NodeHandle nh, Cal
 	//Failed to set up child frame, exit
 	if ( !result )
 	{
-		ROS_FATAL("RobotCalibration::RobotCalibration: Reference frame has not been set up for 10 seconds.");
+		ROS_FATAL("CameraBaseCalibrationMarker::CameraBaseCalibrationMarker: Reference frame has not been set up for 10 seconds.");
 		throw std::exception();
 	}
 
@@ -334,11 +334,12 @@ CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 {
 }
 
-bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T) // Safety measure, to avoid undetermined motion
+bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T, unsigned short& error_code) // Safety measure, to avoid undetermined motion
 {
 	if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T))
 	{
-		ROS_WARN("Can't retrieve transform between base of robot and reference frame.");
+		ROS_WARN("CameraBaseCalibrationMarker::isReferenceFrameValid: Can't retrieve transform between base of robot and reference frame.");
+		error_code = MOV_ERR_SOFT;
 		return false;
 	}
 
@@ -347,7 +348,8 @@ bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T) // Safety me
 	// Avoid robot movement if reference frame is too far away
 	if ( max_ref_frame_distance_ > 0.0 && currentSqNorm > max_ref_frame_distance_*max_ref_frame_distance_ )
 	{
-		 ROS_WARN("Reference frame is too far away from current position of the robot.");
+		 ROS_ERROR("CameraBaseCalibrationMarker::isReferenceFrameValid: Reference frame is too far away from current position of the robot.");
+		 error_code = MOV_ERR_FATAL;
 		 return false;
 	}
 
@@ -366,7 +368,8 @@ bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T) // Safety me
 
 	if ( average == 0.0 || abs(1.0 - (currentSqNorm/average)) > 0.15  ) // Up to 15% deviation to average is allowed.
 	{
-		ROS_WARN("Reference frame can't be detected reliably. It's current deviation from the average is to too great.");
+		ROS_WARN("CameraBaseCalibrationMarker::isReferenceFrameValid: Reference frame can't be detected reliably. It's current deviation from the average is to too great.");
+		error_code = MOV_ERR_SOFT;
 		return false;
 	}
 
@@ -379,9 +382,13 @@ void CameraBaseCalibrationMarker::moveRobot(int config_index)
 
 	for ( short i=0; i<NUM_MOVE_TRIES; ++i )
 	{
-		if ( !moveBase(base_configurations_[config_index]) )
+		unsigned short error_code = moveBase(base_configurations_[config_index]);
+
+		if ( error_code == MOV_NO_ERR ) // Exit loop, as successfully executed move
+			break;
+		else if ( error_code == MOV_ERR_SOFT ) // Retry last failed move
 		{
-			ROS_ERROR("CameraBaseCalibrationMarker::moveRobot: Could not execute moveBase, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
+			ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Could not execute moveBase, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
 			if ( i<NUM_MOVE_TRIES-1 )
 			{
 				ROS_INFO("CameraBaseCalibrationMarker::moveRobot: Trying again in 1 sec.");
@@ -389,15 +396,16 @@ void CameraBaseCalibrationMarker::moveRobot(int config_index)
 			}
 			else
 				ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Skipping base configuration %d.", config_index);
-
-			ros::spinOnce();
 		}
 		else
-			break;
+		{
+			ROS_FATAL("CameraBaseCalibrationMarker::moveRobot: Exiting calibration, to avoid potential damage.");
+			throw std::exception();
+		}
 	}
 }
 
-bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConfiguration &base_configuration)
+unsigned short CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConfiguration &base_configuration)
 {
 	const double k_base = 0.25;
 	const double k_phi = 0.25;
@@ -407,11 +415,12 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 	double error_y = 0;
 
 	cv::Mat T;
+	unsigned short error_code = MOV_NO_ERR;
 
-	if (!isReferenceFrameValid(T))
+	if (!isReferenceFrameValid(T, error_code))
 	{
 		turnOffBaseMotion();
-		return false;
+		return error_code;
 	}
 
 	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
@@ -432,10 +441,10 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 		// control robot angle
 		while(true)
 		{
-			if (!isReferenceFrameValid(T))
+			if (!isReferenceFrameValid(T, error_code))
 			{
 				turnOffBaseMotion();
-				return false;
+				return error_code;
 			}
 
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
@@ -454,7 +463,7 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 			if ( divergenceDetectedRotation(error_phi, start_value) )
 			{
 				turnOffBaseMotion();
-				return false;
+				return MOV_ERR_FATAL;
 			}
 			start_value = false;
 
@@ -469,10 +478,10 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 		start_value = true;
 		while(true)
 		{
-			if (!isReferenceFrameValid(T))
+			if (!isReferenceFrameValid(T, error_code))
 			{
 				turnOffBaseMotion();
-				return false;
+				return error_code;
 			}
 
 			geometry_msgs::Twist tw;
@@ -484,7 +493,7 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 			if ( divergenceDetectedLocation(error_x, error_y, start_value) )
 			{
 				turnOffBaseMotion();
-				return false;
+				return MOV_ERR_FATAL;
 			}
 			start_value = false;
 
@@ -500,10 +509,10 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 		start_value = true;
 		while (true)
 		{
-			if (!isReferenceFrameValid(T))
+			if (!isReferenceFrameValid(T, error_code))
 			{
 				turnOffBaseMotion();
-				return false;
+				return error_code;
 			}
 
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
@@ -522,7 +531,7 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 			if ( divergenceDetectedRotation(error_phi, start_value) )
 			{
 				turnOffBaseMotion();
-				return false;
+				return MOV_ERR_FATAL;
 			}
 			start_value = false;
 
@@ -536,7 +545,7 @@ bool CameraBaseCalibrationMarker::moveBase(const calibration_utilities::BaseConf
 	}
 
 	ros::spinOnce();
-	return true;
+	return error_code;
 }
 
 void CameraBaseCalibrationMarker::turnOffBaseMotion()
@@ -553,7 +562,10 @@ bool CameraBaseCalibrationMarker::divergenceDetectedRotation(double error_phi, b
 	if ( start_value )
 		start_error_phi_ = error_phi;
 	else if ( abs(start_error_phi_ - error_phi) > 0.1 ) // ~5° deviation allowed
+	{
+		ROS_ERROR("Divergence in robot angle detected, robot diverges from rotation setpoint.");
 		return true;
+	}
 
 	return false;
 }
@@ -566,7 +578,10 @@ bool CameraBaseCalibrationMarker::divergenceDetectedLocation(double error_x, dou
 		start_error_y_ = error_y;
 	}
 	else if ( abs(start_error_x_ - error_x) > 0.1 || abs(start_error_y_ - error_y) > 0.1 ) // 0.1 m deviation allowed
+	{
+		ROS_ERROR("Divergence in x- or y-component detected, robot diverges from position setpoint.");
 		return true;
+	}
 
 	return false;
 }

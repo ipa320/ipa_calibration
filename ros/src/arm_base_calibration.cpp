@@ -252,8 +252,6 @@ void ArmBaseCalibration::moveRobot(int config_index)
 			}
 			else
 				ROS_WARN("ArmBaseCalibration::moveRobot: Skipping arm configuration %d.", config_index);
-
-			ros::spinOnce();
 		}
 		else
 			break;

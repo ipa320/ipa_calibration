@@ -57,6 +57,12 @@
 
 #define REF_FRAME_HISTORY_SIZE 15 // 15 entries used to build the moving average upon
 
+enum MoveBaseErrorCode
+{
+    MOV_NO_ERR = 0,     // Everthing is ok
+    MOV_ERR_SOFT = 1,   // Retry to move after a delay
+    MOV_ERR_FATAL = 2   // No retry
+};
 
 class CameraBaseCalibrationMarker : public RobotCalibration
 {
@@ -73,14 +79,14 @@ protected:
 
     // moves the robot to a desired location and adjusts the torso joints
     void moveRobot(int config_index); // derived from parent
-    bool moveBase(const calibration_utilities::BaseConfiguration &base_configuration);
+    unsigned short moveBase(const calibration_utilities::BaseConfiguration &base_configuration);
     bool divergenceDetectedRotation(double error_phi, bool start_value);
     bool divergenceDetectedLocation(double error_x, double error_y, bool start_value);
 
     // Turn off base movement
     void turnOffBaseMotion();
 
-    bool isReferenceFrameValid(cv::Mat &T); // Returns wether reference frame is valid -> if so, it is save to move the robot base, otherwise stop!
+    bool isReferenceFrameValid(cv::Mat &T, unsigned short& error_code); // Returns wether reference frame is valid -> if so, it is save to move the robot base, otherwise stop!
 
     std::string base_frame_;        // Name of base frame, needed for security measure
     std::string child_frame_name_;  // name of reference frame, needed for security measure
