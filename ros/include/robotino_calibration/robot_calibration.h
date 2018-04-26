@@ -86,10 +86,10 @@ protected:
     void displayAndSaveCalibrationResult(std::string output_file_name);
 
     void extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-                              std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> > T_between_gaps_vector,
+                              std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> >& T_between_gaps_vector,
                               std::vector<cv::Mat>& T_gaplast_to_marker_vector, int trafo_to_calibrate);
 
-    bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat> T_between_gaps,
+    bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat>& T_between_gaps,
                                        cv::Mat& T_gaplast_to_marker, std::string marker_frame);
 
     virtual void moveRobot(int config_index);

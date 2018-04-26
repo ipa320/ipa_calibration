@@ -219,7 +219,7 @@ void RobotCalibration::displayAndSaveCalibrationResult(std::string output_file_n
 }
 
 void RobotCalibration::extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-											std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> > T_between_gaps_vector,
+											std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> >& T_between_gaps_vector,
 											std::vector<cv::Mat>& T_gaplast_to_marker_vector, int trafo_to_calibrate)
 {
 	// transform 3d marker points to respective coordinates systems (camera and torso_upper)
@@ -233,23 +233,46 @@ void RobotCalibration::extrinsicCalibration(std::vector< std::vector<cv::Point3f
 		for ( int j=trafo_to_calibrate; j<transforms_to_calibrate_.size()-1; ++j )
 		{
 			if ( transforms_to_calibrate_[j].trafo_until_next_gap_idx_ > -1 )
-				T_child_to_marker *= T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_];
+			{
+				if ( T_child_to_marker.empty() )
+					T_child_to_marker = T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_];
+				else
+					T_child_to_marker *= T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_];
+			}
 
-			T_child_to_marker *= transforms_to_calibrate_[j+1].current_trafo_;
+			if ( T_child_to_marker.empty() )
+				T_child_to_marker = transforms_to_calibrate_[j+1].current_trafo_;
+			else
+				T_child_to_marker *= transforms_to_calibrate_[j+1].current_trafo_;
 		}
-		T_child_to_marker *= T_gaplast_to_marker_vector[i];
+
+		if ( T_child_to_marker.empty() )
+			T_child_to_marker = T_gaplast_to_marker_vector[i];
+		else
+			T_child_to_marker *= T_gaplast_to_marker_vector[i];
 
 		cv::Mat T_parent_to_marker;
 		// Backwards in chain from parent frame on
 		for ( int j=trafo_to_calibrate-1; j>=0; --j )
 		{
 			if ( transforms_to_calibrate_[j].trafo_until_next_gap_idx_ > -1 )
-				T_parent_to_marker *= T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_].inv();
+			{
+				if ( T_parent_to_marker.empty() )
+					T_parent_to_marker = T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_].inv();
+				else
+					T_parent_to_marker *= T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_].inv();
+			}
 
-			T_parent_to_marker *= transforms_to_calibrate_[j].current_trafo_.inv();
+			if ( T_parent_to_marker.empty() )
+				T_parent_to_marker = transforms_to_calibrate_[j].current_trafo_.inv();
+			else
+				T_parent_to_marker *= transforms_to_calibrate_[j].current_trafo_.inv();
 		}
-		T_parent_to_marker *= T_gapfirst_to_marker_vector[i];
 
+		if ( T_parent_to_marker.empty() )
+			T_parent_to_marker = T_gapfirst_to_marker_vector[i];
+		else
+			T_parent_to_marker *= T_gapfirst_to_marker_vector[i];
 
 		for (size_t j=0; j<pattern_points_3d[i].size(); ++j)
 		{
@@ -264,9 +287,11 @@ void RobotCalibration::extrinsicCalibration(std::vector< std::vector<cv::Point3f
 			points_3d_parent.push_back(cv::Point3d(point_parent.at<double>(0), point_parent.at<double>(1), point_parent.at<double>(2)));
 		}
 	}
+
+	transforms_to_calibrate_[trafo_to_calibrate].current_trafo_ = transform_utilities::computeExtrinsicTransform(points_3d_parent, points_3d_child);
 }
 
-bool RobotCalibration::calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat> T_between_gaps,
+bool RobotCalibration::calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat>& T_between_gaps,
 													 cv::Mat& T_gaplast_to_camera_optical, std::string marker_frame)
 {
 	bool result = true;
@@ -279,7 +304,7 @@ bool RobotCalibration::calculateTransformationChains(cv::Mat& T_gapfirst_to_mark
 			continue;
 
 		cv::Mat temp;
-		result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[i+1].parent_, transforms_to_calibrate_[i].child_, temp);
+		result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[i+1].parent_, transforms_to_calibrate_[i].child_, temp); // from current child to next parent
 		T_between_gaps.push_back(temp);
 		transforms_to_calibrate_[i].trafo_until_next_gap_idx_ = T_between_gaps.size()-1;
 	}

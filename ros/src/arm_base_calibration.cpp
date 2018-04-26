@@ -288,7 +288,7 @@ bool ArmBaseCalibration::moveArm(const std::vector<double>& arm_configuration)
 			while (delta_angle > CV_PI)
 				delta_angle -= 2*CV_PI;
 
-			if ( abs(delta_angle) > max_angle_deviation_ )
+			if ( fabs(delta_angle) > max_angle_deviation_ )
 			{
 				ROS_WARN("%d. target angle exceeds max allowed deviation of %f!\n"
 						 "Please move the arm manually closer to the target position to avoid collision issues. Waiting 5 seconds...", (int)(i+1), max_angle_deviation_);
@@ -301,7 +301,7 @@ bool ArmBaseCalibration::moveArm(const std::vector<double>& arm_configuration)
 				ros::Duration(5).sleep();
 				ros::spinOnce();
 			}
-		} while ( abs(delta_angle) > max_angle_deviation_ && ros::ok() );
+		} while ( fabs(delta_angle) > max_angle_deviation_ && ros::ok() );
 	}
 
 	//arm_joint_controller_.publish(new_joint_config);

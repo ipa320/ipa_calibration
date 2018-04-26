@@ -91,11 +91,6 @@ protected:
     std::string base_frame_;        // Name of base frame, needed for security measure
     std::string child_frame_name_;  // name of reference frame, needed for security measure
 
-    bool start_value_set_;
-    double start_error_phi_;	// Used for divergence detection
-    double start_error_x_;	// Used for divergence detection
-    double start_error_y_;
-
     //std::vector<calibration_utilities::RobotConfiguration> robot_configurations_;  // wished robot configurations used for calibration
     double ref_frame_history_[REF_FRAME_HISTORY_SIZE]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <REF_FRAME_HISTORY_SIZE> measurements.
     int ref_history_index_; // Current index of history building
@@ -107,6 +102,10 @@ protected:
 private:
 
     double last_ref_history_update_;  // used to update the ref_frame_history_ array cyclically and not upon every call of isReferenceFrameValid()
+
+    double start_error_phi_;	// Used for divergence detection
+    double start_error_x_;	// Used for divergence detection
+    double start_error_y_;	// Used for divergence detection
 };
 
 

@@ -360,13 +360,13 @@ bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T, unsigned sho
 	average /= REF_FRAME_HISTORY_SIZE;
 
 	double current_time = ros::Time::now().toSec();
-	if ( last_ref_history_update_ - current_time >= 0.1f )  // every 0.1 sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
+	if ( current_time - last_ref_history_update_ >= 0.1f )  // every 0.1 sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
 	{
 		last_ref_history_update_ = current_time;
 		ref_frame_history_[ ref_history_index_ < REF_FRAME_HISTORY_SIZE-1 ? ref_history_index_++ : (ref_history_index_ = 0) ] = currentSqNorm; // Update with new measurement
 	}
 
-	if ( average == 0.0 || abs(1.0 - (currentSqNorm/average)) > 0.15  ) // Up to 15% deviation to average is allowed.
+	if ( average == 0.0 || fabs(1.0 - (currentSqNorm/average)) > 0.15  ) // Up to 15% deviation to average is allowed.
 	{
 		ROS_WARN("CameraBaseCalibrationMarker::isReferenceFrameValid: Reference frame can't be detected reliably. It's current deviation from the average is to too great.");
 		error_code = MOV_ERR_SOFT;
@@ -391,8 +391,8 @@ void CameraBaseCalibrationMarker::moveRobot(int config_index)
 			ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Could not execute moveBase, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
 			if ( i<NUM_MOVE_TRIES-1 )
 			{
-				ROS_INFO("CameraBaseCalibrationMarker::moveRobot: Trying again in 1 sec.");
-				ros::Duration(1.f).sleep();
+				ROS_INFO("CameraBaseCalibrationMarker::moveRobot: Trying again in 2 sec.");
+				ros::Duration(2.f).sleep();
 			}
 			else
 				ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Skipping base configuration %d.", config_index);
@@ -435,7 +435,7 @@ unsigned short CameraBaseCalibrationMarker::moveBase(const calibration_utilities
 	error_y = base_configuration.pose_y_ - T.at<double>(1,3);
 
 	// do not move if close to goal
-	bool start_value = true;
+	bool start_value = true; // for divergence detection
 	if (fabs(error_phi) > 0.03 || fabs(error_x) > 0.02 || fabs(error_y) > 0.02)
 	{
 		// control robot angle
@@ -559,9 +559,12 @@ void CameraBaseCalibrationMarker::turnOffBaseMotion()
 
 bool CameraBaseCalibrationMarker::divergenceDetectedRotation(double error_phi, bool start_value)
 {
+	// unsigned error
+	error_phi = fabs(error_phi);
+
 	if ( start_value )
 		start_error_phi_ = error_phi;
-	else if ( abs(start_error_phi_ - error_phi) > 0.1 ) // ~5° deviation allowed
+	else if ( error_phi > (start_error_phi_ + 0.1) ) // ~5° deviation allowed
 	{
 		ROS_ERROR("Divergence in robot angle detected, robot diverges from rotation setpoint.");
 		return true;
@@ -572,12 +575,16 @@ bool CameraBaseCalibrationMarker::divergenceDetectedRotation(double error_phi, b
 
 bool CameraBaseCalibrationMarker::divergenceDetectedLocation(double error_x, double error_y, bool start_value)
 {
+	// unsigned error
+	error_x = fabs(error_x);
+	error_y = fabs(error_y);
+
 	if ( start_value )
 	{
 		start_error_x_ = error_x;
 		start_error_y_ = error_y;
 	}
-	else if ( abs(start_error_x_ - error_x) > 0.1 || abs(start_error_y_ - error_y) > 0.1 ) // 0.1 m deviation allowed
+	else if ( error_x > (start_error_x_+ 0.1) || error_y > (start_error_y_+ 0.1) ) // 0.1 m deviation allowed
 	{
 		ROS_ERROR("Divergence in x- or y-component detected, robot diverges from position setpoint.");
 		return true;
