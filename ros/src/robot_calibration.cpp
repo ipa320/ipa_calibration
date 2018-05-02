@@ -121,6 +121,12 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		transforms_to_calibrate_.push_back(tmp);
 	}
 
+	if ( transforms_to_calibrate_.size() == 0 )
+	{
+		ROS_WARN("No transform to calibrate: Exiting.");
+		throw std::exception();
+	}
+
 	node_handle_.param("optimization_iterations", optimization_iterations_, 1000);
 
 	if ( transforms_to_calibrate_.size() == 1 )
