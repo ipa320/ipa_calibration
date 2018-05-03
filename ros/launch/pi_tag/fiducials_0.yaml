@@ -16,7 +16,7 @@ log_or_calibrate_sharpness_measurements: false
 # Publish coordinate systems of detected fiducials as marker_array for rviz
 publish_marker_array: true
 # Publish TF
-publish_tf: true
+publish_tf: false
 # Publish 2D image
 publish_2d_image: true
 # verbosity level on output (1=all outputs, 2=only warnings,infos and errors)

@@ -15,10 +15,10 @@ use_range: true
 # each parameter is set as [min_value, step, max_value]
 # double
 x_range: [-1.25, 0.25, -0.75]       # in [m]
-y_range: [-1.0, 0.4, -0.6]          # in [m], fixed y-coordinate
+y_range: [-1.5, 0.5, -1.0]          # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]          # in [rad], fixed phi-angle
-camera_ranges: [-1.2, 0.4, 0.4,
-                -0.8, 0.2, 0.2]     # first pan then tilt in [rad]
+camera_ranges: [-1.2, 0.5, 0.2,
+                -0.8, 0.4, 0.0]     # first pan then tilt in [rad]
 
 # list of robot configurations for observing the pitags measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker
 # includes 5 parameters per entry: robot pose: x, y, phi and camera angles at the end
@@ -69,7 +69,7 @@ camera_optical_frame: "kinect_rgb_optical_frame"
 # the list must be in order, i.e. uncertainties earlier in the list must also be earlier in the kinematic chain
 # take into account that the transformations between the uncertainties have to be available from TF as well
 uncertainties_list: ["base_linkz","base_neck_link",
-                     "neck_tilt_link","kinect_link"]
+                     "neck_pan_link","neck_tilt_link"]
 
 # defines the order in which the uncertainties will be calibrated
 # each couple or uncertainty in the uncertainties_list increases the calibration_order list
@@ -94,7 +94,7 @@ load_images: false
 
 # number of optimization iterations
 # int
-optimization_iterations: 1000
+optimization_iterations: 10000
 
 # storage folder that holds the calibration output
 # string

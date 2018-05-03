@@ -153,10 +153,15 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, st
 				for (int v=0; v<3; ++v)
 					transcv.at<double>(v) = trans.m_floats[v];
 				T_camera_optical_to_marker = transform_utilities::makeTransform(rotcv, transcv);
+//std::cout << marker_frame << ": " << T_camera_optical_to_marker.at<double>(0,3) << ", " << T_camera_optical_to_marker.at<double>(1,3) << ", " << T_camera_optical_to_marker.at<double>(2,3) << std::endl;
 				T_gaplast_to_marker = T_gaplast_to_camera_optical*T_camera_optical_to_marker;
-
+//std::cout << "gap_last: " << T_gaplast_to_marker.at<double>(0,3) << ", " << T_gaplast_to_marker.at<double>(1,3) << ", " << T_gaplast_to_marker.at<double>(2,3) << std::endl;
 				// attach data to array
 				T_gapfirst_to_marker_vector.push_back(T_gapfirst_to_marker);
+//std::cout << "gap_first: " << T_gapfirst_to_marker.at<double>(0,3) << ", " << T_gapfirst_to_marker.at<double>(1,3) << ", " << T_gapfirst_to_marker.at<double>(2,3) << std::endl;
+				if ( T_between_gaps.empty() )
+					T_between_gaps = std::vector<cv::Mat>(1, cv::Mat::zeros(cv::Size(1,1), CV_64FC1));
+
 				T_between_gaps_vector.push_back(T_between_gaps);
 				T_gaplast_to_marker_vector.push_back(T_gaplast_to_marker);
 

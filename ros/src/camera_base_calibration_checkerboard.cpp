@@ -191,6 +191,9 @@ bool CameraBaseCalibrationCheckerboard::acquireCalibrationImages(const cv::Size 
 			if (result == false)
 				continue;
 
+			if ( T_between_gaps.empty() )
+				T_between_gaps = std::vector<cv::Mat>(1, cv::Mat::zeros(cv::Size(1,1), CV_64FC1));
+
 			// save transforms to file
 			cv::FileStorage fs(path.str().c_str(), cv::FileStorage::WRITE);
 			if (fs.isOpened())

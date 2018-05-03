@@ -3,7 +3,7 @@
 
 	<!-- topic identifying the rgb source -->
 	<!-- arg name="rgb_topic" default="/cam3d/rgb/" /-->
-	<arg name="rgb_topic" default="/kinect/rgb/" /> <!-- Robotino -->
+	<arg name="rgb_topic" default="/kinect/rgb" /> <!-- Robotino -->
 	<!-- <arg name="rgb_topic" default="/camera/rgb" /> RAW3-1 -->
 	<!--arg name="rgb_topic" default="/stereo/left/" /-->
 	<!--arg name="rgb_topic" default="/stereo/right/" /-->
