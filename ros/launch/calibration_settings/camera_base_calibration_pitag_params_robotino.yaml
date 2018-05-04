@@ -69,7 +69,7 @@ camera_optical_frame: "kinect_rgb_optical_frame"
 # the list must be in order, i.e. uncertainties earlier in the list must also be earlier in the kinematic chain
 # take into account that the transformations between the uncertainties have to be available from TF as well
 uncertainties_list: ["base_linkz","base_neck_link",
-                     "neck_pan_link","neck_tilt_link"]
+                     "kinect_link","kinect_rgb_frame"]#"neck_pan_link","neck_tilt_link"]
 
 # defines the order in which the uncertainties will be calibrated
 # each couple or uncertainty in the uncertainties_list increases the calibration_order list

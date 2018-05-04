@@ -147,13 +147,19 @@ namespace transform_utilities
 	}*/
 
 	// computes the transform from source_frame to target_frame (i.e. transform arrow is pointing from source_frame to target_frame)
-	bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T)
+	bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T, bool check_time)
 	{
 		try
 		{
 			tf::StampedTransform Ts;
 			transform_listener.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(1.0));
 			transform_listener.lookupTransform(target_frame, source_frame, ros::Time(0), Ts);
+
+			const double current_time = ros::Time::now().toSec();
+
+			if ( check_time && ( !Ts.stamp_.isValid() || current_time - Ts.stamp_.toSec() > 1.f ) )
+				throw tf::TransformException("getTransform: Transform from "+target_frame+" to "+source_frame+" timed out.");
+
 			const tf::Matrix3x3& rot = Ts.getBasis();
 			const tf::Vector3& trans = Ts.getOrigin();
 			cv::Mat rotcv(3,3,CV_64FC1);

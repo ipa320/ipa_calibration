@@ -336,7 +336,7 @@ CameraBaseCalibrationMarker::~CameraBaseCalibrationMarker()
 
 bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T, unsigned short& error_code) // Safety measure, to avoid undetermined motion
 {
-	if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T)) // from reference frame to base frame, swapped order is correct here!
+	if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T, true)) // from reference frame to base frame, swapped order is correct here!
 	{
 		ROS_WARN("CameraBaseCalibrationMarker::isReferenceFrameValid: Can't retrieve transform between base of robot and reference frame.");
 		error_code = MOV_ERR_SOFT;
@@ -359,7 +359,7 @@ bool CameraBaseCalibrationMarker::isReferenceFrameValid(cv::Mat &T, unsigned sho
 		average += ref_frame_history_[i];
 	average /= REF_FRAME_HISTORY_SIZE;
 
-	double current_time = ros::Time::now().toSec();
+	const double current_time = ros::Time::now().toSec();
 	if ( current_time - last_ref_history_update_ >= 0.1f )  // every 0.1 sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
 	{
 		last_ref_history_update_ = current_time;
