@@ -49,17 +49,30 @@
  ****************************************************************/
 
 #include <calibration_interface/cob_interface.h>
+#include <trajectory_msgs/JointTrajectoryPoint.h>
+#include <trajectory_msgs/JointTrajectory.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
+#include <control_msgs/FollowJointTrajectoryGoal.h>
+#include <actionlib/client/simple_action_client.h>
 
 CobInterface::CobInterface(ros::NodeHandle nh, bool do_arm_calibration) :
 				CustomInterface(nh)
 {
 	std::cout << "\n========== CobInterface Parameters ==========\n";
 
+	node_handle_.param<std::string>("camera_joint_controller_command", camera_joint_controller_command_, "");
+	std::cout << "camera_joint_controller_command: " << camera_joint_controller_command_ << std::endl;
+	camera_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray/*trajectory_msgs::JointTrajectory*/>(camera_joint_controller_command_, 1, false);
+
+	node_handle_.param<std::string>("camera_joint_state_topic", camera_joint_state_topic_, "");
+	std::cout << "camera_joint_state_topic: " << camera_joint_state_topic_ << std::endl;
+	camera_state_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &CobInterface::cameraStateCallback, this);
+
 	if ( do_arm_calibration )
 	{
 		node_handle_.param<std::string>("arm_left_command", arm_left_command_, "");
 		std::cout << "arm_left_command: " << arm_left_command_ << std::endl;
-		arm_left_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_left_command_, 1, false);
+		arm_left_controller_ = node_handle_.advertise<trajectory_msgs::JointTrajectory>(arm_left_command_, 1, false);
 
 		node_handle_.param<std::string>("arm_left_state_topic", arm_left_state_topic_, "");
 		std::cout << "arm_left_state_topic: " << arm_left_state_topic_ << std::endl;
@@ -67,7 +80,7 @@ CobInterface::CobInterface(ros::NodeHandle nh, bool do_arm_calibration) :
 
 		node_handle_.param<std::string>("arm_right_command", arm_right_command_, "");
 		std::cout << "arm_right_command: " << arm_right_command_ << std::endl;
-		arm_right_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(arm_right_command_, 1, false);
+		arm_right_controller_ = node_handle_.advertise<trajectory_msgs::JointTrajectory>(arm_right_command_, 1, false);
 
 		node_handle_.param<std::string>("arm_right_state_topic", arm_right_state_topic_, "");
 		std::cout << "arm_right_state_topic: " << arm_right_state_topic_ << std::endl;

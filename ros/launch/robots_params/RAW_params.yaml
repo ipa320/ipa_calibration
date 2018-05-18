@@ -23,6 +23,6 @@ arm_state_topic: "/arm/joint_states"
 # string
 camera_image_topic: "/camera/rgb"
 
-# calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW
+# calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW, 2 - COB
 # int
 calibration_ID: 1

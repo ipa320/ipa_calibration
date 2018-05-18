@@ -76,13 +76,13 @@ CalibrationInterface* CustomInterface::createInterfaceByID(int ID, ros::NodeHand
 {
 	switch(ID)
 	{
-		case Robotino:
+		case ROB_ROBOTINO:
 				return (new RobotinoInterface(nh, do_arm_calibration));
 				break;
-		case RobAtWork:
+		case ROB_RAW_3_1:
 				return (new RAWInterface(nh, do_arm_calibration));
 				break;
-		case CareOBot:
+		case ROB_COB:
 				return (new CobInterface(nh, do_arm_calibration));
 				break;
 		default:

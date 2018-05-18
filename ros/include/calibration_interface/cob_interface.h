@@ -63,11 +63,15 @@ protected:
 	std::string arm_right_command_;
 	std::string arm_right_state_topic_;
 	std::string base_velocity_command_;
+	std::string camera_joint_controller_command_;
+	std::string camera_joint_state_topic_;
 	ros::Subscriber arm_left_state_;
 	ros::Subscriber arm_right_state_;
+	ros::Subscriber camera_state_;
 	ros::Publisher arm_left_controller_;
 	ros::Publisher arm_right_controller_;
 	ros::Publisher base_velocity_controller_;
+	ros::Publisher camera_joint_controller_;
 
 public:
 	CobInterface(ros::NodeHandle nh, bool do_arm_calibration);

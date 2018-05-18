@@ -54,9 +54,12 @@
 #include <robotino_calibration/calibration_interface.h>
 
 // Robot types
-#define Robotino	0
-#define RobAtWork	1
-#define CareOBot	2
+enum RobotTypes
+{
+    ROB_ROBOTINO	= 0,
+    ROB_RAW_3_1		= 1,
+    ROB_COB			= 2
+};
 
 class CustomInterface : public CalibrationInterface
 {

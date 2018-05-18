@@ -37,7 +37,7 @@ base_controller_topic_name: "/cmd_vel"
 # string
 camera_image_topic: "/kinect/rgb/image_raw"
 
-# calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW
+# calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW, 2 - COB
 # int
 calibration_ID: 0
 
