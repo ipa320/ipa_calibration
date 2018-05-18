@@ -124,7 +124,17 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, st
 
 			// extract marker points
 			cob_object_detection_msgs::DetectObjects detect;
+			// hack to fix camera providing outdated image!
 			pitag_client_.call(detect);
+			detect.response.object_list.detections.clear();
+			pitag_client_.call(detect);
+			detect.response.object_list.detections.clear();
+			pitag_client_.call(detect);
+			detect.response.object_list.detections.clear();
+			pitag_client_.call(detect);
+			detect.response.object_list.detections.clear();
+			pitag_client_.call(detect);
+
 			if (detect.response.object_list.detections.size() == 0)
 				continue;
 
@@ -152,6 +162,7 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, st
 						rotcv.at<double>(v,u) = rot[v].m_floats[u];
 				for (int v=0; v<3; ++v)
 					transcv.at<double>(v) = trans.m_floats[v];
+
 				T_camera_optical_to_marker = transform_utilities::makeTransform(rotcv, transcv);
 //std::cout << marker_frame << ": " << T_camera_optical_to_marker.at<double>(0,3) << ", " << T_camera_optical_to_marker.at<double>(1,3) << ", " << T_camera_optical_to_marker.at<double>(2,3) << std::endl;
 				T_gaplast_to_marker = T_gaplast_to_camera_optical*T_camera_optical_to_marker;

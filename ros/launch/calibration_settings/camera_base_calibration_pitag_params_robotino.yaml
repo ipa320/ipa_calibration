@@ -62,14 +62,14 @@ robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
 base_frame: "base_linkz"
 
 # this is the camera coordinate system which refers to the color image sensor [the transformations between camera_frame and camera_optical_frame should be available from tf]
-camera_optical_frame: "kinect_rgb_optical_frame"
+camera_optical_frame: "kinect_depth_optical_frame"
 
 # the transformations between base_frame and the first entry of the uncertainties list and the last entry and camera_optical_frame has to be be available from TF
 # the list contains couples from parent to child. Each couple defines an uncertainty in the kinematic chain which will be calibrated by the program
 # the list must be in order, i.e. uncertainties earlier in the list must also be earlier in the kinematic chain
 # take into account that the transformations between the uncertainties have to be available from TF as well
 uncertainties_list: ["base_linkz","base_neck_link",
-                     "kinect_link","kinect_rgb_frame"]#"neck_pan_link","neck_tilt_link"]
+                     "kinect_link","kinect_depth_frame"]#"neck_pan_link","neck_tilt_link"]
 
 # defines the order in which the uncertainties will be calibrated
 # each couple or uncertainty in the uncertainties_list increases the calibration_order list

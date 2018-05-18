@@ -253,11 +253,14 @@ void RobotCalibration::extrinsicCalibration(std::vector< std::vector<cv::Point3f
 					T_child_to_marker *= T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_];
 			}
 
+//std::cout << "forward 1: " << T_child_to_marker.at<double>(0,3) << ", " << T_child_to_marker.at<double>(1,3) << ", " << T_child_to_marker.at<double>(2,3) << std::endl;
+
 			if ( T_child_to_marker.empty() )
 				T_child_to_marker = transforms_to_calibrate_[j+1].current_trafo_.clone();
 			else
 				T_child_to_marker *= transforms_to_calibrate_[j+1].current_trafo_;
 //std::cout << "forward: " << transforms_to_calibrate_[j+1].current_trafo_ << std::endl;
+//std::cout << "forward 2: " << T_child_to_marker.at<double>(0,3) << ", " << T_child_to_marker.at<double>(1,3) << ", " << T_child_to_marker.at<double>(2,3) << std::endl;
 		}
 
 		if ( T_child_to_marker.empty() )
@@ -277,11 +280,14 @@ void RobotCalibration::extrinsicCalibration(std::vector< std::vector<cv::Point3f
 					T_parent_to_marker *= T_between_gaps_vector[i][transforms_to_calibrate_[j].trafo_until_next_gap_idx_].inv();
 			}
 
+//std::cout << "backward 1: " << T_parent_to_marker.at<double>(0,3) << ", " << T_parent_to_marker.at<double>(1,3) << ", " << T_parent_to_marker.at<double>(2,3) << std::endl;
+
 			if ( T_parent_to_marker.empty() )
 				T_parent_to_marker = transforms_to_calibrate_[j].current_trafo_.inv();
 			else
 				T_parent_to_marker *= transforms_to_calibrate_[j].current_trafo_.inv();
 //std::cout << "backward: " << transforms_to_calibrate_[j].current_trafo_.inv() << std::endl;
+//std::cout << "backward 2: " << T_parent_to_marker.at<double>(0,3) << ", " << T_parent_to_marker.at<double>(1,3) << ", " << T_parent_to_marker.at<double>(2,3) << std::endl;
 		}
 
 		if ( T_parent_to_marker.empty() )
@@ -309,11 +315,14 @@ void RobotCalibration::extrinsicCalibration(std::vector< std::vector<cv::Point3f
 }
 
 bool RobotCalibration::calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat>& T_between_gaps,
-													 cv::Mat& T_gaplast_to_camera_optical, std::string marker_frame)
+													 cv::Mat& T_gaplast_to_camera_optical, const std::string& marker_frame)
 {
 	bool result = true;
 	result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[0].parent_, marker_frame, T_gapfirst_to_marker); // from first parent to marker
 	result &= transform_utilities::getTransform(transform_listener_, transforms_to_calibrate_[ transforms_to_calibrate_.size()-1 ].child_, camera_optical_frame_, T_gaplast_to_camera_optical); // from last child to camera optical
+
+	/*std::cout << transforms_to_calibrate_[0].parent_ << " to " << marker_frame << ": " << T_gapfirst_to_marker.at<double>(0,3) << ", " << T_gapfirst_to_marker.at<double>(1,3) << ", " << T_gapfirst_to_marker.at<double>(2,3) << std::endl;
+	std::cout << transforms_to_calibrate_[ transforms_to_calibrate_.size()-1 ].child_ << " to " << camera_optical_frame_ << ": " << T_gaplast_to_camera_optical.at<double>(0,3) << ", " << T_gaplast_to_camera_optical.at<double>(1,3) << ", " << T_gaplast_to_camera_optical.at<double>(2,3) << std::endl;*/
 
 	for ( int i=0; i<transforms_to_calibrate_.size()-1; ++i )
 	{

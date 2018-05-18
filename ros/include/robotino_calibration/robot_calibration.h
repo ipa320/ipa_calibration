@@ -90,7 +90,7 @@ protected:
                               std::vector<cv::Mat>& T_gaplast_to_marker_vector, int trafo_to_calibrate);
 
     bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat>& T_between_gaps,
-                                       cv::Mat& T_gaplast_to_marker, std::string marker_frame);
+                                       cv::Mat& T_gaplast_to_marker, const std::string& marker_frame);
 
     virtual void moveRobot(int config_index);
     bool moveCamera(const std::vector<double>& cam_configuration);
