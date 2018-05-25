@@ -57,7 +57,7 @@
 
 
 RAWInterface::RAWInterface(ros::NodeHandle nh, bool do_arm_calibration) :
-				CustomInterface(nh), arm_state_current_(0)
+				IPAInterface(nh, do_arm_calibration), arm_state_current_(0)
 {
 	std::cout << "\n========== RAWInterface Parameters ==========\n";
 
@@ -72,7 +72,7 @@ RAWInterface::RAWInterface(ros::NodeHandle nh, bool do_arm_calibration) :
 
 	camera_state_current_.resize(2);
 
-	if (do_arm_calibration)
+	if ( arm_calibration_ )
 	{
 		node_handle_.param<std::string>("arm_joint_controller_command", arm_joint_controller_command_, "");
 		std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;

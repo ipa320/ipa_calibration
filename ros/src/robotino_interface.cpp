@@ -52,7 +52,7 @@
 
 
 RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool do_arm_calibration) :
-				CustomInterface(nh), camera_state_current_(2, 0.), arm_state_current_(0)
+				IPAInterface(nh, do_arm_calibration), camera_state_current_(2, 0.), arm_state_current_(0)
 {
 	std::cout << "\n========== RobotinoInterface Parameters ==========\n";
 
@@ -73,7 +73,7 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, bool do_arm_calibration
 
 	camera_joint_state_sub_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &RobotinoInterface::cameraJointStateCallback, this);
 
-	if (do_arm_calibration)
+	if ( arm_calibration_ )
 	{
 		node_handle_.param<std::string>("/camera_base_calibration_pitag/camera_base_calibration/arm_joint_controller_command", arm_joint_controller_command_, "");
 		std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;

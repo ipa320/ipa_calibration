@@ -81,12 +81,12 @@ int main(int argc, char** argv)
 	{
 		if (marker_type.compare("checkerboard") == 0)
 		{
-			CameraBaseCalibrationCheckerboard cb(nh, CustomInterface::createInterfaceByID(calibration_ID, nh, arm_calibration));
+			CameraBaseCalibrationCheckerboard cb(nh, IPAInterface::createInterfaceByID(calibration_ID, nh, arm_calibration));
 			cb.calibrateCameraToBase(load_images);
 		}
 		else if (marker_type.compare("pitag") == 0)
 		{
-			CameraBaseCalibrationPiTag pt(nh, CustomInterface::createInterfaceByID(calibration_ID, nh, arm_calibration));
+			CameraBaseCalibrationPiTag pt(nh, IPAInterface::createInterfaceByID(calibration_ID, nh, arm_calibration));
 			pt.calibrateCameraToBase(load_images);
 		}
 	}

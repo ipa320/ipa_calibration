@@ -48,30 +48,54 @@
  *
  ****************************************************************/
 
-#ifndef CUSTOM_INTERFACE_H_
-#define CUSTOM_INTERFACE_H_
+/* This class represents the interface between your robot and the calibration code.
+ * Adjust the interface functions so that the calibration code will work correctly with your robot environment.
+*/
 
-#include <robotino_calibration/calibration_interface.h>
+#include <calibration_interface/ipa_interface.h>
+#include <calibration_interface/robotino_interface.h>
+#include <calibration_interface/raw_interface.h>
+#include <calibration_interface/cob_interface.h>
 
-// Robot types
-enum RobotTypes
+
+IPAInterface::IPAInterface()
 {
-    ROB_ROBOTINO	= 0,
-    ROB_RAW_3_1		= 1,
-    ROB_COB			= 2
-};
+}
 
-class CustomInterface : public CalibrationInterface
+IPAInterface::IPAInterface(ros::NodeHandle nh, bool do_arm_calibration) :
+				CalibrationInterface(nh), arm_calibration_(do_arm_calibration)
 {
-protected:
-	ros::NodeHandle node_handle_;
+}
 
-public:
-	CustomInterface();
-	CustomInterface(ros::NodeHandle nh);
-	virtual ~CustomInterface();
-	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration); //Create corresponding robot interface by a user-defined ID.
-};
+IPAInterface::~IPAInterface()
+{
+}
 
+// You can add further interfaces for other robots in here.
+CalibrationInterface* IPAInterface::createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration)
+{
+	switch(ID)
+	{
+		case ROB_ROBOTINO:
+				return (new RobotinoInterface(nh, do_arm_calibration));
+				break;
+		case ROB_RAW_3_1:
+				return (new RAWInterface(nh, do_arm_calibration));
+				break;
+		case ROB_COB:
+				return (new CobInterface(nh, do_arm_calibration));
+				break;
+		default:
+				return 0;
+	}
+}
 
-#endif /* CUSTOM_INTERFACE_H_ */
+bool IPAInterface::moveRobot(int index)
+{
+	return true;
+}
+
+bool IPAInterface::lastConfigurationReached(int index)
+{
+	return true;
+}

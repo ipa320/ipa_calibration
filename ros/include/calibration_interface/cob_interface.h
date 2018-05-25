@@ -51,11 +51,11 @@
 #ifndef COB_INTERFACE_H_
 #define COB_INTERFACE_H_
 
-#include <calibration_interface/custom_interface.h>
+#include <calibration_interface/ipa_interface.h>
 #include <sensor_msgs/JointState.h>
 #include <boost/thread/mutex.hpp>
 
-class CobInterface : public CustomInterface
+class CobInterface : public IPAInterface
 {
 protected:
 	std::string arm_left_command_;

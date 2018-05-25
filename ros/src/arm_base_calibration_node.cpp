@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 
 	try
 	{
-		ArmBaseCalibration armCal(nh, CustomInterface::createInterfaceByID(calibration_ID, nh, arm_calibration));
+		ArmBaseCalibration armCal(nh, IPAInterface::createInterfaceByID(calibration_ID, nh, arm_calibration));
 		armCal.calibrateArmToBase(load_images);
 	}
 	catch ( std::exception &e )

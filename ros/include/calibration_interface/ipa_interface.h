@@ -48,44 +48,51 @@
  *
  ****************************************************************/
 
-/* This class represents the interface between your robot and the calibration code.
- * Adjust the interface functions so that the calibration code will work correctly with your robot environment.
-*/
-
-#include <calibration_interface/custom_interface.h>
-#include <calibration_interface/robotino_interface.h>
-#include <calibration_interface/raw_interface.h>
-#include <calibration_interface/cob_interface.h>
+#ifndef CUSTOM_INTERFACE_H_
+#define CUSTOM_INTERFACE_H_
 
 
-CustomInterface::CustomInterface()
+#include <std_msgs/Float64MultiArray.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/Twist.h>
+#include <vector>
+#include <robotino_calibration/calibration_interface.h>
+
+
+// Robot types
+enum RobotTypes
 {
-}
+    ROB_ROBOTINO	= 0,
+    ROB_RAW_3_1		= 1,
+    ROB_COB			= 2
+};
 
-CustomInterface::CustomInterface(ros::NodeHandle nh) :
-				CalibrationInterface(nh)
-{
-}
 
-CustomInterface::~CustomInterface()
+class IPAInterface : public CalibrationInterface
 {
-}
+protected:
+	ros::NodeHandle node_handle_;
+	bool arm_calibration_;
 
-// You can add further interfaces for other robots in here.
-CalibrationInterface* CustomInterface::createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration)
-{
-	switch(ID)
-	{
-		case ROB_ROBOTINO:
-				return (new RobotinoInterface(nh, do_arm_calibration));
-				break;
-		case ROB_RAW_3_1:
-				return (new RAWInterface(nh, do_arm_calibration));
-				break;
-		case ROB_COB:
-				return (new CobInterface(nh, do_arm_calibration));
-				break;
-		default:
-				return 0;
-	}
-}
+public:
+	IPAInterface();
+	IPAInterface(ros::NodeHandle nh, bool do_arm_calibration);
+	virtual ~IPAInterface();
+
+	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration); //Create corresponding robot interface by a user-defined ID.
+
+	bool moveRobot(int index);
+	bool lastConfigurationReached(int index);
+
+	// camera calibration interface
+	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;
+	virtual void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles) = 0;
+	virtual std::vector<double>* getCurrentCameraState() = 0;
+
+	// arm calibration interface
+	virtual void assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig) = 0;
+	virtual std::vector<double>* getCurrentArmState() = 0;
+};
+
+
+#endif /* CUSTOM_INTERFACE_H_ */

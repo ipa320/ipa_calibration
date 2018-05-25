@@ -51,11 +51,11 @@
 #ifndef ROBOTINO_INTERFACE_H_
 #define ROBOTINO_INTERFACE_H_
 
-#include <calibration_interface/custom_interface.h>
+#include <calibration_interface/ipa_interface.h>
 #include <sensor_msgs/JointState.h>
 #include <boost/thread/mutex.hpp>
 
-class RobotinoInterface : public CustomInterface
+class RobotinoInterface : public IPAInterface
 {
 protected:
 	ros::Publisher arm_joint_controller_;

@@ -77,7 +77,7 @@ include_directories(
 
 # calibration software
 add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
-										ros/src/custom_interface.cpp
+										ros/src/ipa_interface.cpp
 										ros/src/robotino_interface.cpp
 										ros/src/raw_interface.cpp
 										ros/src/cob_interface.cpp
@@ -92,7 +92,7 @@ target_link_libraries(camera_base_calibration
 add_dependencies(camera_base_calibration	${catkin_EXPORTED_TARGETS})
 
 add_executable(arm_base_calibration  ros/src/arm_base_calibration_node.cpp
-										ros/src/custom_interface.cpp
+										ros/src/ipa_interface.cpp
 										ros/src/robotino_interface.cpp
 										ros/src/raw_interface.cpp
 										ros/src/cob_interface.cpp

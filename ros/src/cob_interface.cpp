@@ -56,7 +56,7 @@
 #include <actionlib/client/simple_action_client.h>
 
 CobInterface::CobInterface(ros::NodeHandle nh, bool do_arm_calibration) :
-				CustomInterface(nh)
+				IPAInterface(nh, do_arm_calibration)
 {
 	std::cout << "\n========== CobInterface Parameters ==========\n";
 
@@ -68,7 +68,7 @@ CobInterface::CobInterface(ros::NodeHandle nh, bool do_arm_calibration) :
 	std::cout << "camera_joint_state_topic: " << camera_joint_state_topic_ << std::endl;
 	camera_state_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &CobInterface::cameraStateCallback, this);
 
-	if ( do_arm_calibration )
+	if ( arm_calibration_ )
 	{
 		node_handle_.param<std::string>("arm_left_command", arm_left_command_, "");
 		std::cout << "arm_left_command: " << arm_left_command_ << std::endl;

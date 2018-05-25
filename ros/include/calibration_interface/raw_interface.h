@@ -51,11 +51,11 @@
 #ifndef RAW_CALIBRATION_H_
 #define RAW_CALIBRATION_H_
 
-#include <calibration_interface/custom_interface.h>
+#include <calibration_interface/ipa_interface.h>
 #include <sensor_msgs/JointState.h>
 #include <boost/thread/mutex.hpp>
 
-class RAWInterface : public CustomInterface
+class RAWInterface : public IPAInterface
 {
 protected:
 	ros::Publisher arm_joint_controller_;
