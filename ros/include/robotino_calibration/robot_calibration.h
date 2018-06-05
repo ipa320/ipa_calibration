@@ -59,8 +59,6 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-#define NUM_MOVE_TRIES 4
-
 
 struct CalibrationInfo
 {
@@ -92,10 +90,8 @@ protected:
     bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat>& T_between_gaps,
                                        cv::Mat& T_gaplast_to_marker, const std::string& marker_frame);
 
-    virtual void moveRobot(int config_index);
-    bool moveCamera(const std::vector<double>& cam_configuration);
 
-    int camera_dof_;		// degrees of freedom the camera has
+    //int camera_dof_;		// degrees of freedom the camera has
     int optimization_iterations_;	// number of iterations for optimization
     bool calibrated_;
     tf::TransformListener transform_listener_;
@@ -105,7 +101,7 @@ protected:
     CalibrationInterface *calibration_interface_;
     std::vector<CalibrationInfo> transforms_to_calibrate_;
     std::vector<int> calibration_order_;
-    std::vector< std::vector<double> > camera_configurations_; // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
+    //std::vector< std::vector<double> > camera_configurations_; // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
 
 };
 
