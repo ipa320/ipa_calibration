@@ -15,7 +15,7 @@
  *
  * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
  *
- * Date of creation: January 2018
+ * Date of creation: June 2018
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -48,67 +48,42 @@
  *
  ****************************************************************/
 
-/* This class represents the interface between your robot and the calibration code.
- * Adjust the interface functions so that the calibration code will work correctly with your robot environment.
-*/
+#ifndef CALIBRATION_TYPE_H_
+#define CALIBRATION_TYPE_H_
 
+
+#include <ros/ros.h>
+#include <tf/transform_listener.h>
 #include <calibration_interface/ipa_interface.h>
-#include <calibration_interface/robotino_interface.h>
-#include <calibration_interface/raw_interface.h>
-#include <calibration_interface/cob_interface.h>
-#include <exception>
 
 
-IPAInterface::IPAInterface()
+#define NUM_MOVE_TRIES 4
+
+
+class CalibrationType
 {
-}
 
-IPAInterface::IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, bool do_arm_calibration) :
-				CalibrationInterface(nh), calibration_type_(calib_type), arm_calibration_(do_arm_calibration)
-{
-	if ( calibration_type_ != 0 )
-		calibration_type_->initialize(nh, this);
-	else
-		throw std::exception();
-}
+protected:
 
-IPAInterface::~IPAInterface()
-{
-	if ( calibration_type_ != 0 )
-		delete calibration_type_;
-}
+	ros::NodeHandle node_handle_;
+    tf::TransformListener transform_listener_;
+	IPAInterface *calibration_interface_;
 
-// You can add further interfaces for other robots in here.
-CalibrationInterface* IPAInterface::createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration)
-{
-	switch(ID)
-	{
-		case ROB_ROBOTINO:
-				return (new RobotinoInterface(nh, do_arm_calibration));
-				break;
-		case ROB_RAW_3_1:
-				return (new RAWInterface(nh, do_arm_calibration));
-				break;
-		case ROB_COB:
-				return (new CobInterface(nh, do_arm_calibration));
-				break;
-		default:
-				return 0;
-	}
-}
+    int camera_dof_;  // degrees of freedom the camera has
+    std::vector< std::vector<double> > camera_configurations_;  // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
+    bool initialized_;
 
-bool IPAInterface::moveRobot(int config_index)
-{
-	if ( calibration_type_ != 0 )
-		return calibration_type_->moveRobot(config_index);
-	else
-		return false;
-}
 
-bool IPAInterface::lastConfigurationReached(int config_index)
-{
-	if ( calibration_type_ != 0 )
-		return calibration_type_->lastConfigurationReached(config_index);
-	else
-		return true;
-}
+public:
+
+	CalibrationType();
+	virtual void initialize(ros::NodeHandle nh, IPAInterface* calib_interface);
+	virtual ~CalibrationType();
+
+	virtual bool moveRobot(int config_index);
+	bool moveCamera(const std::vector<double> &cam_configuration);
+	bool lastConfigurationReached(int config_index);
+};
+
+
+#endif /* CALIBRATION_TYPE_H_ */

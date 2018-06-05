@@ -15,7 +15,7 @@
  *
  * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
  *
- * Date of creation: January 2018
+ * Date of creation: June 2018
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -48,67 +48,17 @@
  *
  ****************************************************************/
 
-/* This class represents the interface between your robot and the calibration code.
- * Adjust the interface functions so that the calibration code will work correctly with your robot environment.
-*/
-
-#include <calibration_interface/ipa_interface.h>
-#include <calibration_interface/robotino_interface.h>
-#include <calibration_interface/raw_interface.h>
-#include <calibration_interface/cob_interface.h>
-#include <exception>
+#ifndef CAMERA_ARM_TYPE_H_
+#define CAMERA_ARM_TYPE_H_
 
 
-IPAInterface::IPAInterface()
+#include <calibration_interface/calibration_type.h>
+
+
+class CameraArmType : public CalibrationType
 {
-}
 
-IPAInterface::IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, bool do_arm_calibration) :
-				CalibrationInterface(nh), calibration_type_(calib_type), arm_calibration_(do_arm_calibration)
-{
-	if ( calibration_type_ != 0 )
-		calibration_type_->initialize(nh, this);
-	else
-		throw std::exception();
-}
+};
 
-IPAInterface::~IPAInterface()
-{
-	if ( calibration_type_ != 0 )
-		delete calibration_type_;
-}
 
-// You can add further interfaces for other robots in here.
-CalibrationInterface* IPAInterface::createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration)
-{
-	switch(ID)
-	{
-		case ROB_ROBOTINO:
-				return (new RobotinoInterface(nh, do_arm_calibration));
-				break;
-		case ROB_RAW_3_1:
-				return (new RAWInterface(nh, do_arm_calibration));
-				break;
-		case ROB_COB:
-				return (new CobInterface(nh, do_arm_calibration));
-				break;
-		default:
-				return 0;
-	}
-}
-
-bool IPAInterface::moveRobot(int config_index)
-{
-	if ( calibration_type_ != 0 )
-		return calibration_type_->moveRobot(config_index);
-	else
-		return false;
-}
-
-bool IPAInterface::lastConfigurationReached(int config_index)
-{
-	if ( calibration_type_ != 0 )
-		return calibration_type_->lastConfigurationReached(config_index);
-	else
-		return true;
-}
+#endif /* CAMERA_ARM_TYPE_H_ */

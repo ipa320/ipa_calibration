@@ -81,6 +81,7 @@ add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
 										ros/src/robotino_interface.cpp
 										ros/src/raw_interface.cpp
 										ros/src/cob_interface.cpp
+										ros/src/calibration_type.cpp
 )
 
 target_link_libraries(camera_base_calibration
@@ -96,6 +97,7 @@ add_executable(arm_base_calibration  ros/src/arm_base_calibration_node.cpp
 										ros/src/robotino_interface.cpp
 										ros/src/raw_interface.cpp
 										ros/src/cob_interface.cpp
+										ros/src/calibration_type.cpp
 )
 
 target_link_libraries(arm_base_calibration

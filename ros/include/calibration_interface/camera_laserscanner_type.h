@@ -15,7 +15,7 @@
  *
  * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
  *
- * Date of creation: January 2018
+ * Date of creation: June 2018
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -48,58 +48,64 @@
  *
  ****************************************************************/
 
-#ifndef CUSTOM_INTERFACE_H_
-#define CUSTOM_INTERFACE_H_
+#ifndef CAMERA_LASERSCANNER_TYPE_H_
+#define CAMERA_LASERSCANNER_TYPE_H_
 
 
-#include <robotino_calibration/calibration_interface.h>
 #include <calibration_interface/calibration_type.h>
-#include <std_msgs/Float64MultiArray.h>
-#include <std_msgs/Float64.h>
-#include <geometry_msgs/Twist.h>
-#include <vector>
+#include <robotino_calibration/calibration_utilities.h>
 
 
+#define REF_FRAME_HISTORY_SIZE 15 // 15 entries used to build the moving average upon
 
-// Robot types
-enum RobotTypes
+enum MoveBaseErrorCode
 {
-    ROB_ROBOTINO	= 0,
-    ROB_RAW_3_1		= 1,
-    ROB_COB			= 2
+    MOV_NO_ERR		= 0,	// Everthing is ok
+    MOV_ERR_SOFT	= 1,	// Retry to move after a delay
+    MOV_ERR_FATAL	= 2		// No retry
 };
 
 
-class IPAInterface : public CalibrationInterface
+class CameraLaserscannerType : public CalibrationType
 {
-
-protected:
-
-	ros::NodeHandle node_handle_;
-	CalibrationType* calibration_type_;
-	bool arm_calibration_;
-
 
 public:
 
-	IPAInterface();
-	IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, bool do_arm_calibration);
-	virtual ~IPAInterface();
-
-	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration); //Create corresponding robot interface by a user-defined ID.
+	CameraLaserscannerType();
+	~CameraLaserscannerType();
+	void initialize(ros::NodeHandle nh, IPAInterface* calib_interface);
 
 	bool moveRobot(int config_index);
-	bool lastConfigurationReached(int config_index);
+    unsigned short moveBase(const calibration_utilities::BaseConfiguration &base_configuration);
 
-	// camera calibration interface
-	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;
-	virtual void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles) = 0;
-	virtual std::vector<double>* getCurrentCameraState() = 0;
+    bool isReferenceFrameValid(cv::Mat &T, unsigned short& error_code);  // returns wether reference frame is valid -> if so, it is save to move the robot base, otherwise stop!
+    bool divergenceDetectedRotation(double error_phi, bool start_value);  // rotation controller diverges!
+    bool divergenceDetectedLocation(double error_x, double error_y, bool start_value);  // location controller diverges!
+    void turnOffBaseMotion();  // set angular and linear speed to 0
 
-	// arm calibration interface
-	virtual void assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig) = 0;
-	virtual std::vector<double>* getCurrentArmState() = 0;
+
+protected:
+
+    double ref_frame_history_[REF_FRAME_HISTORY_SIZE]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <REF_FRAME_HISTORY_SIZE> measurements.
+    int ref_history_index_; // Current index of history building
+    double max_ref_frame_distance_;
+
+    std::vector<calibration_utilities::BaseConfiguration> base_configurations_;  // wished base configurations used for calibration
+
+    std::string base_frame_;        // Name of base frame, needed for security measure
+    std::string child_frame_name_;  // name of reference frame, needed for security measure
+
+
+private:
+
+    double last_ref_history_update_;  // used to update the ref_frame_history_ array cyclically and not upon every call of isReferenceFrameValid()
+
+    double start_error_phi_;	// Used for divergence detection
+    double start_error_x_;	// Used for divergence detection
+    double start_error_y_;	// Used for divergence detection
+
+
 };
 
 
-#endif /* CUSTOM_INTERFACE_H_ */
+#endif /* CAMERA_LASERSCANNER_TYPE_H_ */
