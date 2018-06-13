@@ -67,7 +67,7 @@ public:
 
 	// apply new configuration to robot
 	virtual bool moveRobot(int index) = 0;
-	virtual bool lastConfigurationReached(int index) = 0;
+	virtual int getConfigurationCount() = 0;
 };
 
 

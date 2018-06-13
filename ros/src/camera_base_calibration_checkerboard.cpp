@@ -143,11 +143,14 @@ bool CameraBaseCalibrationCheckerboard::calibrateCameraToBase(const bool load_im
 	}
 
 	// extrinsic calibration optimization
-	for (int i=0; i<optimization_iterations_; ++i)
+	for ( int l=0; l<calibration_setups_.size(); ++l )
 	{
-		for ( int j=0; j<transforms_to_calibrate_.size(); ++j )
+		for (int i=0; i<optimization_iterations_; ++i)
 		{
-			extrinsicCalibration(pattern_points_3d, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector, calibration_order_[j]);
+			for ( int j=0; j<calibration_setups_[l].transforms_to_calibrate_.size(); ++j )
+			{
+				extrinsicCalibration(pattern_points_3d, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector, j);
+			}
 		}
 	}
 

@@ -60,13 +60,25 @@
 #include <vector>
 
 
-struct CalibrationInfo
+struct CalibrationInfo  // defines one uncertain transform in the kinematic chain
 {
-    std::string parent_;
-    std::string child_;
+    std::string parent_;  // parent frame: start point of the vector
+    std::string child_;  // child frame: end point of the vector
+	std::vector<std::string> parent_markers_;  // marker frame one reaches from parent frame backwards
+	std::vector<std::string> child_markers_;  // marker_frame one reaches from child frame onwards
     cv::Mat current_trafo_;
-    int trafo_until_next_gap_idx_; // index to between_gaps trafo
+    //int weight_;  // determines the order of calibration. The highest weighted transform in a setup will be calibrated first.
+    int trafo_until_next_gap_idx_;  // index to between_gaps trafo
 };
+
+struct CalibrationSetup  // defines one calibration setup, consisting of x transforms to be calibrated via parent and child marker
+{
+	std::string origin_;  // this is not the robot's base, but the frame where two transformations chains meet
+	std::vector<CalibrationInfo> origin_to_parent_marker_uncertainties_;
+	std::vector<CalibrationInfo> origin_to_child_marker_uncertainties_;
+	std::vector<CalibrationInfo> transforms_to_calibrate_;  // unsorted list, only temporarily in use during initialization
+};
+
 
 class RobotCalibration
 {
@@ -85,10 +97,20 @@ protected:
 
     void extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
                               std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> >& T_between_gaps_vector,
-                              std::vector<cv::Mat>& T_gaplast_to_marker_vector, int trafo_to_calibrate);
+                              std::vector<cv::Mat>& T_gaplast_to_marker_vector, const CalibrationSetup &setup);
 
     bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat>& T_between_gaps,
                                        cv::Mat& T_gaplast_to_marker, const std::string& marker_frame);
+
+    void getTransformByIndex(const int index);
+
+    bool getOrigin(const std::string parent_marker, const std::string child_marker, std::string &origin);  // returns mutual frame of parent_marker and child_marker back-chains
+
+    bool getChain(const std::string parent_marker, const std::string child_marker, const std::string origin,
+    				std::vector<std::string> &parent_marker_to_origin, std::vector<std::string> &child_marker_to_origin);
+
+    void feedCalibrationSetup(CalibrationSetup &setup, const std::string parent, const std::string child,
+    							const std::string parent_marker, const std::string child_marker);  // extend existing calibration setup by new information given
 
 
     //int camera_dof_;		// degrees of freedom the camera has
@@ -99,8 +121,9 @@ protected:
     std::string camera_optical_frame_;  // name of camera optical frame
     std::string calibration_storage_path_;  // path to data
     CalibrationInterface *calibration_interface_;
-    std::vector<CalibrationInfo> transforms_to_calibrate_;
+    //std::vector<CalibrationInfo> transforms_to_calibrate_;
     std::vector<int> calibration_order_;
+    std::vector<CalibrationSetup> calibration_setups_;
     //std::vector< std::vector<double> > camera_configurations_; // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
 
 };
