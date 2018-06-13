@@ -89,7 +89,7 @@ public:
 	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration); //Create corresponding robot interface by a user-defined ID.
 
 	bool moveRobot(int config_index);
-	bool lastConfigurationReached(int config_index);
+	int getConfigurationCount();
 
 	// camera calibration interface
 	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;

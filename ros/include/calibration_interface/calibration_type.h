@@ -82,7 +82,7 @@ public:
 
 	virtual bool moveRobot(int config_index);
 	bool moveCamera(const std::vector<double> &cam_configuration);
-	bool lastConfigurationReached(int config_index);
+	int getConfigurationCount();
 };
 
 

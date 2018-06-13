@@ -166,8 +166,8 @@ bool CalibrationType::moveCamera(const std::vector<double> &cam_configuration)
 	return true;
 }
 
-bool CalibrationType::lastConfigurationReached(int config_index)
+int CalibrationType::getConfigurationCount()
 {
-	return (config_index >= camera_configurations_.size());
+	return camera_configurations_.size();
 }
 
