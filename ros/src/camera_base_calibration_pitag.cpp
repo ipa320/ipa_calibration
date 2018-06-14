@@ -102,6 +102,8 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 				extrinsicCalibration(pattern_points_3d, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector, calibration_setups_[l]);
 			}
 		}
+
+		calibration_setups_[l].calibrated_ = true;  // setup has been calibrated
 	}
 	// display and save calibration parameters
 	RobotCalibration::displayAndSaveCalibrationResult("camera_calibration_pitag_urdf.txt");
@@ -136,7 +138,18 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, st
 			// grab transforms for each setup and store them
 			for ( int i=0; i<calibration_setups_.size(); ++i )
 			{
-				std::vector<cv::Mat> last_trafo_to_parent_markers;
+				// snapshot parent branch
+				populateTFSnapshots(calibration_setups_[i]);
+
+				// snapshot child branch
+				//populateTFSnapshots(calibration_setups_[i].child_branch);
+
+
+
+
+
+
+				/*std::vector<cv::Mat> last_trafo_to_parent_markers;
 				std::vector<cv::Mat> last_trafo_to_child_markers;
 				std::vector< std::vector<cv::Mat> > in_between_trafos_parent_branch;  // origin to parent_markers is parent branch
 				std::vector< std::vector<cv::Mat> > in_between_trafos_child_branch;
@@ -160,7 +173,46 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, st
 				}
 
 				// get in between trafos, that means in between the uncertain trafos there might be well known trafos. Retreive them from tf as well
-				// start here ...
+				std::vector<cv::Mat> in_between_trafos;
+				std::string first_parent_frame = calibration_setups_[i].origin_to_parent_marker_uncertainties_[0].parent_;  // remember, vector is sorted!
+				if ( first_parent_frame.compare(calibration_setups_[i].origin_) != 0 )  // add origin to first parent if it is not equal to origin (zero Mat in that case)
+				{
+					if ( transform_utilities::getTransform(transform_listener_, calibration_setups_[i].origin_, calibration_setups_[i].origin_to_parent_marker_uncertainties_[0].parent_, trafo, true) )
+						in_between_trafos.push_back(trafo);
+				}
+
+				for ( int j=0; j<calibration_setups_[i].origin_to_parent_marker_uncertainties_.size()-1; ++j )
+				{
+					CalibrationInfo current_info = calibration_setups_[i].origin_to_parent_marker_uncertainties_[j];
+					CalibrationInfo next_info = calibration_setups_[i].origin_to_parent_marker_uncertainties_[j+1];
+					if ( current_info.child_ == next_info.parent_ ) // transforms come one after the other, so there is no transform in between -> next
+						continue;
+
+					if ( transform_utilities::getTransform(transform_listener_, current_info.child_, next_info.parent_, trafo, true) )
+						in_between_trafos.push_back(trafo);
+				}
+
+				if ( !in_between_trafos.empty() )
+
+
+				// same for in between trafos of child branch
+				std::string first_parent_frame = calibration_setups_[i].origin_to_parent_marker_uncertainties_[0].parent_;  // remember, vector is sorted!
+				if ( first_parent_frame.compare(calibration_setups_[i].origin_) != 0 )  // add origin to first parent if it is not equal to origin (zero Mat in that case)
+				{
+					if ( transform_utilities::getTransform(transform_listener_, calibration_setups_[i].origin_, calibration_setups_[i].origin_to_parent_marker_uncertainties_[0].parent_, trafo, true) )
+						in_between_trafos_parent_branch.push_back(trafo);
+				}
+
+				for ( int j=0; j<calibration_setups_[i].origin_to_parent_marker_uncertainties_.size()-1; ++j )
+				{
+					CalibrationInfo current_info = calibration_setups_[i].origin_to_parent_marker_uncertainties_[j];
+					CalibrationInfo next_info = calibration_setups_[i].origin_to_parent_marker_uncertainties_[j+1];
+					if ( current_info.child_ == next_info.parent_ ) // transforms come one after the other, so there is no transform in between -> next
+						continue;
+
+					if ( transform_utilities::getTransform(transform_listener_, current_info.child_, next_info.parent_, trafo, true) )
+						in_between_trafos_parent_branch.push_back(trafo);
+				}*/
 			}
 
 			// retrieve transformations

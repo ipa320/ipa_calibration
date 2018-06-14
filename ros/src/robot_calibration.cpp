@@ -194,12 +194,17 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		std::string a_child_marker = calibration_setups_[i].transforms_to_calibrate_[0].child_markers_[0];  // get a child_marker, any is suffice
 
 		// retrieve the chain, that connects parent_marker and child_marker. Store it in two different vectors: one from origin to parent_marker and the other from origin to child_marker
-		getChain(a_parent_marker, a_child_marker, calibration_setups_[i].origin_, parent_marker_to_origin, child_marker_to_origin);
+		bool success = getChain(a_parent_marker, a_child_marker, calibration_setups_[i].origin_, parent_marker_to_origin, child_marker_to_origin);
+
+		if ( !success )
+			continue;
 
 		// 2. Find natural order of the frames to be calibrated in the resulting closed chain
 		// search trafos_to_calibrate inside parent_marker_to_origin backwards (from origin to parent_marker)
 		for ( int j=parent_marker_to_origin.size()-1; j>=1; --j )
 		{
+			calibration_setups_[i].parent_branch.push_back(parent_marker_to_origin[j]);  // store parent branch: from origin to frame before parent_markers
+
 			for ( int k=0; k<calibration_setups_[i].transforms_to_calibrate_.size(); ++k )
 			{
 				if ( parent_marker_to_origin[j].compare(calibration_setups_[i].transforms_to_calibrate_[k].parent_) == 0 &&
@@ -214,6 +219,8 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		// search trafos_to_calibrate inside child_marker_to_origin backwards (from origin to child_marker)
 		for ( int j=child_marker_to_origin.size()-1; j>=0; --j )
 		{
+			calibration_setups_[i].child_branch.push_back(child_marker_to_origin[j]);  // store parent branch: from origin to frame before child_markers
+
 			for ( int k=0; k<calibration_setups_[i].transforms_to_calibrate_.size(); ++k )
 			{
 				if ( child_marker_to_origin[j].compare(calibration_setups_[i].transforms_to_calibrate_[k].parent_) == 0 &&
@@ -339,7 +346,10 @@ bool RobotCalibration::getOrigin(const std::string parent_marker, const std::str
 	}
 
 	if ( parent_marker_to_origin.size() == 0 )
+	{
+		ROS_WARN("parent_marker_to_origin is empty for %s frame", parent_marker.c_str());
 		return false;
+	}
 
 	// check for first occurence of child_marker back-chain in parent_marker back-chain
 	parent = child_marker;
@@ -382,6 +392,12 @@ bool RobotCalibration::getChain(const std::string parent_marker, const std::stri
 		}
 	}
 
+	if ( parent_marker_to_origin.size() == 0 )
+	{
+		ROS_WARN("parent_marker_to_origin is empty for %s frame", parent_marker.c_str());
+		return false;
+	}
+
 	// fill child_marker_to_origin
 	parent = child_marker;
 	while ( parent.compare(origin) != 0 )  // build back chain from it until both chains (parent_marker_to_origin and child_marker_to_origin) meet in their mutual base
@@ -393,6 +409,12 @@ bool RobotCalibration::getChain(const std::string parent_marker, const std::stri
 			ROS_WARN("Could not create back chain for child_marker %s, no parent for %s!", child_marker.c_str(), parent.c_str());
 			return false;
 		}
+	}
+
+	if ( child_marker_to_origin.size() == 0 )
+	{
+		ROS_WARN("child_marker_to_origin is empty for %s frame", child_marker.c_str());
+		return false;
 	}
 
 	return true;
@@ -425,11 +447,99 @@ void RobotCalibration::feedCalibrationSetup(CalibrationSetup &setup, const std::
 
 	// add new transform to be calibrated
 	CalibrationInfo info;
-	info.parent_ = parent;
-	info.child_ = child;
-	info.parent_markers_.push_back(parent_marker);
-	info.child_markers_.push_back(child_marker);
-	setup.transforms_to_calibrate_.push_back(info);
+
+	bool success = transform_utilities::getTransform(transform_listener_, parent, child, info.current_trafo_);  // init uncertain trafo with what's in tf
+
+	if ( success )
+	{
+		info.parent_ = parent;
+		info.child_ = child;
+		info.parent_markers_.push_back(parent_marker);
+		info.child_markers_.push_back(child_marker);
+		setup.transforms_to_calibrate_.push_back(info);
+	}
+}
+
+void RobotCalibration::populateTFSnapshots(const CalibrationSetup &setup)
+{
+	// populate parent branch
+	TFSnapshot snapshot;
+	cv::Mat trafo;
+	for ( int i=0; i<setup.parent_branch.size()-1; ++i )
+	{
+		if ( transform_utilities::getTransform(transform_listener_, setup.parent_branch[i], setup.parent_branch[i+1], trafo, true) )
+		{
+			TFInfo info;
+			info.parent_ = setup.parent_branch[i];
+			info.child_ = setup.parent_branch[i+1];
+			info.transform_ = trafo;
+			snapshot.parent_branch_.push_back(info);
+		}
+	}
+
+	// populate child branch
+	for ( int i=0; i<setup.child_branch.size()-1; ++i )
+	{
+		if ( transform_utilities::getTransform(transform_listener_, setup.child_branch[i], setup.child_branch[i+1], trafo, true) )
+		{
+			TFInfo info;
+			info.parent_ = setup.child_branch[i];
+			info.child_ = setup.child_branch[i+1];
+			info.transform_ = trafo;
+			snapshot.child_branch_.push_back(info);
+		}
+	}
+
+	// populate parent markers
+	std::string last_parent_branch_frame = setup.parent_branch[setup.parent_branch.size()-1];
+	for ( int i=0; i<setup.origin_to_parent_marker_uncertainties_.size(); ++i )
+	{
+		std::vector<TFInfo> parent_markers;
+		for ( std::string parent_marker : setup.origin_to_parent_marker_uncertainties_[i].parent_markers_ )
+		{
+			if ( transform_utilities::getTransform(transform_listener_, last_parent_branch_frame, parent_marker, trafo, true) )
+			{
+				TFInfo info;
+				info.parent_ = last_parent_branch_frame;
+				info.child_ = parent_marker;
+				info.transform_ = trafo;
+				parent_markers.push_back(info);
+			}
+		}
+
+		// std::vector<TFInfo> child_markers;
+		// for ( std::string child_marker : setup.origin_to_parent_marker_uncertainties_[i].child_markers_ )
+		// still missing, implement that, or not?
+
+		snapshot.parent_markers_.push_back(parent_markers);
+	}
+
+	// populate child markers
+	std::string last_child_branch_frame = setup.child_branch[setup.child_branch.size()-1];
+	for ( int i=0; i<setup.origin_to_child_marker_uncertainties_.size(); ++i )
+	{
+		// for ( std::string parent_marker : setup.origin_to_parent_marker_uncertainties_[i].child_markers_ )  // is missing here, implement that
+
+		std::vector<TFInfo> child_markers;
+		for ( std::string child_marker : setup.origin_to_child_marker_uncertainties_[i].parent_markers_ )
+		{
+			if ( transform_utilities::getTransform(transform_listener_, last_child_branch_frame, child_marker, trafo, true) )
+			{
+				TFInfo info;
+				info.parent_ = last_child_branch_frame;
+				info.child_ = child_marker;
+				info.transform_ = trafo;
+				child_markers.push_back(info);
+			}
+		}
+
+		snapshot.parent_markers_.push_back(child_markers);
+	}
+}
+
+bool RobotCalibration::checkAddTFTransform(const std::string parent, const std::string child)
+{
+	return true;
 }
 
 void RobotCalibration::displayAndSaveCalibrationResult(std::string output_file_name)

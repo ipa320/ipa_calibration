@@ -73,10 +73,28 @@ struct CalibrationInfo  // defines one uncertain transform in the kinematic chai
 
 struct CalibrationSetup  // defines one calibration setup, consisting of x transforms to be calibrated via parent and child marker
 {
+	bool calibrated_;  // marks whether this setup has already been done
 	std::string origin_;  // this is not the robot's base, but the frame where two transformations chains meet
 	std::vector<CalibrationInfo> origin_to_parent_marker_uncertainties_;
 	std::vector<CalibrationInfo> origin_to_child_marker_uncertainties_;
 	std::vector<CalibrationInfo> transforms_to_calibrate_;  // unsorted list, only temporarily in use during initialization
+	std::vector<std::string> parent_branch;  // contains all frames from origin up to the frame before parent_markers
+	std::vector<std::string> child_branch;  // contains all frames from origin up to the frame before child_markers
+};
+
+struct TFInfo  // used to make snapshots from tf tree
+{
+	std::string parent_;
+	std::string child_;
+	cv::Mat transform_;
+};
+
+struct TFSnapshot
+{
+	std::vector< std::vector<TFInfo> > parent_markers_;  // each uncertain trafo on parent branch can have a different set of parent_markers
+	std::vector< std::vector<TFInfo> > child_markers_;  // same for child branch
+	std::vector<TFInfo> parent_branch_;
+	std::vector<TFInfo> child_branch_;
 };
 
 
@@ -112,6 +130,10 @@ protected:
     void feedCalibrationSetup(CalibrationSetup &setup, const std::string parent, const std::string child,
     							const std::string parent_marker, const std::string child_marker);  // extend existing calibration setup by new information given
 
+    void populateTFSnapshots(const CalibrationSetup &setup);
+
+    bool checkAddTFTransform(const std::string parent, const std::string child);
+
 
     //int camera_dof_;		// degrees of freedom the camera has
     int optimization_iterations_;	// number of iterations for optimization
@@ -124,6 +146,7 @@ protected:
     //std::vector<CalibrationInfo> transforms_to_calibrate_;
     std::vector<int> calibration_order_;
     std::vector<CalibrationSetup> calibration_setups_;
+    std::vector<TFSnapshot> tf_snapshots;  // each robot configuration has its own TFSnapshot vector
     //std::vector< std::vector<double> > camera_configurations_; // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
 
 };
