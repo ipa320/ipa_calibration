@@ -173,6 +173,10 @@ namespace RelativeLocalizationUtilities
 					rotcv.at<double>(v,u) = rot[v].m_floats[u];
 			for (int v=0; v<3; ++v)
 				transcv.at<double>(v) = trans.m_floats[v];
+
+			if ( !T.empty() )  // release memory when T is not empty
+				T.release();
+
 			T = makeTransform(rotcv, transcv);
 		}
 		catch (tf::TransformException& ex)
