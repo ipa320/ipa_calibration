@@ -68,15 +68,15 @@ struct CalibrationInfo  // defines one uncertain transform in the kinematic chai
 	std::vector<std::string> child_markers_;  // marker_frame one reaches from child frame onwards
     cv::Mat current_trafo_;
     //int weight_;  // determines the order of calibration. The highest weighted transform in a setup will be calibrated first.
-    int trafo_until_next_gap_idx_;  // index to between_gaps trafo
+    //int trafo_until_next_gap_idx_;  // index to between_gaps trafo
 };
 
 struct CalibrationSetup  // defines one calibration setup, consisting of x transforms to be calibrated via parent and child marker
 {
 	bool calibrated_;  // marks whether this setup has already been done
 	std::string origin_;  // this is not the robot's base, but the frame where two transformations chains meet
-	std::vector<CalibrationInfo> origin_to_parent_marker_uncertainties_;
-	std::vector<CalibrationInfo> origin_to_child_marker_uncertainties_;
+	std::vector<CalibrationInfo> origin_to_parent_marker_uncertainties_;  // parent branch uncertainties
+	std::vector<CalibrationInfo> origin_to_child_marker_uncertainties_;  // child branch uncertainties
 	std::vector<CalibrationInfo> transforms_to_calibrate_;  // unsorted list, only temporarily in use during initialization
 	std::vector<std::string> parent_branch;  // contains all frames from origin up to the frame before parent_markers
 	std::vector<std::string> child_branch;  // contains all frames from origin up to the frame before child_markers
@@ -91,8 +91,10 @@ struct TFInfo  // used to make snapshots from tf tree
 
 struct TFSnapshot
 {
-	std::vector< std::vector<TFInfo> > parent_markers_;  // each uncertain trafo on parent branch can have a different set of parent_markers
-	std::vector< std::vector<TFInfo> > child_markers_;  // same for child branch
+	std::vector< std::vector<TFInfo> > parent_branch_parent_markers_;  // each uncertain trafo on parent branch can have a different set of parent_markers
+	std::vector< std::vector<TFInfo> > parent_branch_child_markers_;  // each uncertain trafo on parent branch can have a different set of child_markers
+	std::vector< std::vector<TFInfo> > child_branch_parent_markers_;  // same for child branch
+	std::vector< std::vector<TFInfo> > child_branch_child_markers_;
 	std::vector<TFInfo> parent_branch_;
 	std::vector<TFInfo> child_branch_;
 };
@@ -113,12 +115,14 @@ protected:
     // displays the calibration result in the urdf file's format and also stores the screen output to a file
     void displayAndSaveCalibrationResult(std::string output_file_name);
 
-    void extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
+    /*void extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
                               std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> >& T_between_gaps_vector,
-                              std::vector<cv::Mat>& T_gaplast_to_marker_vector, const CalibrationSetup &setup);
+                              std::vector<cv::Mat>& T_gaplast_to_marker_vector, const CalibrationSetup &setup);*/
 
-    bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat>& T_between_gaps,
-                                       cv::Mat& T_gaplast_to_marker, const std::string& marker_frame);
+    void extrinsicCalibration(const CalibrationSetup &setup, const int current_uncertainty_idx);
+
+    /*bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat>& T_between_gaps,
+                                       cv::Mat& T_gaplast_to_marker, const std::string& marker_frame);*/
 
     void getTransformByIndex(const int index);
 
@@ -130,9 +134,11 @@ protected:
     void feedCalibrationSetup(CalibrationSetup &setup, const std::string parent, const std::string child,
     							const std::string parent_marker, const std::string child_marker);  // extend existing calibration setup by new information given
 
-    void populateTFSnapshots(const CalibrationSetup &setup);
+    void populateTFSnapshot(const CalibrationSetup &setup);
 
-    bool checkAddTFTransform(const std::string parent, const std::string child);
+    bool isParentBranchUncertainty(const CalibrationSetup &setup, const int uncertainty_idx, int &branch_idx);  // returns whether uncertainty is part of parent branch, stores found index (for both parent and child branch)
+
+    bool buildTransform(const std::string start, const std::string end, cv::Mat &trafo);
 
 
     //int camera_dof_;		// degrees of freedom the camera has

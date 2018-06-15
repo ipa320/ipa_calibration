@@ -76,13 +76,16 @@ CameraBaseCalibrationPiTag::~CameraBaseCalibrationPiTag()
 bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 {
 	// acquire images
-	std::vector<cv::Mat> T_gapfirst_to_marker_vector;
+	/*std::vector<cv::Mat> T_gapfirst_to_marker_vector;
 	std::vector< std::vector<cv::Mat> > T_between_gaps_vector;
 	std::vector<cv::Mat> T_gaplast_to_marker_vector;
-	acquireCalibrationData(load_data, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector);
+	acquireCalibrationData(load_data, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector);*/
+	acquireTFData(load_data);  // make a snapshot of all relevant tf transforms
 
 	// prepare marker 3d points (actually only the point (0,0,0) in the marker coordinate system
-	std::vector< std::vector<cv::Point3f> > pattern_points_3d(T_gapfirst_to_marker_vector.size(), std::vector<cv::Point3f>(1, cv::Point3f(0.f, 0.f, 0.f)));
+	std::vector< std::vector<cv::Point3f> > pattern_points_3d;//(T_gapfirst_to_marker_vector.size(), std::vector<cv::Point3f>(1, cv::Point3f(0.f, 0.f, 0.f)));
+
+	//calibration_interface_->getPatternPoints(pattern_points_3d);
 
 	// extrinsic calibration optimization
 	for ( int l=0; l<calibration_setups_.size(); ++l )
@@ -99,7 +102,8 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 		{
 			for ( int j=0; j<calibration_setups_[l].transforms_to_calibrate_.size(); ++j )
 			{
-				extrinsicCalibration(pattern_points_3d, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector, calibration_setups_[l]);
+				// HERE NEEDS TO BE AN ORDER IN PLACE SO USER CAN DEFINE IT!
+				extrinsicCalibration(calibration_setups_[l], j);
 			}
 		}
 
@@ -112,8 +116,7 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 	return true;
 }
 
-bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
-		std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_marker_vector)
+bool CameraBaseCalibrationPiTag::acquireTFData(const bool load_data)
 {
 	std::stringstream path;
 	path << calibration_storage_path_ << "pitag_data.yml";  // retrieve from interface instead!
@@ -138,103 +141,8 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, st
 			// grab transforms for each setup and store them
 			for ( int i=0; i<calibration_setups_.size(); ++i )
 			{
-				// snapshot parent branch
-				populateTFSnapshots(calibration_setups_[i]);
-
-				// snapshot child branch
-				//populateTFSnapshots(calibration_setups_[i].child_branch);
-
-
-
-
-
-
-				/*std::vector<cv::Mat> last_trafo_to_parent_markers;
-				std::vector<cv::Mat> last_trafo_to_child_markers;
-				std::vector< std::vector<cv::Mat> > in_between_trafos_parent_branch;  // origin to parent_markers is parent branch
-				std::vector< std::vector<cv::Mat> > in_between_trafos_child_branch;
-
-				// get last frame in parent_marker vector (remember, the transforms in there are in order, so the last is actually the last in tf tree) and
-				// retrieve the trafo from child of last frame to all parent_markers
-				cv::Mat trafo;
-				CalibrationInfo info = calibration_setups_[i].origin_to_parent_marker_uncertainties_[calibration_setups_[i].origin_to_parent_marker_uncertainties_.size()-1];  // take last entry
-				for ( int j=0; j<info.parent_markers_.size(); ++j )
-				{
-					if ( transform_utilities::getTransform(transform_listener_, info.child_, info.parent_markers_[j], trafo, true) )
-						last_trafo_to_parent_markers.push_back(trafo);
-				}
-
-				// same for child_marker vector
-				info = calibration_setups_[i].origin_to_child_marker_uncertainties_[calibration_setups_[i].origin_to_parent_marker_uncertainties_.size()-1];  // take last entry
-				for ( int j=0; j<info.child_markers_.size(); ++j )
-				{
-					if ( transform_utilities::getTransform(transform_listener_, info.child_, info.child_markers_[j], trafo, true) )
-						last_trafo_to_child_markers.push_back(trafo);
-				}
-
-				// get in between trafos, that means in between the uncertain trafos there might be well known trafos. Retreive them from tf as well
-				std::vector<cv::Mat> in_between_trafos;
-				std::string first_parent_frame = calibration_setups_[i].origin_to_parent_marker_uncertainties_[0].parent_;  // remember, vector is sorted!
-				if ( first_parent_frame.compare(calibration_setups_[i].origin_) != 0 )  // add origin to first parent if it is not equal to origin (zero Mat in that case)
-				{
-					if ( transform_utilities::getTransform(transform_listener_, calibration_setups_[i].origin_, calibration_setups_[i].origin_to_parent_marker_uncertainties_[0].parent_, trafo, true) )
-						in_between_trafos.push_back(trafo);
-				}
-
-				for ( int j=0; j<calibration_setups_[i].origin_to_parent_marker_uncertainties_.size()-1; ++j )
-				{
-					CalibrationInfo current_info = calibration_setups_[i].origin_to_parent_marker_uncertainties_[j];
-					CalibrationInfo next_info = calibration_setups_[i].origin_to_parent_marker_uncertainties_[j+1];
-					if ( current_info.child_ == next_info.parent_ ) // transforms come one after the other, so there is no transform in between -> next
-						continue;
-
-					if ( transform_utilities::getTransform(transform_listener_, current_info.child_, next_info.parent_, trafo, true) )
-						in_between_trafos.push_back(trafo);
-				}
-
-				if ( !in_between_trafos.empty() )
-
-
-				// same for in between trafos of child branch
-				std::string first_parent_frame = calibration_setups_[i].origin_to_parent_marker_uncertainties_[0].parent_;  // remember, vector is sorted!
-				if ( first_parent_frame.compare(calibration_setups_[i].origin_) != 0 )  // add origin to first parent if it is not equal to origin (zero Mat in that case)
-				{
-					if ( transform_utilities::getTransform(transform_listener_, calibration_setups_[i].origin_, calibration_setups_[i].origin_to_parent_marker_uncertainties_[0].parent_, trafo, true) )
-						in_between_trafos_parent_branch.push_back(trafo);
-				}
-
-				for ( int j=0; j<calibration_setups_[i].origin_to_parent_marker_uncertainties_.size()-1; ++j )
-				{
-					CalibrationInfo current_info = calibration_setups_[i].origin_to_parent_marker_uncertainties_[j];
-					CalibrationInfo next_info = calibration_setups_[i].origin_to_parent_marker_uncertainties_[j+1];
-					if ( current_info.child_ == next_info.parent_ ) // transforms come one after the other, so there is no transform in between -> next
-						continue;
-
-					if ( transform_utilities::getTransform(transform_listener_, current_info.child_, next_info.parent_, trafo, true) )
-						in_between_trafos_parent_branch.push_back(trafo);
-				}*/
-			}
-
-			// retrieve transformations
-			std::vector<cv::Mat> T_camera_optical_to_markers = calibration_interface_->getCameraOpticalToMarkers();
-
-			// How to make several calibration chains possible here? start and endpoint are needed
-
-			if ( T_camera_optical_to_markers.empty() )
-				continue;
-
-			cv::Mat T_gapfirst_to_marker, T_gaplast_to_camera_optical, T_camera_optical_to_marker, T_gaplast_to_marker;
-			std::vector<cv::Mat> T_between_gaps;
-			bool result = calculateTransformationChains(T_gapfirst_to_marker, T_between_gaps, T_gaplast_to_camera_optical, marker_frame);
-
-			if ( result )
-			{
-				for ( int marker_counter = 0; marker_counter < T_camera_optical_to_markers.size(); ++marker_counter )
-				{
-					T_gapfirst_to_marker_vector.push_back()
-					T_between_gaps_vector.push_back(T_between_gaps);
-					T_gaplast_to_marker_vector.push_back(T_gaplast_to_marker);
-				}
+				// snapshot necessary tf data: 1) all transforms in parent and child branch, 2) all parent and child marker transforms for each uncertain trafo
+				populateTFSnapshot(calibration_setups_[i]);
 			}
 		}
 	}
@@ -242,7 +150,8 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, st
 	{
 		// load data from file
 		cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
-		if (fs.isOpened())
+		// discuss this functionality with Rirchard, would be hard to implement due to complex structs that have to be stored and loaded
+		/*if (fs.isOpened())
 		{
 			fs["T_gapfirst_to_marker_vector"] >> T_gapfirst_to_marker_vector;
 			fs["T_gaplast_to_marker_vector"] >> T_gaplast_to_marker_vector;
@@ -251,12 +160,12 @@ bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, st
 		else
 		{
 			ROS_WARN("Could not read transformations from file '%s'.", path.str().c_str());
-		}
+		}*/
 
 		fs.release();
 	}
 
-	std::cout << "Captured markers: " << T_gaplast_to_marker_vector.size() << std::endl;
+	//std::cout << "Captured markers: " << T_gaplast_to_marker_vector.size() << std::endl;
 	return true;
 }
 

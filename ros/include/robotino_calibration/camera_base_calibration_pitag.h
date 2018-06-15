@@ -77,8 +77,10 @@ protected:
     // acquires images automatically from all set up robot configurations and detects the pitags
     // @param load_images loads calibration images and transformations from hard disk if set to true (transformations are stored automatically)
     // retrieves all relevant transformations
-    bool acquireCalibrationData(const bool load_data, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
-                                std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_marker_vector);
+    /*bool acquireCalibrationData(const bool load_data, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,
+                                std::vector< std::vector<cv::Mat> >& T_between_gaps_vector, std::vector<cv::Mat>& T_gaplast_to_marker_vector);*/
+
+    bool acquireTFData(const bool load_data);
 
     ros::ServiceClient pitag_client_;
     std::string marker_frame_base_name_;
