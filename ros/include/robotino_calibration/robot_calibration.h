@@ -138,7 +138,9 @@ protected:
 
     bool isParentBranchUncertainty(const CalibrationSetup &setup, const int uncertainty_idx, int &branch_idx);  // returns whether uncertainty is part of parent branch, stores found index (for both parent and child branch)
 
-    bool buildTransform(const std::string start, const std::string end, cv::Mat &trafo);
+    bool buildTransformChain(const std::string start, const std::string end, const std::vector<TFInfo> &branch, cv::Mat &trafo);  // returns the transform between two arbitrary points in a branch
+
+    bool retrieveTransform(const std::string start, const std::string end, const std::vector<TFInfo> &branch, cv::Mat &trafo);  // returns the transform between two points in a branch that are neighbours
 
 
     //int camera_dof_;		// degrees of freedom the camera has
