@@ -73,19 +73,9 @@ CameraBaseCalibrationPiTag::~CameraBaseCalibrationPiTag()
 {
 }
 
-bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
+/*bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 {
-	// acquire images
-	/*std::vector<cv::Mat> T_gapfirst_to_marker_vector;
-	std::vector< std::vector<cv::Mat> > T_between_gaps_vector;
-	std::vector<cv::Mat> T_gaplast_to_marker_vector;
-	acquireCalibrationData(load_data, T_gapfirst_to_marker_vector, T_between_gaps_vector, T_gaplast_to_marker_vector);*/
-	acquireTFData(load_data);  // make a snapshot of all relevant tf transforms
-
-	// prepare marker 3d points (actually only the point (0,0,0) in the marker coordinate system
-	std::vector< std::vector<cv::Point3f> > pattern_points_3d;//(T_gapfirst_to_marker_vector.size(), std::vector<cv::Point3f>(1, cv::Point3f(0.f, 0.f, 0.f)));
-
-	//calibration_interface_->getPatternPoints(pattern_points_3d);
+	acquireTFData(load_data);  // make snapshots of all relevant tf transforms for every robot configuration
 
 	// extrinsic calibration optimization
 	for ( int l=0; l<calibration_setups_.size(); ++l )
@@ -93,17 +83,21 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 		int iterations = 0;
 
 		// if there is only one trafo to calibrate, we don't need to optimize over iterations
-		if ( calibration_setups_[l].transforms_to_calibrate_.size() > 1 )
+		if ( calibration_setups_[l].uncertainties_list_.size() > 1 )
 			iterations = optimization_iterations_;
 		else
 			iterations = 1;
 
 		for (int i=0; i<iterations; ++i)
 		{
-			for ( int j=0; j<calibration_setups_[l].transforms_to_calibrate_.size(); ++j )
+			for ( int j=0; j<calibration_setups_[l].uncertainties_list_.size(); ++j )
 			{
 				// HERE NEEDS TO BE AN ORDER IN PLACE SO USER CAN DEFINE IT!
-				extrinsicCalibration(calibration_setups_[l], j);
+				if ( !extrinsicCalibration(calibration_setups_[l], j) )
+				{
+					ROS_ERROR("Calibration failed!");
+					return false;
+				}
 			}
 		}
 
@@ -114,9 +108,9 @@ bool CameraBaseCalibrationPiTag::calibrateCameraToBase(const bool load_data)
 
 	calibrated_ = true;
 	return true;
-}
+}*/
 
-bool CameraBaseCalibrationPiTag::acquireTFData(const bool load_data)
+/*bool CameraBaseCalibrationPiTag::acquireTFData(const bool load_data)
 {
 	std::stringstream path;
 	path << calibration_storage_path_ << "pitag_data.yml";  // retrieve from interface instead!
@@ -151,7 +145,7 @@ bool CameraBaseCalibrationPiTag::acquireTFData(const bool load_data)
 		// load data from file
 		cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
 		// discuss this functionality with Rirchard, would be hard to implement due to complex structs that have to be stored and loaded
-		/*if (fs.isOpened())
+		if (fs.isOpened())
 		{
 			fs["T_gapfirst_to_marker_vector"] >> T_gapfirst_to_marker_vector;
 			fs["T_gaplast_to_marker_vector"] >> T_gaplast_to_marker_vector;
@@ -160,14 +154,14 @@ bool CameraBaseCalibrationPiTag::acquireTFData(const bool load_data)
 		else
 		{
 			ROS_WARN("Could not read transformations from file '%s'.", path.str().c_str());
-		}*/
+		}
 
 		fs.release();
 	}
 
 	//std::cout << "Captured markers: " << T_gaplast_to_marker_vector.size() << std::endl;
 	return true;
-}
+}*/
 
 
 /*bool CameraBaseCalibrationPiTag::acquireCalibrationData(const bool load_data, std::vector<cv::Mat>& T_gapfirst_to_marker_vector,

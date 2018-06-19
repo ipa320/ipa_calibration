@@ -53,7 +53,8 @@
 
 // ROS
 #include <ros/ros.h>
-
+#include <string>
+#include <opencv2/opencv.hpp>
 
 class CalibrationInterface
 {
@@ -66,8 +67,13 @@ public:
 	virtual ~CalibrationInterface();
 
 	// apply new configuration to robot
-	virtual bool moveRobot(int index) = 0;
+	virtual bool moveRobot(int current_index) = 0;
+
 	virtual int getConfigurationCount() = 0;
+
+	virtual void waitForTransforms(int current_index) = 0;
+
+	virtual void getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d) = 0;
 };
 
 

@@ -75,9 +75,9 @@ struct CalibrationSetup  // defines one calibration setup, consisting of x trans
 {
 	bool calibrated_;  // marks whether this setup has already been done
 	std::string origin_;  // this is not the robot's base, but the frame where two transformations chains meet
-	std::vector<CalibrationInfo> origin_to_parent_marker_uncertainties_;  // parent branch uncertainties
-	std::vector<CalibrationInfo> origin_to_child_marker_uncertainties_;  // child branch uncertainties
-	std::vector<CalibrationInfo> transforms_to_calibrate_;  // unsorted list, only temporarily in use during initialization
+	std::vector<CalibrationInfo> origin_to_parent_marker_uncertainties_;  // parent branch uncertainties, sorted
+	std::vector<CalibrationInfo> origin_to_child_marker_uncertainties_;  // child branch uncertainties, sorted
+	std::vector<CalibrationInfo> uncertainties_list_;  // unsorted list of uncertainties
 	std::vector<std::string> parent_branch;  // contains all frames from origin up to the frame before parent_markers
 	std::vector<std::string> child_branch;  // contains all frames from origin up to the frame before child_markers
 };
@@ -112,20 +112,6 @@ protected:
 
     void createStorageFolder();
 
-    // displays the calibration result in the urdf file's format and also stores the screen output to a file
-    void displayAndSaveCalibrationResult(std::string output_file_name);
-
-    /*void extrinsicCalibration(std::vector< std::vector<cv::Point3f> >& pattern_points_3d,
-                              std::vector<cv::Mat>& T_gapfirst_to_marker_vector, std::vector< std::vector<cv::Mat> >& T_between_gaps_vector,
-                              std::vector<cv::Mat>& T_gaplast_to_marker_vector, const CalibrationSetup &setup);*/
-
-    void extrinsicCalibration(const CalibrationSetup &setup, const int current_uncertainty_idx);
-
-    /*bool calculateTransformationChains(cv::Mat& T_gapfirst_to_marker, std::vector<cv::Mat>& T_between_gaps,
-                                       cv::Mat& T_gaplast_to_marker, const std::string& marker_frame);*/
-
-    void getTransformByIndex(const int index);
-
     bool getOrigin(const std::string parent_marker, const std::string child_marker, std::string &origin);  // returns mutual frame of parent_marker and child_marker back-chains
 
     bool getChain(const std::string parent_marker, const std::string child_marker, const std::string origin,
@@ -134,28 +120,32 @@ protected:
     void feedCalibrationSetup(CalibrationSetup &setup, const std::string parent, const std::string child,
     							const std::string parent_marker, const std::string child_marker);  // extend existing calibration setup by new information given
 
+    bool startCalibration(const bool load_data_from_drive);
+
+    bool acquireTFData(const bool load_data);
+
     void populateTFSnapshot(const CalibrationSetup &setup);
 
     bool isParentBranchUncertainty(const CalibrationSetup &setup, const int uncertainty_idx, int &branch_idx);  // returns whether uncertainty is part of parent branch, stores found index (for both parent and child branch)
 
     bool buildTransformChain(const std::string start, const std::string end, const std::vector<TFInfo> &branch, cv::Mat &trafo);  // returns the transform between two arbitrary points in a branch
 
-    bool retrieveTransform(const std::string start, const std::string end, const std::vector<TFInfo> &branch, cv::Mat &trafo);  // returns the transform between two points in a branch that are neighbours
+    bool retrieveTransform(const std::string parent, const std::string child, const std::vector<TFInfo> &branch, cv::Mat &trafo);  // returns the transform between two points in a branch that are neighbours
+
+    bool extrinsicCalibration(const CalibrationSetup &setup, const int current_uncertainty_idx);
+
+    // displays the calibration result on the screen and also stores it to a file in the urdf file's format
+    void displayAndSaveCalibrationResult(std::string output_file_name);
 
 
-    //int camera_dof_;		// degrees of freedom the camera has
     int optimization_iterations_;	// number of iterations for optimization
-    bool calibrated_;
+    bool calibrated_;  // calibration has successfully been finished
     tf::TransformListener transform_listener_;
     ros::NodeHandle node_handle_;
-    std::string camera_optical_frame_;  // name of camera optical frame
     std::string calibration_storage_path_;  // path to data
     CalibrationInterface *calibration_interface_;
-    //std::vector<CalibrationInfo> transforms_to_calibrate_;
-    std::vector<int> calibration_order_;
     std::vector<CalibrationSetup> calibration_setups_;
     std::vector<TFSnapshot> tf_snapshots;  // each robot configuration has its own TFSnapshot vector
-    //std::vector< std::vector<double> > camera_configurations_; // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
 
 };
 
