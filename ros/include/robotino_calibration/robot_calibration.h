@@ -55,6 +55,7 @@
 // ROS
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
+
 #include <robotino_calibration/calibration_interface.h>
 #include <opencv2/opencv.hpp>
 #include <vector>
@@ -107,6 +108,8 @@ public:
     RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface);
     virtual ~RobotCalibration();
 
+    bool startCalibration(const bool load_data_from_drive);  // starts the calibration process
+
 
 protected:
 
@@ -119,8 +122,6 @@ protected:
 
     void feedCalibrationSetup(CalibrationSetup &setup, const std::string parent, const std::string child,
     							const std::string parent_marker, const std::string child_marker);  // extend existing calibration setup by new information given
-
-    bool startCalibration(const bool load_data_from_drive);
 
     bool acquireTFData(const bool load_data);
 

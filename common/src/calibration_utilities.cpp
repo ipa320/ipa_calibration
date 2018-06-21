@@ -107,7 +107,7 @@ namespace calibration_utilities
 	}
 
 	// generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates
-	void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images)
+	/*void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images)
 	{
 		// prepare chessboard 3d points
 		pattern_points.clear();
@@ -117,7 +117,7 @@ namespace calibration_utilities
 			for (int u=0; u<pattern_size.width; ++u)
 				pattern_points[0][v*pattern_size.width+u] = cv::Point3f(u*chessboard_cell_size, v*chessboard_cell_size, 0.f);
 		pattern_points.resize(number_images, pattern_points[0]);
-	}
+	}*/
 
 	double computeReprojectionError( const std::vector<std::vector<cv::Point3f> >& objectPoints,
 										const std::vector<std::vector<cv::Point2f> >& imagePoints,

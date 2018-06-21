@@ -503,10 +503,10 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 				// retry here?
 			}
 
-			// wait a moment here to mitigate shaking camera effects.
-			ros::Duration(3).sleep();
+			// wait a moment here to mitigate shaking camera effects and give tf time to update
+			ros::Duration(1).sleep();
 
-			calibration_interface_->waitForTransforms(config_counter);  // give user possibility to halt here until tf has been provided with updated transforms (camera detections)
+			calibration_interface_->preSnapshot(config_counter);  // give user possibility to execute code before snapshots take place
 
 			// grab transforms for each setup and store them
 			for ( int i=0; i<calibration_setups_.size(); ++i )

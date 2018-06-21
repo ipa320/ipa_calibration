@@ -69,10 +69,13 @@ public:
 	// apply new configuration to robot
 	virtual bool moveRobot(int current_index) = 0;
 
+	// get the amount of robot (movement) configurations that have been created by user
 	virtual int getConfigurationCount() = 0;
 
-	virtual void waitForTransforms(int current_index) = 0;
+	// give user the chance to execute some code before tf tree will be snapshotted (e.g. wait for transforms to be ready, wait to mitigate shaking effects in robot's kinematic after moving)
+	virtual void preSnapshot(int current_index) = 0;
 
+	// get the pattern points (in 3 dimensions) for each marker in local marker's frame. markers can have different patterns, hence one can mix pitags, checkerboards, etc...
 	virtual void getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d) = 0;
 };
 

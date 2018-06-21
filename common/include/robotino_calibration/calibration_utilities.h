@@ -75,7 +75,7 @@ namespace calibration_utilities
     bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image);
 
     // generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates
-    void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images);
+    //void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images);
 
     double computeReprojectionError( const std::vector<std::vector<cv::Point3f> >& objectPoints,
                                     const std::vector<std::vector<cv::Point2f> >& imagePoints,
