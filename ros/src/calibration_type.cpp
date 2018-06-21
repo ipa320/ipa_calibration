@@ -170,4 +170,3 @@ int CalibrationType::getConfigurationCount()
 {
 	return camera_configurations_.size();
 }
-

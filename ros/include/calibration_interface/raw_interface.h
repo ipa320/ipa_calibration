@@ -81,7 +81,7 @@ protected:
 
 
 public:
-	RAWInterface(ros::NodeHandle nh, bool do_arm_calibration);
+	RAWInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration);
 	~RAWInterface();
 
 	// camera calibration interface

@@ -52,15 +52,26 @@
 #define CALIBRATION_MARKER_H_
 
 
+#include <ros/ros.h>
+#include <opencv2/opencv.hpp>
+
+
 class CalibrationMarker
 {
+
+protected:
+
+	ros::NodeHandle node_handle_;
+	bool initialized_;
+
 
 public:
 
 	CalibrationMarker();
 	virtual ~CalibrationMarker();
 
-	virtual void setupTFFrames() = 0;
+	virtual void initialize(ros::NodeHandle nh);
+	virtual void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d) = 0;
 
 };
 

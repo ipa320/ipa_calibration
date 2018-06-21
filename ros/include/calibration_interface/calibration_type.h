@@ -52,9 +52,9 @@
 #define CALIBRATION_TYPE_H_
 
 
+#include <calibration_interface/ipa_interface.h>
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
-#include <calibration_interface/ipa_interface.h>
 
 
 #define NUM_MOVE_TRIES 4

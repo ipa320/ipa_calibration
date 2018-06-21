@@ -56,8 +56,8 @@
 #include <actionlib/client/simple_action_client.h>
 
 
-RAWInterface::RAWInterface(ros::NodeHandle nh, bool do_arm_calibration) :
-				IPAInterface(nh, do_arm_calibration), arm_state_current_(0)
+RAWInterface::RAWInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration) :
+				IPAInterface(nh, calib_type, calib_marker, do_arm_calibration), arm_state_current_(0)
 {
 	std::cout << "\n========== RAWInterface Parameters ==========\n";
 

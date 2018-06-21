@@ -80,7 +80,7 @@ protected:
 	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
 
 public:
-	RobotinoInterface(ros::NodeHandle nh, bool do_arm_calibration);
+	RobotinoInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration);
 	~RobotinoInterface();
 
 	// camera calibration interface

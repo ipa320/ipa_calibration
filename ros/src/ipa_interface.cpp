@@ -63,8 +63,8 @@ IPAInterface::IPAInterface()
 {
 }
 
-IPAInterface::IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, bool do_arm_calibration) :
-				CalibrationInterface(nh), calibration_type_(calib_type), arm_calibration_(do_arm_calibration)
+IPAInterface::IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration) :
+				CalibrationInterface(nh), calibration_type_(calib_type), calibration_marker_(calib_marker), arm_calibration_(do_arm_calibration)
 {
 	if ( calibration_type_ != 0 )
 		calibration_type_->initialize(nh, this);
@@ -73,27 +73,38 @@ IPAInterface::IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, bool
 		ROS_FATAL("IPAInterface::IPAInterface - Calibration type has not been created!");
 		throw std::exception();
 	}
+
+	if ( calibration_marker_ != 0 )
+		calibration_marker_->initialize(nh);
+	else
+	{
+		ROS_FATAL("IPAInterface::IPAInterface - Calibration marker has not been created!");
+		throw std::exception();
+	}
 }
 
 IPAInterface::~IPAInterface()
 {
 	if ( calibration_type_ != 0 )
 		delete calibration_type_;
+
+	if ( calibration_marker_ != 0 )
+		delete calibration_marker_;
 }
 
 // You can add further interfaces for other robots in here.
-CalibrationInterface* IPAInterface::createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration)
+CalibrationInterface* IPAInterface::createInterfaceByID(int ID, ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration)
 {
 	switch(ID)
 	{
 		case ROB_ROBOTINO:
-				return (new RobotinoInterface(nh, do_arm_calibration));
+				return (new RobotinoInterface(nh, calib_type, calib_marker, do_arm_calibration));
 				break;
 		case ROB_RAW_3_1:
-				return (new RAWInterface(nh, do_arm_calibration));
+				return (new RAWInterface(nh, calib_type, calib_marker, do_arm_calibration));
 				break;
 		case ROB_COB:
-				return (new CobInterface(nh, do_arm_calibration));
+				return (new CobInterface(nh, calib_type, calib_marker, do_arm_calibration));
 				break;
 		default:
 				return 0;
@@ -120,4 +131,18 @@ int IPAInterface::getConfigurationCount()
 		ROS_ERROR("IPAInterface::getConfigurationCount - Calibration type has not been created!");
 		return 0;
 	}
+}
+
+void IPAInterface::preSnapshot(int current_index)
+{
+	ros::Duration(2).sleep();  // wait some more to mitigate shaking effects as our robot's kinematics are not that stiff
+}
+
+// we are not making use of marker_frame, as we do either use pitags or checkerboards throughout the whole calibration, so we do not mix markers
+void IPAInterface::getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d)
+{
+	if ( calibration_marker_ != 0 )
+		calibration_marker_->getPatternPoints3D(pattern_points_3d);
+	else
+		ROS_ERROR("IPAInterface::getPatternPoints3D - Calibration marker has not been created!");
 }

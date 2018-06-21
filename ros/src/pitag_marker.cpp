@@ -57,12 +57,20 @@ PitagMarker::PitagMarker()
 
 }
 
+// nothing special to do here
+void PitagMarker::initialize(ros::NodeHandle nh)
+{
+	CalibrationMarker::initialize(nh);
+}
+
 PitagMarker::~PitagMarker()
 {
 
 }
 
-void PitagMarker::setupTFFrames()
+// our pitags just have one point, the origin
+void PitagMarker::getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d)
 {
-
+	pattern_points_3d.clear();
+	pattern_points_3d.push_back( cv::Point3f(0.f, 0.f, 0.f) );
 }

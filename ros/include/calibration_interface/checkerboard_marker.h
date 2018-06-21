@@ -58,12 +58,19 @@
 class CheckerboardMarker : public CalibrationMarker
 {
 
+protected:
+
+    double chessboard_cell_size_;  // cell side length in [m]
+    cv::Size chessboard_pattern_size_;  // number of checkerboard corners in x and y direction
+
+
 public:
 
 	CheckerboardMarker();
 	~CheckerboardMarker();
 
-	void setupTFFrames();
+	void initialize(ros::NodeHandle nh);
+	void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d);
 
 
 };

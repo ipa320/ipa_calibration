@@ -54,14 +54,14 @@
 
 #include <robotino_calibration/calibration_interface.h>
 #include <calibration_interface/calibration_type.h>
+#include <calibration_interface/calibration_marker.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Twist.h>
 #include <vector>
 
 
-
-// Robot types
+// robot types
 enum RobotTypes
 {
     ROB_ROBOTINO	= 0,
@@ -77,19 +77,23 @@ protected:
 
 	ros::NodeHandle node_handle_;
 	CalibrationType* calibration_type_;
+	CalibrationMarker* calibration_marker_;
 	bool arm_calibration_;
 
 
 public:
 
 	IPAInterface();
-	IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, bool do_arm_calibration);
+	IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration);
 	virtual ~IPAInterface();
 
-	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, bool do_arm_calibration); //Create corresponding robot interface by a user-defined ID.
+	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration); //Create corresponding robot interface by a user-defined ID.
 
 	bool moveRobot(int config_index);
 	int getConfigurationCount();
+
+	void preSnapshot(int current_index);
+	void getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d);
 
 	// camera calibration interface
 	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;

@@ -63,7 +63,8 @@ public:
 	PitagMarker();
 	~PitagMarker();
 
-	void setupTFFrames();
+	void initialize(ros::NodeHandle nh);
+	void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d);
 
 
 };

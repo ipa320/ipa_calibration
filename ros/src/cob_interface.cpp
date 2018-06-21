@@ -55,8 +55,8 @@
 #include <control_msgs/FollowJointTrajectoryGoal.h>
 #include <actionlib/client/simple_action_client.h>
 
-CobInterface::CobInterface(ros::NodeHandle nh, bool do_arm_calibration) :
-				IPAInterface(nh, do_arm_calibration)
+CobInterface::CobInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration) :
+				IPAInterface(nh, calib_type, calib_marker, do_arm_calibration)
 {
 	std::cout << "\n========== CobInterface Parameters ==========\n";
 
