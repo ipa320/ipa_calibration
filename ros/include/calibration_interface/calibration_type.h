@@ -55,6 +55,9 @@
 #include <calibration_interface/ipa_interface.h>
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
+#include <string>
+#include <vector>
+#include <std_msgs/Float64MultiArray.h>
 
 
 #define NUM_MOVE_TRIES 4
@@ -65,12 +68,16 @@ class CalibrationType
 
 protected:
 
+	bool moveCamera(const std::vector<double> &cam_configuration);
+
+
 	ros::NodeHandle node_handle_;
     tf::TransformListener transform_listener_;
 	IPAInterface *calibration_interface_;
 
     int camera_dof_;  // degrees of freedom the camera has
     std::vector< std::vector<double> > camera_configurations_;  // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
+	std::vector<std::string> uncertainties_list_;
     bool initialized_;
 
 
@@ -81,8 +88,8 @@ public:
 	virtual ~CalibrationType();
 
 	virtual bool moveRobot(int config_index);
-	bool moveCamera(const std::vector<double> &cam_configuration);
 	int getConfigurationCount();
+	void getUncertainties(std::vector<std::string> &uncertainties_list);
 };
 
 

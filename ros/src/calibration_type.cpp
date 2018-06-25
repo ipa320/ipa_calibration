@@ -66,12 +66,22 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 	transform_listener_ = nh;
 	calibration_interface_ = calib_interface;
 
+	std::cout << "\n========== CalibrationType Parameters ==========\n";
+
 	node_handle_.param("camera_dof", camera_dof_, 0);
 	std::cout << "camera_dof: " << camera_dof_ << std::endl;
 	if ( camera_dof_ < 1 )
 	{
 		std::cout << "Error: Invalid camera_dof: " << camera_dof_ << ". Setting camera_dof to 1." << std::endl;
 		camera_dof_ = 1;
+	}
+
+	node_handle_.getParam("uncertainties_list", uncertainties_list_);
+	std::cout << "uncertainties list: ";
+	for ( int i=0; i<uncertainties_list_.size()-4; i+=4 )
+	{
+		std::cout << i << ". Uncertainty: From " << uncertainties_list_[i] << " [Marker: " << uncertainties_list_[i+2] << "] to "
+				<< uncertainties_list_[i+1] << "[Marker: " << uncertainties_list_[i+3] << "]" << std::endl;
 	}
 
 	initialized_ = true;
@@ -169,4 +179,9 @@ bool CalibrationType::moveCamera(const std::vector<double> &cam_configuration)
 int CalibrationType::getConfigurationCount()
 {
 	return camera_configurations_.size();
+}
+
+void CalibrationType::getUncertainties(std::vector<std::string> &uncertainties_list)
+{
+	uncertainties_list = uncertainties_list_;
 }

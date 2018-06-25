@@ -146,3 +146,11 @@ void IPAInterface::getPatternPoints3D(const std::string marker_frame, std::vecto
 	else
 		ROS_ERROR("IPAInterface::getPatternPoints3D - Calibration marker has not been created!");
 }
+
+void IPAInterface::getUncertainties(std::vector<std::string> &uncertainties_list)
+{
+	if ( calibration_type_ != 0 )
+		calibration_type_->getUncertainties(uncertainties_list);
+	else
+		ROS_ERROR("IPAInterface::getUncertainties - Calibration type has not been created!");
+}

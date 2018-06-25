@@ -70,11 +70,13 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 {
 	CalibrationType::initialize(nh, calib_interface);  // call parent
 
+	std::cout << "\n========== Camera-Laserscanner Parameters ==========\n";
+
 	// coordinate frame name parameters
 	node_handle_.param<std::string>("base_frame", base_frame_, "");
 	std::cout << "base_frame: " << base_frame_ << std::endl;
-	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "");
-	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
+	node_handle_.param<std::string>("reference_frame", reference_frame_, "");
+	std::cout << "reference_frame: " << reference_frame_ << std::endl;
 
 	node_handle_.param("max_ref_frame_distance", max_ref_frame_distance_, 1.0);
 	std::cout << "max_ref_frame_distance: " << max_ref_frame_distance_ << std::endl;
@@ -275,11 +277,11 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 	{
 		try
 		{
-			result = transform_listener_.waitForTransform(base_frame_, child_frame_name_, ros::Time(0), ros::Duration(1.f));
+			result = transform_listener_.waitForTransform(base_frame_, reference_frame_, ros::Time(0), ros::Duration(1.f));
 			if (result) // Everything is fine, exit loop
 			{
 				cv::Mat T;
-				transform_utilities::getTransform(transform_listener_, base_frame_, child_frame_name_, T); // from base frame to reference frame, used to check whether there is an error in detecting the reference frame
+				transform_utilities::getTransform(transform_listener_, base_frame_, reference_frame_, T); // from base frame to reference frame, used to check whether there is an error in detecting the reference frame
 				double start_dist = T.at<double>(0,3)*T.at<double>(0,3) + T.at<double>(1,3)*T.at<double>(1,3) + T.at<double>(2,3)*T.at<double>(2,3); // Squared norm is suffice here, no need to take root.
 				for ( int i=0; i<REF_FRAME_HISTORY_SIZE; ++i ) // Initialize history array
 					ref_frame_history_[i] = start_dist;
@@ -483,7 +485,7 @@ unsigned short CameraLaserscannerType::moveBase(const calibration_utilities::Bas
 
 bool CameraLaserscannerType::isReferenceFrameValid(cv::Mat &T, unsigned short& error_code) // Safety measure, to avoid undetermined motion
 {
-	if (!transform_utilities::getTransform(transform_listener_, child_frame_name_, base_frame_, T, true)) // from reference frame to base frame, swapped order is correct here!
+	if (!transform_utilities::getTransform(transform_listener_, reference_frame_, base_frame_, T, true)) // from reference frame to base frame, swapped order is correct here!
 	{
 		ROS_WARN("CameraBaseCalibrationMarker::isReferenceFrameValid: Can't retrieve transform between base of robot and reference frame.");
 		error_code = MOV_ERR_SOFT;

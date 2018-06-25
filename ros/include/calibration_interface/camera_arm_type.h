@@ -58,6 +58,27 @@
 class CameraArmType : public CalibrationType
 {
 
+public:
+
+	CameraArmType();
+	~CameraArmType();
+
+	bool moveRobot(int config_index);
+
+
+protected:
+
+	void initialize(ros::NodeHandle nh, IPAInterface* calib_interface);
+
+	bool moveArm(const std::vector<double>& arm_configuration);
+
+
+    int arm_dof_;					// degrees of freedom the arm has
+    double max_angle_deviation_;	// max value an angle of the target arm configuration is allowed to differ from the current arm configuration. Avoid collision issues! [rad]
+
+    std::vector< std::vector<double> > arm_configurations_; // wished arm configurations used for calibration
+
+
 };
 
 

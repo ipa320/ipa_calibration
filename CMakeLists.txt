@@ -76,37 +76,44 @@ include_directories(
 )
 
 # calibration software
-add_executable(camera_base_calibration	ros/src/camera_base_calibration_node.cpp
-										ros/src/ipa_interface.cpp
-										ros/src/robotino_interface.cpp
-										ros/src/raw_interface.cpp
-										ros/src/cob_interface.cpp
-										ros/src/calibration_type.cpp
+add_executable(camera_laserscanner_calibration	ros/src/camera_laserscanner_calibration_node.cpp
+												ros/src/ipa_interface.cpp
+												ros/src/robotino_interface.cpp
+												ros/src/raw_interface.cpp
+												ros/src/cob_interface.cpp
+												ros/src/calibration_type.cpp
+												ros/src/camera_laserscanner_type.cpp
+												ros/src/calibration_marker.cpp
+												ros/src/checkerboard_marker.cpp
+												ros/src/pitag_marker.cpp
 )
 
-target_link_libraries(camera_base_calibration
+target_link_libraries(camera_laserscanner_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
 	${robotino_calibration_LIBRARIES}
 )
 
-add_dependencies(camera_base_calibration	${catkin_EXPORTED_TARGETS})
+add_dependencies(camera_laserscanner_calibration	${catkin_EXPORTED_TARGETS})
 
-add_executable(arm_base_calibration  ros/src/arm_base_calibration_node.cpp
+add_executable(camera_arm_calibration	ros/src/camera_arm_calibration_node.cpp
 										ros/src/ipa_interface.cpp
 										ros/src/robotino_interface.cpp
 										ros/src/raw_interface.cpp
 										ros/src/cob_interface.cpp
 										ros/src/calibration_type.cpp
+										ros/src/camera_arm_type.cpp
+										ros/src/calibration_marker.cpp
+										ros/src/checkerboard_marker.cpp
 )
 
-target_link_libraries(arm_base_calibration
+target_link_libraries(camera_arm_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
 	${robotino_calibration_LIBRARIES}
 )
 
-add_dependencies(arm_base_calibration	${catkin_EXPORTED_TARGETS})
+add_dependencies(camera_arm_calibration		${catkin_EXPORTED_TARGETS})
 
 
 #############
