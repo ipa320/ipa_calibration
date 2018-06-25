@@ -68,8 +68,6 @@ struct CalibrationInfo  // defines one uncertain transform in the kinematic chai
 	std::vector<std::string> parent_markers_;  // marker frame one reaches from parent frame backwards
 	std::vector<std::string> child_markers_;  // marker_frame one reaches from child frame onwards
     cv::Mat current_trafo_;
-    //int weight_;  // determines the order of calibration. The highest weighted transform in a setup will be calibrated first.
-    //int trafo_until_next_gap_idx_;  // index to between_gaps trafo
 };
 
 struct CalibrationSetup  // defines one calibration setup, consisting of x transforms to be calibrated via parent and child marker
@@ -106,7 +104,7 @@ class RobotCalibration
 public:
 
     RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface);
-    virtual ~RobotCalibration();
+    ~RobotCalibration();
 
     bool startCalibration(const bool load_data_from_drive);  // starts the calibration process
 

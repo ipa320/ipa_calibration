@@ -51,17 +51,23 @@
 #ifndef CALIBRATION_INTERFACE_H_
 #define CALIBRATION_INTERFACE_H_
 
-// ROS
+
 #include <ros/ros.h>
-#include <string>
 #include <opencv2/opencv.hpp>
+#include <string>
+#include <vector>
+
 
 class CalibrationInterface
 {
+
 protected:
+
 	ros::NodeHandle node_handle_;
 
+
 public:
+
 	CalibrationInterface();
 	CalibrationInterface(ros::NodeHandle nh);
 	virtual ~CalibrationInterface();
@@ -77,6 +83,10 @@ public:
 
 	// get the pattern points (in 3 dimensions) for each marker in local marker's frame. markers can have different patterns, hence one can mix pitags, checkerboards, etc...
 	virtual void getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d) = 0;
+
+	// returns the uncertainties list which has to be set up like this: [parent frame, child frame, parent marker frame, child marker frame]
+	virtual void getUncertainties(std::vector<std::string> &uncertainties_list) = 0;
+
 };
 
 

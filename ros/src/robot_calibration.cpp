@@ -87,19 +87,27 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 	}
 	ROS_INFO("End waiting for TF to initialize.");
 
-	//node_handle_.param<std::string>("camera_optical_frame", camera_optical_frame_, "");
-	//std::cout << "camera_optical_frame: " << camera_optical_frame_ << std::endl;
+	if (calibration_interface_ == 0) // Throw exception, as we need an calibration interface in order to function properly!
+	{
+		ROS_FATAL("Could not create a calibration interface.");
+		throw std::exception();
+	}
+
 	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/calibration");
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
 
-
-
 	// load gaps including its initial values
 	std::vector<std::string> uncertainties_list;
-	node_handle_.getParam("uncertainties_list", uncertainties_list);
+	calibration_interface_->getUncertainties(uncertainties_list);
+
+	if ( uncertainties_list.empty() )
+	{
+		ROS_WARN("Uncertainties list is empty... nothing to do.");
+		return;
+	}
 
 	if ( uncertainties_list.size() % 4 != 0 )
-		ROS_WARN("Size of uncertainsties_list is not a factor of 4: [parent, child, parent_marker, child_marker]");
+		ROS_WARN("Size of uncertainsties_list is not a factor of 4: [parent frame, child frame, parent marker, child marker]");
 
 	// create calibration setups, check for errors
 	for ( int i=0; i<uncertainties_list.size(); i+=4 )
@@ -240,7 +248,6 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		}
 	}
 
-
 	if ( calibration_setups_.size() == 0 )
 	{
 		ROS_WARN("No calibration setup entry found: Exiting.");
@@ -255,44 +262,9 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		optimization_iterations_ = 1000;
 	}
 
-	/*if ( transforms_to_calibrate_.size() == 1 )
-	{
-		std::cout << "Only one transform to calibrate: Setting optimization_iterations to 1." << std::endl;
-		optimization_iterations_ = 1;
-	}*/
-
 	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
 
-	/*node_handle_.getParam("calibration_order", calibration_order_);
-	if ( calibration_order_.size() != calibration_setups_.size() )
-	{
-		ROS_FATAL("Size of calibration_order and size of calibration_setups do not match!");
-		throw std::exception();
-	}
-
-	std::cout << "calibration order:" << std::endl;
-	for ( int i=0; i<calibration_order_.size(); ++i )
-	{
-		if ( calibration_order_[i] < 1 || calibration_order_[i] > calibration_setups_.size() )
-		{
-			ROS_FATAL("Invalid index in calibration order %d", calibration_order_[i]);
-			throw std::exception();
-		}
-		else
-		{
-			calibration_order_[i] = calibration_order_[i]-1; // zero-indexed values from now on
-			//std::cout << (i+1) << ". From " << transforms_to_calibrate_[calibration_order_[i]].parent_ << " to " << transforms_to_calibrate_[calibration_order_[i]].child_ << std::endl;
-			//std::cout << "Initial transform: " << transforms_to_calibrate_[calibration_order_[i]].current_trafo_ << std::endl;
-		}
-	}*/
-
 	createStorageFolder();
-
-	if (calibration_interface_ == 0) // Throw exception, as we need an calibration interface in order to function properly!
-	{
-		ROS_FATAL("Could not create a calibration interface.");
-		throw std::exception();
-	}
 }
 
 RobotCalibration::~RobotCalibration()
@@ -315,8 +287,6 @@ void RobotCalibration::createStorageFolder()
 		}
 	}
 }
-
-
 
 bool RobotCalibration::getOrigin(const std::string parent_marker, const std::string child_marker, std::string &origin)
 {
@@ -448,6 +418,12 @@ void RobotCalibration::feedCalibrationSetup(CalibrationSetup &setup, const std::
 
 bool RobotCalibration::startCalibration(const bool load_data_from_drive)
 {
+	if ( calibration_interface_ == 0 ) // Throw exception, as we need an calibration interface in order to function properly!
+	{
+		ROS_FATAL("Calibration interface has not been set up!");
+		throw std::exception();
+	}
+
 	acquireTFData(load_data);  // make snapshots of all relevant tf transforms for every robot configuration
 
 	// extrinsic calibration optimization
