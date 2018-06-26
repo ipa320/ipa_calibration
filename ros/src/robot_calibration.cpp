@@ -52,7 +52,6 @@
 #include <robotino_calibration/robot_calibration.h>
 #include <robotino_calibration/timer.h>
 #include <robotino_calibration/transformation_utilities.h>
-#include <std_msgs/Float64MultiArray.h>
 
 //Exception
 #include <exception>
@@ -67,6 +66,7 @@
 
 
 // ToDo: Implement calibration order mechanics!
+// ToDo: Implement snapshot save/load system
 
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface) :
