@@ -48,33 +48,41 @@
  *
  ****************************************************************/
 
-#ifndef CHECKERBOARD_MARKER_H_
-#define CHECKERBOARD_MARKER_H_
+
+#include <ros/ros.h>
+#include <cob_object_detection_msgs/DetectObjects.h>
 
 
-#include <calibration_interface/calibration_marker.h>
-
-
-class CheckerboardMarker : public CalibrationMarker
+// detect and publish pitag marker
+int main(int argc, char** argv)
 {
+	// Initialize ROS, specify name of node
+	ros::init(argc, argv, "pitag_detection");
 
-protected:
+	// Create a handle for this node, initialize node
+	ros::NodeHandle node_handle("~");
 
-    double checkerboard_cell_size_;  // cell side length in [m]
-    cv::Size checkerboard_pattern_size_;  // number of checkerboard corners in x and y direction
+	// Load necessary parameters
+	std::cout << "\n========== Pitag Detection Parameters ==========\n";
+	std::string get_fiducials_topic;
+	node_handle.param<std::string>("get_fiducials_topic", get_fiducials_topic, "");
+	std::cout << "get_fiducials_topic: " << get_fiducials_topic << std::endl;
 
+	double update_rate;
+	node_handle.param("update_rate", update_rate, 0.5);
+	std::cout << "update_rate: " << update_rate << std::endl;
 
-public:
+	ros::ServiceClient pitag_client = node_handle.serviceClient<cob_object_detection_msgs::DetectObjects>(get_fiducials_topic);
 
-	CheckerboardMarker();
-	~CheckerboardMarker();
+	// Cyclically detect pitags and publish resulting frames to tf
+	while ( ros::ok() )
+	{
+		ros::spinOnce();
 
-	void initialize(ros::NodeHandle nh);
-	void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d);
+		// detect tags, but as results will be published to tf, we don't need to process any results here anymore
+		cob_object_detection_msgs::DetectObjects detect;
+		pitag_client.call(detect);
 
-	static void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d, const cv::Size pattern_size, const double cell_size);  // static version, so we don't need an object
-
-};
-
-
-#endif /* CHECKERBOARD_MARKER_H_ */
+		ros::Duration(update_rate).sleep();
+	}
+}
