@@ -119,7 +119,7 @@ namespace calibration_utilities
 		pattern_points.resize(number_images, pattern_points[0]);
 	}*/
 
-	double computeReprojectionError( const std::vector<std::vector<cv::Point3f> >& objectPoints,
+	/*double computeReprojectionError( const std::vector<std::vector<cv::Point3f> >& objectPoints,
 										const std::vector<std::vector<cv::Point2f> >& imagePoints,
 										const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
 										const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs)
@@ -140,7 +140,7 @@ namespace calibration_utilities
 			totalPoints     += n;
 		}
 		return std::sqrt(totalErr/totalPoints);
-	}
+	}*/
 }
 
 

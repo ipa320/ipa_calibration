@@ -131,7 +131,7 @@ protected:
 
     bool retrieveTransform(const std::string parent, const std::string child, const std::vector<TFInfo> &branch, cv::Mat &trafo);  // returns the transform between two points in a branch that are neighbours
 
-    bool extrinsicCalibration(const CalibrationSetup &setup, const int current_uncertainty_idx);
+    bool extrinsicCalibration(CalibrationSetup &setup, const int current_uncertainty_idx);
 
     // displays the calibration result on the screen and also stores it to a file in the urdf file's format
     void displayAndSaveCalibrationResult(std::string output_file_name);

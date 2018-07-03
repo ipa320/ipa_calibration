@@ -51,10 +51,11 @@
 #ifndef CALIBRATION_UTILITIES_H
 #define CALIBRATION_UTILITIES_H
 
-#include <opencv2/opencv.hpp>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
+//#include <opencv2/opencv.hpp>
+//#include <cv_bridge/cv_bridge.h>
+//#include <sensor_msgs/image_encodings.h>
 #include <vector>
+#include <string>
 
 #define NUM_BASE_PARAMS 3
 
@@ -77,10 +78,10 @@ namespace calibration_utilities
     // generates the 3d coordinates of the checkerboard in local checkerboard frame coordinates
     //void computeCheckerboard3dPoints(std::vector< std::vector<cv::Point3f> >& pattern_points, const cv::Size pattern_size, const double chessboard_cell_size, const int number_images);
 
-    double computeReprojectionError( const std::vector<std::vector<cv::Point3f> >& objectPoints,
+    /*double computeReprojectionError( const std::vector<std::vector<cv::Point3f> >& objectPoints,
                                     const std::vector<std::vector<cv::Point2f> >& imagePoints,
                                     const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
-                                    const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs);
+                                    const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs);*/
 }
 
 #endif	// CALIBRATION_UTILITIES_H

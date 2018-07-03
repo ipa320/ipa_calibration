@@ -87,6 +87,9 @@ public:
 	// returns the uncertainties list which has to be set up like this: [parent frame, child frame, parent marker frame, child marker frame]
 	virtual void getUncertainties(std::vector<std::string> &uncertainties_list) = 0;
 
+	// returns the file name (including file extension) in which the calibration results will be stored to
+	virtual std::string getResultFileName();
+
 };
 
 

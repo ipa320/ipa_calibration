@@ -166,7 +166,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 				ROS_WARN("No mutual origin found, skipping uncertainty.");
 		}
 		else
-			ROS_WARN("Given parent frame does not match actual parent (%s) in tf tree. Given parent: %s, given child: %s", actual_parent, uncertainties_list[i].c_str(), child.c_str());
+			ROS_WARN("Given parent frame does not match actual parent (%s) in tf tree. Given parent: %s, given child: %s", actual_parent.c_str(), uncertainties_list[i].c_str(), child.c_str());
 	}
 
 	// remove all corrupted entries in calibration setups vector
@@ -185,7 +185,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 			if ( calibration_setups_[i].uncertainties_list_[j].parent_markers_.size() == 0 ||
 					calibration_setups_[i].uncertainties_list_[j].child_markers_.size() == 0 )
 			{
-				ROS_WARN("Empty parent or child_markers for %s to %s -> removing transform", calibration_setups_[i].uncertainties_list_[j].parent_, calibration_setups_[i].uncertainties_list_[j].child_);
+				ROS_WARN("Empty parent or child_markers for %s to %s -> removing transform", calibration_setups_[i].uncertainties_list_[j].parent_.c_str(), calibration_setups_[i].uncertainties_list_[j].child_.c_str());
 				calibration_setups_[i].uncertainties_list_.erase(calibration_setups_[i].uncertainties_list_.begin()+j);
 			}
 		}
@@ -424,7 +424,8 @@ bool RobotCalibration::startCalibration(const bool load_data_from_drive)
 		throw std::exception();
 	}
 
-	acquireTFData(load_data);  // make snapshots of all relevant tf transforms for every robot configuration
+	if ( !acquireTFData(load_data_from_drive) )  // make snapshots of all relevant tf transforms for every robot configuration
+		return false;
 
 	// extrinsic calibration optimization
 	for ( int l=0; l<calibration_setups_.size(); ++l )
@@ -452,8 +453,17 @@ bool RobotCalibration::startCalibration(const bool load_data_from_drive)
 
 		calibration_setups_[l].calibrated_ = true;  // setup has been calibrated
 	}
+
 	// display and save calibration parameters
-	RobotCalibration::displayAndSaveCalibrationResult("camera_calibration_pitag_urdf.txt");
+	std::string output = calibration_interface_->getResultFileName();
+
+	// check for file extension
+	if( output.rfind(".") == std::string::npos )
+	{
+		output += ".txt";
+	}
+
+	RobotCalibration::displayAndSaveCalibrationResult(output);
 
 	calibrated_ = true;
 	return true;
@@ -461,8 +471,8 @@ bool RobotCalibration::startCalibration(const bool load_data_from_drive)
 
 bool RobotCalibration::acquireTFData(const bool load_data)
 {
-	std::stringstream path;
-	path << calibration_storage_path_ << "pitag_data.yml";  // retrieve from interface instead!
+	//std::stringstream path;
+	//path << calibration_storage_path_ << "pitag_data.yml";  // retrieve from interface instead!
 
 	if ( load_data == false )
 	{
@@ -474,9 +484,15 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 
 			std::cout << "Configuration " << (config_counter+1) << "/" << num_configs << std::endl;
 
-			if ( !calibration_interface_->moveRobot(config_counter) )
+			// try to move robot
+			try
 			{
-				// retry here?
+				if ( !calibration_interface_->moveRobot(config_counter) )
+					continue;
+			}
+			catch( std::exception &ex )
+			{
+				return false;
 			}
 
 			// wait a moment here to mitigate shaking camera effects and give tf time to update
@@ -712,7 +728,7 @@ void RobotCalibration::displayAndSaveCalibrationResult(std::string output_file_n
 	}
 }
 
-bool RobotCalibration::extrinsicCalibration(const CalibrationSetup &setup, const int current_uncertainty_idx)
+bool RobotCalibration::extrinsicCalibration(CalibrationSetup &setup, const int current_uncertainty_idx)
 {
 	// find in which branch the current uncertainty resides, build forward and backward chain based on that
 	int branch_idx = -1;
@@ -727,28 +743,34 @@ bool RobotCalibration::extrinsicCalibration(const CalibrationSetup &setup, const
 		for ( int i=0; i<tf_snapshots.size(); ++i )  // go through all snapshots for this setup and build
 		{
 			bool success = true;
-			std::vector<TFInfo> &branch;  // either parent or child_branch
-			std::vector<TFInfo> &other_branch;  // if branch = child_branch then this is parent_branch and vice versa
-			std::vector<TFInfo> &parent_markers;  // points to markers of parent of current uncertainty
-			std::vector<TFInfo> &child_markers;  // points to markers of child of current uncertainty
+			std::vector<TFInfo>* branch_tmp;  			// either parent or child_branch
+			std::vector<TFInfo>* other_branch_tmp;		// if branch = child_branch then this is parent_branch and vice versa
+			std::vector<TFInfo>* parent_markers_tmp;	// points to markers of parent of current uncertainty
+			std::vector<TFInfo>* child_markers_tmp;		// points to markers of child of current uncertainty
 			if ( on_parent_branch )
 			{
-				branch = tf_snapshots[i].parent_branch_;
-				other_branch = tf_snapshots[i].child_branch_;
+				branch_tmp = &tf_snapshots[i].parent_branch_;
+				other_branch_tmp = &tf_snapshots[i].child_branch_;
 
 				// Why can we use branch_idx when it is actually the index for setup.origin_to_parent_marker_uncertainties_ here?
 				// Because for each uncertainty there will be a snapshot created of its own markers, therefore setup.origin_to_parent_marker_uncertainties_
 				// and tf_snapshots[i].parent_branch_parent_markers_ have the same size and have the same order (check populateTFSnapshot())
-				parent_markers = tf_snapshots[i].parent_branch_parent_markers_[branch_idx];
-				child_markers = tf_snapshots[i].parent_branch_child_markers_[branch_idx];
+				parent_markers_tmp = &tf_snapshots[i].parent_branch_parent_markers_[branch_idx];
+				child_markers_tmp = &tf_snapshots[i].parent_branch_child_markers_[branch_idx];
 			}
 			else
 			{
-				branch = tf_snapshots[i].child_branch_;
-				other_branch = tf_snapshots[i].parent_branch_;
-				parent_markers = tf_snapshots[i].child_branch_parent_markers_[branch_idx];
-				child_markers = tf_snapshots[i].child_branch_child_markers_[branch_idx];
+				branch_tmp = &tf_snapshots[i].child_branch_;
+				other_branch_tmp = &tf_snapshots[i].parent_branch_;
+				parent_markers_tmp = &tf_snapshots[i].child_branch_parent_markers_[branch_idx];
+				child_markers_tmp = &tf_snapshots[i].child_branch_child_markers_[branch_idx];
 			}
+
+			// now with references
+			std::vector<TFInfo> &branch = *branch_tmp;
+			std::vector<TFInfo> &other_branch = *other_branch_tmp;
+			std::vector<TFInfo> &parent_markers = *parent_markers_tmp;
+			std::vector<TFInfo> &child_markers = *child_markers_tmp;
 
 			if ( parent_markers.size() != child_markers.size() )
 			{

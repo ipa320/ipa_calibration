@@ -17,15 +17,15 @@ endif()
 ## End C++11
 
 set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is system dependency --> sudo apt-get install)
-	cob_fiducials
-	cob_object_detection_msgs
-	cv_bridge
-	geometry_msgs
-	image_transport
+	#cob_fiducials
+	#cob_object_detection_msgs
+	#cv_bridge
+	#geometry_msgs
+	#image_transport
 	roscpp
 	roslib
-	sensor_msgs
-	std_msgs
+	#sensor_msgs
+	#std_msgs
 	tf
 )
 
@@ -80,10 +80,10 @@ include_directories(
 add_library(CalibrationTools
 					ros/src/robot_calibration.cpp
 					ros/src/calibration_interface.cpp
-					ros/src/camera_base_calibration_marker.cpp
-					ros/src/camera_base_calibration_checkerboard.cpp
-					ros/src/camera_base_calibration_pitag.cpp
-					ros/src/arm_base_calibration.cpp
+					#ros/src/camera_base_calibration_marker.cpp
+					#ros/src/camera_base_calibration_checkerboard.cpp
+					#ros/src/camera_base_calibration_pitag.cpp
+					#ros/src/arm_base_calibration.cpp
 					common/src/transformation_utilities.cpp
 					common/src/calibration_utilities.cpp
 )
