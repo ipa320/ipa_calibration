@@ -26,6 +26,10 @@ set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is 
 	trajectory_msgs
 	actionlib
 	tf
+	cob_fiducials
+	cob_object_detection_msgs
+	cv_bridge
+	image_transport
 )
 
 set(catkin_BUILD_PACKAGES 
@@ -42,6 +46,7 @@ find_package(catkin REQUIRED
 
 find_package(robotino_calibration REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(OpenCV REQUIRED)	# name identical to FindOpenCV.cmake in cmake_modules
 
 ## System dependencies are found with CMake's conventions
 #find_package(Boost REQUIRED COMPONENTS system)
@@ -59,6 +64,7 @@ CATKIN_DEPENDS
 DEPENDS
 	CalibrationTools
 	Boost
+	OpenCV
 )
 
 ###########
@@ -115,6 +121,20 @@ target_link_libraries(camera_arm_calibration
 
 add_dependencies(camera_arm_calibration		${catkin_EXPORTED_TARGETS})
 
+add_executable(checkerboard_detection	ros/src/checkerboard_detection_node.cpp
+						ros/src/calibration_marker.cpp
+						ros/src/checkerboard_marker.cpp
+)
+target_link_libraries(checkerboard_detection
+	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
+)
+add_dependencies(checkerboard_detection		${catkin_EXPORTED_TARGETS})
+
+add_executable(pitag_detection	ros/src/pitag_detection_node.cpp)
+target_link_libraries(pitag_detection
+	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
+)
+add_dependencies(pitag_detection		${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -131,13 +151,25 @@ add_dependencies(camera_arm_calibration		${catkin_EXPORTED_TARGETS})
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS camera_base_calibration
+install(TARGETS camera_laserscanner_calibration
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(TARGETS arm_base_calibration
+install(TARGETS camera_arm_calibration
+	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS checkerboard_detection
+	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS pitag_detection
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

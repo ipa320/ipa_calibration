@@ -54,6 +54,7 @@
 
 #include <calibration_interface/calibration_type.h>
 #include <robotino_calibration/calibration_utilities.h>
+#include <opencv2/opencv.hpp>
 
 
 #define REF_FRAME_HISTORY_SIZE 15 // 15 entries used to build the moving average upon
@@ -76,6 +77,7 @@ public:
 	void initialize(ros::NodeHandle nh, IPAInterface* calib_interface);
 
 	bool moveRobot(int config_index);
+	std::string getString();
 
 
 protected:

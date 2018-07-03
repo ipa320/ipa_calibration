@@ -64,6 +64,7 @@ public:
 	~CameraArmType();
 
 	bool moveRobot(int config_index);
+	std::string getString();
 
 
 protected:

@@ -49,9 +49,11 @@
  ****************************************************************/
 
 #include <calibration_interface/calibration_type.h>
+#include <calibration_interface/ipa_interface.h>
 #include <robotino_calibration/timer.h>
 #include <robotino_calibration/transformation_utilities.h>
 #include <numeric>  // std::inner_product
+#include <std_msgs/Float64MultiArray.h>
 
 
 CalibrationType::CalibrationType() :
@@ -63,7 +65,7 @@ CalibrationType::CalibrationType() :
 void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface)
 {
 	node_handle_ = nh;
-	transform_listener_ = nh;
+	//transform_listener_ = nh;
 	calibration_interface_ = calib_interface;
 
 	std::cout << "\n========== CalibrationType Parameters ==========\n";

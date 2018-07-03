@@ -154,3 +154,19 @@ void IPAInterface::getUncertainties(std::vector<std::string> &uncertainties_list
 	else
 		ROS_ERROR("IPAInterface::getUncertainties - Calibration type has not been created!");
 }
+
+std::string IPAInterface::getResultFileName()
+{
+	std::string file_name;
+
+	if ( calibration_type_ != 0 )
+		file_name = calibration_type_->getString();
+	else
+		file_name = "unspecified";
+
+	if ( calibration_marker_ != 0 )
+		file_name += ("_"+calibration_marker_->getString());
+
+	file_name += "_result.txt";
+	return file_name;
+}

@@ -52,16 +52,16 @@
 #define CALIBRATION_TYPE_H_
 
 
-#include <calibration_interface/ipa_interface.h>
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include <string>
 #include <vector>
-#include <std_msgs/Float64MultiArray.h>
 
 
 #define NUM_MOVE_TRIES 4
 
+
+class IPAInterface;  // forward declaration
 
 class CalibrationType
 {
@@ -88,6 +88,7 @@ public:
 	virtual ~CalibrationType();
 
 	virtual bool moveRobot(int config_index);
+	virtual std::string getString() = 0;
 	int getConfigurationCount();
 	void getUncertainties(std::vector<std::string> &uncertainties_list);
 };

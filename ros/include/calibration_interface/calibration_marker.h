@@ -54,6 +54,7 @@
 
 #include <ros/ros.h>
 #include <opencv2/opencv.hpp>
+#include <string>
 
 
 class CalibrationMarker
@@ -72,7 +73,7 @@ public:
 
 	virtual void initialize(ros::NodeHandle nh);
 	virtual void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d) = 0;
-
+	virtual std::string getString() = 0;
 };
 
 

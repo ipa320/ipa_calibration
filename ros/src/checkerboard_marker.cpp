@@ -99,3 +99,7 @@ void CheckerboardMarker::getPatternPoints3D(std::vector<cv::Point3f> &pattern_po
 	}
 }
 
+std::string CheckerboardMarker::getString()
+{
+	return "checkerboard";
+}

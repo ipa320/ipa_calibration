@@ -142,11 +142,9 @@ int main(int argc, char** argv)
 	image_transport::ImageTransport it(node_handle);
 	image_transport::SubscriberFilter color_image_sub;
 	color_image_sub.subscribe(it, camera_image_topic, 1);
-	color_image_sub.registerCallback(boost::bind(&imageCallback, _1, _2));
+	color_image_sub.registerCallback(boost::bind(&imageCallback, _1));
 
 	// Cyclically detect checkerboard and publish resulting frame to tf
-	cv::Mat T_camera_to_checkerboard_avg;
-
 	tf::Vector3 avg_translation;
 	tf::Quaternion avg_orientation;
 	tf::TransformBroadcaster transform_broadcaster;
@@ -172,14 +170,14 @@ int main(int argc, char** argv)
 				gray = cv::Mat::zeros(image_height, image_width, CV_8UC1);
 				cv::cvtColor(image, gray, CV_BGR2GRAY);
 
-				std::vector<cv::Point2f>& checkerboard_points_2d;
+				std::vector<cv::Point2f> checkerboard_points_2d;
 				bool pattern_found = cv::findChessboardCorners(gray, checkerboard_pattern_size, checkerboard_points_2d,
 																   cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);
 
 				if ( pattern_found )
 				{
 					// compute checkerboard transform
-					std::vector<cv::Point3f> &pattern_points_3d;
+					std::vector<cv::Point3f> pattern_points_3d;
 					CheckerboardMarker::getPatternPoints3D(pattern_points_3d, checkerboard_pattern_size, checkerboard_cell_size);
 					cv::Mat rvec, tvec, T_camera_to_checkerboard;
 
@@ -198,7 +196,7 @@ int main(int argc, char** argv)
 					tf::Transform transform;
 
 					// update transform
-					if (avg_translation.isZero())
+					if ( avg_translation.isZero() )
 					{
 						// use value directly on first message
 						avg_translation = translation;

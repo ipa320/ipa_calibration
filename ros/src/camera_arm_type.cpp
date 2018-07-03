@@ -50,6 +50,10 @@
 
 
 #include <calibration_interface/camera_arm_type.h>
+#include <calibration_interface/ipa_interface.h>
+#include <opencv2/opencv.hpp>
+#include <std_msgs/Float64MultiArray.h>
+#include <robotino_calibration/timer.h>
 
 
 CameraArmType::CameraArmType()
@@ -221,4 +225,9 @@ bool CameraArmType::moveArm(const std::vector<double>& arm_configuration)
 
 	ros::spinOnce();
 	return true;
+}
+
+std::string CameraArmType::getString()
+{
+	return "camera_arm";
 }

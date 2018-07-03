@@ -49,8 +49,8 @@
  ****************************************************************/
 
 #include <ros/ros.h>
-#include <robotino_calibration/arm_base_calibration.h>
-#include <calibration_interface/custom_interface.h>
+//#include <robotino_calibration/arm_base_calibration.h>
+//#include <calibration_interface/custom_interface.h>
 
 //#######################
 //#### main programm ####
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 
 	bool arm_calibration = true;
 
-	try
+	/*try
 	{
 		ArmBaseCalibration armCal(nh, IPAInterface::createInterfaceByID(calibration_ID, nh, arm_calibration));
 		armCal.calibrateArmToBase(load_images);
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 	catch ( std::exception &e )
 	{
 		return -1;
-	}
+	}*/
 
 	return 0;
 }

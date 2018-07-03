@@ -74,6 +74,9 @@ public:
 
 	static void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d, const cv::Size pattern_size, const double cell_size);  // static version, so we don't need an object
 
+	std::string getString();
+
+
 };
 
 

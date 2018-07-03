@@ -50,7 +50,7 @@
 
 
 #include <calibration_interface/camera_laserscanner_type.h>
-#include <opencv2/opencv.hpp>
+#include <calibration_interface/ipa_interface.h>
 #include <robotino_calibration/transformation_utilities.h>
 #include <robotino_calibration/timer.h>
 #include <geometry_msgs/Twist.h>
@@ -568,4 +568,9 @@ bool CameraLaserscannerType::divergenceDetectedLocation(double error_x, double e
 	}
 
 	return false;
+}
+
+std::string CameraLaserscannerType::getString()
+{
+	return "camera_laserscanner";
 }

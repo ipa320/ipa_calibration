@@ -49,9 +49,9 @@
  ****************************************************************/
 
 #include <ros/ros.h>
-#include <robotino_calibration/camera_base_calibration_checkerboard.h>
-#include <robotino_calibration/camera_base_calibration_pitag.h>
-#include <calibration_interface/custom_interface.h>
+//#include <robotino_calibration/camera_base_calibration_checkerboard.h>
+//#include <robotino_calibration/camera_base_calibration_pitag.h>
+//#include <calibration_interface/custom_interface.h>
 
 //#######################
 //#### main programm ####
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 
 	bool arm_calibration = false;
 
-	try
+	/*try
 	{
 		if (marker_type.compare("checkerboard") == 0)
 		{
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 	catch ( std::exception &e )
 	{
 		return -1;
-	}
+	}*/
 
 	return 0;
 }
