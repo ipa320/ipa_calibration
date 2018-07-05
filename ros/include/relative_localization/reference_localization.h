@@ -123,7 +123,7 @@ protected:
 	double update_rate_;
 	std::string base_frame_;
 	std::string laser_scanner_topic_in_;
-	std::string child_frame_name_;
+	std::string reference_frame_;
 	std::vector<cv::Point2f> front_wall_polygon_;
 };
 

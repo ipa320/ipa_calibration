@@ -67,8 +67,8 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	std::cout << "\n========== Reference Localization Parameters ==========\n";
 	node_handle_.param("update_rate", update_rate_, 0.75);
 	std::cout << "update_rate: " << update_rate_ << std::endl;
-	node_handle_.param<std::string>("child_frame_name", child_frame_name_, "");
-	std::cout << "child_frame_name: " << child_frame_name_ << std::endl;
+	node_handle_.param<std::string>("reference_frame", reference_frame_, "");
+	std::cout << "reference_frame: " << reference_frame_ << std::endl;
 	node_handle_.param<std::string>("laser_scanner_topic_in", laser_scanner_topic_in_, "");
 	std::cout << "laser_scanner_topic_in: " << laser_scanner_topic_in_ << std::endl;
 	node_handle_.param<std::string>("base_frame", base_frame_, "");
@@ -112,9 +112,9 @@ ReferenceLocalization::~ReferenceLocalization()
 void ReferenceLocalization::dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig &config, uint32_t level)
 {
 	update_rate_ = config.update_rate;
-	child_frame_name_ = config.child_frame_name;
+	reference_frame_ = config.child_frame_name;
 	std::cout << "Reconfigure request with\n update_rate=" << update_rate_
-			<< "\n child_frame_name=" << child_frame_name_ << "\n";
+			<< "\n child_frame_name=" << reference_frame_ << "\n";
 }
 
 bool ReferenceLocalization::estimateFrontWall(std::vector<cv::Point2d>& scan_front, cv::Vec4d& line_front, const double inlier_ratio, const double success_probability,
@@ -209,7 +209,7 @@ void ReferenceLocalization::computeAndPublishChildFrame(const cv::Vec4d& line, c
 	// transform
 	transform_table_reference.setOrigin(avg_translation_);
 	transform_table_reference.setRotation(avg_orientation_);
-	tf::StampedTransform tf_msg(transform_table_reference, time_stamp, base_frame_, child_frame_name_);
+	tf::StampedTransform tf_msg(transform_table_reference, time_stamp, base_frame_, reference_frame_);
 	shiftReferenceFrameToGround(tf_msg);
 
 	// publish coordinate system on tf

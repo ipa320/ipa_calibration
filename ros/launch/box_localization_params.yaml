@@ -2,9 +2,9 @@
 # double
 update_rate: 0.75
 
-# The name of the computed child frame.
+# The name of the computed reference frame.
 # string
-child_frame_name: "/landmark_reference_nav"
+reference_frame: "/landmark_reference_nav"
 
 # height above ground of base frame
 # double
