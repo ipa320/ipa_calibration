@@ -49,8 +49,13 @@
  ****************************************************************/
 
 #include <ros/ros.h>
-//#include <robotino_calibration/arm_base_calibration.h>
-//#include <calibration_interface/custom_interface.h>
+#include <robotino_calibration/robot_calibration.h>
+#include <robotino_calibration/calibration_interface.h>
+#include <calibration_interface/ipa_interface.h>
+#include <calibration_interface/calibration_marker.h>
+#include <calibration_interface/checkerboard_marker.h>
+#include <calibration_interface/calibration_type.h>
+#include <calibration_interface/camera_arm_type.h>
 
 //#######################
 //#### main programm ####
@@ -63,25 +68,48 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh("~");
 
 	// load parameters
-	bool load_images = false;
+	bool load_data = false;
 	std::cout << "\n========== Arm Base Calibration Node Parameters ==========\n";
-	nh.param("load_images", load_images, false);
-	std::cout << "load_images: " << load_images << std::endl;
+	nh.param("load_data", load_data, false);
+	std::cout << "load_images: " << load_data << std::endl;
 	int calibration_ID = 0;
 	nh.param("calibration_ID", calibration_ID, 0);
 	std::cout << "calibration_ID: " << calibration_ID << std::endl;
 
 	bool arm_calibration = true;
 
-	/*try
+	// setting up objects needed for calibration
+	CalibrationType* calibration_type = new CameraArmType();
+	CalibrationMarker* marker = new CheckerboardMarker();
+	CalibrationInterface* interface = 0;
+
+	if ( marker != 0 )
+		marker->initialize(nh);
+	else
 	{
-		ArmBaseCalibration armCal(nh, IPAInterface::createInterfaceByID(calibration_ID, nh, arm_calibration));
-		armCal.calibrateArmToBase(load_images);
-	}
-	catch ( std::exception &e )
-	{
+		ROS_WARN("Marker object has not been created!");
 		return -1;
-	}*/
+	}
+
+	interface = IPAInterface::createInterfaceByID(calibration_ID, nh, calibration_type, marker, arm_calibration);
+
+	if ( interface != 0 )
+	{
+		try
+		{
+			RobotCalibration calib_obj(nh, interface);
+			calib_obj.startCalibration(load_data);
+		}
+		catch ( std::exception &e )
+		{
+			return -1;
+		}
+	}
+	else
+	{
+		ROS_WARN("Interface object has not been created!");
+		return -1;
+	}
 
 	return 0;
 }

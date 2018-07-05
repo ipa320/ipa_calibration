@@ -48,10 +48,17 @@
  *
  ****************************************************************/
 
+
 #include <ros/ros.h>
-//#include <robotino_calibration/camera_base_calibration_checkerboard.h>
-//#include <robotino_calibration/camera_base_calibration_pitag.h>
-//#include <calibration_interface/custom_interface.h>
+#include <robotino_calibration/robot_calibration.h>
+#include <robotino_calibration/calibration_interface.h>
+#include <calibration_interface/ipa_interface.h>
+#include <calibration_interface/calibration_marker.h>
+#include <calibration_interface/pitag_marker.h>
+#include <calibration_interface/checkerboard_marker.h>
+#include <calibration_interface/calibration_type.h>
+#include <calibration_interface/camera_laserscanner_type.h>
+
 
 //#######################
 //#### main programm ####
@@ -65,35 +72,59 @@ int main(int argc, char** argv)
 
 	// load parameters
 	std::string marker_type;
-	bool load_images = false;
+	bool load_data = false;
 	std::cout << "\n========== Relative Localization Parameters ==========\n";
 	nh.param<std::string>("marker_type", marker_type, "");
 	std::cout << "marker_type: " << marker_type << std::endl;
-	nh.param("load_images", load_images, false);
-	std::cout << "load_images: " << load_images << std::endl;
+	nh.param("load_data", load_data, false);
+	std::cout << "load_data: " << load_data << std::endl;
 	int calibration_ID = 0;
 	nh.param("calibration_ID", calibration_ID, 0);
 	std::cout << "calibration_ID: " << calibration_ID << std::endl;
 
 	bool arm_calibration = false;
 
-	/*try
+	// setting up objects needed for calibration
+	CalibrationType* calibration_type = new CameraLaserscannerType();
+	CalibrationMarker* marker = 0;
+	CalibrationInterface* interface = 0;
+
+	if (marker_type.compare("checkerboard") == 0)
 	{
-		if (marker_type.compare("checkerboard") == 0)
+		marker = new CheckerboardMarker();
+	}
+	else if (marker_type.compare("pitag") == 0)
+	{
+		marker = new PitagMarker();
+	}
+
+	if ( marker != 0 )
+		marker->initialize(nh);
+	else
+	{
+		ROS_WARN("Marker object has not been created!");
+		return -1;
+	}
+
+	interface = IPAInterface::createInterfaceByID(calibration_ID, nh, calibration_type, marker, arm_calibration);
+
+	if ( interface != 0 )
+	{
+		try
 		{
-			CameraBaseCalibrationCheckerboard cb(nh, IPAInterface::createInterfaceByID(calibration_ID, nh, arm_calibration));
-			cb.calibrateCameraToBase(load_images);
+			RobotCalibration calib_obj(nh, interface);
+			calib_obj.startCalibration(load_data);
 		}
-		else if (marker_type.compare("pitag") == 0)
+		catch ( std::exception &e )
 		{
-			CameraBaseCalibrationPiTag pt(nh, IPAInterface::createInterfaceByID(calibration_ID, nh, arm_calibration));
-			pt.calibrateCameraToBase(load_images);
+			return -1;
 		}
 	}
-	catch ( std::exception &e )
+	else
 	{
+		ROS_WARN("Interface object has not been created!");
 		return -1;
-	}*/
+	}
 
 	return 0;
 }

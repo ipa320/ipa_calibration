@@ -127,6 +127,7 @@ add_executable(checkerboard_detection	ros/src/checkerboard_detection_node.cpp
 )
 target_link_libraries(checkerboard_detection
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
+	${robotino_calibration_LIBRARIES}
 )
 add_dependencies(checkerboard_detection		${catkin_EXPORTED_TARGETS})
 
