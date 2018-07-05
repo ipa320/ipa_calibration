@@ -1,0 +1,7 @@
+# fiducials topic
+# string
+get_fiducials_topic: "/fiducials/get_fiducials"
+
+# pause time after each detection iteration [in sec]
+# double
+update_rate: 0.5

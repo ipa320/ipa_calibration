@@ -1,0 +1,7 @@
+# name of detected checkerboard frame
+# string
+checkerboard_frame: "checkerboard_detected"
+
+# pause time after each detection iteration [in sec]
+# double
+update_rate: 0.5
