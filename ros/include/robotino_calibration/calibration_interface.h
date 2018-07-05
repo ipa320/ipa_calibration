@@ -88,7 +88,7 @@ public:
 	virtual void getUncertainties(std::vector<std::string> &uncertainties_list) = 0;
 
 	// returns the file name (including file extension) in which the calibration results will be stored to
-	virtual std::string getResultFileName();
+	virtual std::string getResultFileName() = 0;
 
 };
 

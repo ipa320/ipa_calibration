@@ -424,6 +424,9 @@ bool RobotCalibration::startCalibration(const bool load_data_from_drive)
 		throw std::exception();
 	}
 
+	if ( calibration_setups_.size() == 0 )
+		return false;
+
 	if ( !acquireTFData(load_data_from_drive) )  // make snapshots of all relevant tf transforms for every robot configuration
 		return false;
 
