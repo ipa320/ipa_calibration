@@ -4,19 +4,15 @@
 
 	<arg name="robot" default="robotino"/>	<!-- robotino, cob or RAW -->
 
-	<!-- Start checkerboard marker transform based on robot's arm -->
-	<include file="$(find calibration_interface)/ros/launch/checkerboard_markers.launch"/>
-
-	<!-- Detect real checkerboard frame with camera -->
-	<node ns="checkerboard_detection" name="checkerboard_detection" pkg="calibration_interface" type="checkerboard_detection" output="screen">
-		<rosparam command="load" file="$(find calibration_interface)/ros/launch/detection_settings/checkerboard_detection_settings.yaml"/>
-		<rosparam command="load" file="$(find calibration_interface)/ros/launch/robot_settings/$(arg robot)_settings.yaml"/>
-	</node>
+	<!-- Start markers and setup detection -->
+	<include file="$(find calibration_interface)/ros/launch/$(arg marker)_setup.launch">
+		<arg name="robot" value="$(arg robot)"/>
+	</include>
 
 	<!-- Start camera-arm calibration method -->
-	<node ns="camera_arm_calibration_pitag" name="camera_arm_calibration" pkg="calibration_interface" type="camera_arm_calibration" output="screen">
+	<node ns="camera_arm_calibration" name="camera_arm_calibration" pkg="calibration_interface" type="camera_arm_calibration" output="screen">
 		<rosparam command="load" file="$(find calibration_interface)/ros/launch/calibration_settings/camera_arm_calibration_pitag_settings_$(arg robot).yaml"/>
 		<rosparam command="load" file="$(find calibration_interface)/ros/launch/robot_settings/$(arg robot)_settings.yaml"/>
-		<param name="marker_type" value="pitag"/>
+		<param name="marker_type" value="checkerboard"/>
 	</node>
 </launch>

@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 	// load parameters
 	std::string marker_type;
 	bool load_data = false;
-	std::cout << "\n========== Relative Localization Parameters ==========\n";
+	std::cout << "\n========== Camera Laserscanner Calibration Node Parameters ==========\n";
 	nh.param<std::string>("marker_type", marker_type, "");
 	std::cout << "marker_type: " << marker_type << std::endl;
 	nh.param("load_data", load_data, false);

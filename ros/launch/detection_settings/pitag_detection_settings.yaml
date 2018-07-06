@@ -2,6 +2,6 @@
 # string
 get_fiducials_topic: "/fiducials/get_fiducials"
 
-# pause time after each detection iteration [in sec]
+# update frequency (has to be positive) at which the detection will be tried to loop at [in Hz]
 # double
-update_rate: 0.5
+update_frequency: 10

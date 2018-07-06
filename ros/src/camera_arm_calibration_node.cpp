@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 
 	// load parameters
 	bool load_data = false;
-	std::cout << "\n========== Arm Base Calibration Node Parameters ==========\n";
+	std::cout << "\n========== Camera Arm Calibration Node Parameters ==========\n";
 	nh.param("load_data", load_data, false);
 	std::cout << "load_images: " << load_data << std::endl;
 	int calibration_ID = 0;

@@ -63,18 +63,20 @@ int main(int argc, char** argv)
 	ros::NodeHandle node_handle("~");
 
 	// Load necessary parameters
-	std::cout << "\n========== Pitag Detection Parameters ==========\n";
+	std::cout << "\n========== Pitag Detection Node Parameters ==========\n";
 	std::string get_fiducials_topic;
 	node_handle.param<std::string>("get_fiducials_topic", get_fiducials_topic, "");
 	std::cout << "get_fiducials_topic: " << get_fiducials_topic << std::endl;
 
-	double update_rate;
-	node_handle.param("update_rate", update_rate, 0.5);
-	std::cout << "update_rate: " << update_rate << std::endl;
+	double update_freq;
+	node_handle.param("update_frequency", update_freq, 10.0);
+	update_freq = fmax(update_freq, -update_freq);  // must be positive
+	std::cout << "update_frequency: " << update_freq << std::endl;
 
 	ros::ServiceClient pitag_client = node_handle.serviceClient<cob_object_detection_msgs::DetectObjects>(get_fiducials_topic);
 
 	// Cyclically detect pitags and publish resulting frames to tf
+	ros::Rate rate(update_freq);  // in Hz
 	while ( ros::ok() )
 	{
 		ros::spinOnce();
@@ -83,6 +85,6 @@ int main(int argc, char** argv)
 		cob_object_detection_msgs::DetectObjects detect;
 		pitag_client.call(detect);
 
-		ros::Duration(update_rate).sleep();
+		rate.sleep();  // try to keep looping at update_freq
 	}
 }

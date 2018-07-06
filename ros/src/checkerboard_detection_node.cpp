@@ -109,7 +109,7 @@ int main(int argc, char** argv)
 	ros::NodeHandle node_handle("~");
 
 	// Load necessary parameters
-	std::cout << "\n========== Checkerboard Detection Parameters ==========\n";
+	std::cout << "\n========== Checkerboard Detection Node Parameters ==========\n";
 	std::string camera_frame;
 	node_handle.param<std::string>("camera_frame", camera_frame, "");
 	std::cout << "camera_frame: " << camera_frame << std::endl;
@@ -132,11 +132,15 @@ int main(int argc, char** argv)
 	if (temp.size() == 2)
 		checkerboard_pattern_size = cv::Size(temp[0], temp[1]);
 
-	double update_rate;
-	node_handle.param("update_rate", update_rate, 0.5);
-	std::cout << "update_rate: " << update_rate << std::endl;
+	double update_freq;
+	node_handle.param("update_frequency", update_freq, 10.0);
+	update_freq = fmax(update_freq, -update_freq);  // must be positive
+	std::cout << "update_frequency: " << update_freq << std::endl;
 
-	float update_pct = 0.5f;  // determines the percentage of how much a new transform will update the old one
+	double update_pct;  // determines the percentage of how much a new transform will update the old one
+	node_handle.param("update_percentage", update_pct, 0.5);
+	update_pct = fmin( fmax(update_pct, 0.1), 1.0 );  // between [0.1, 1]
+	std::cout << "update_percentage: " << update_pct << std::endl;
 
 	// Set up callback
 	image_transport::ImageTransport it(node_handle);
@@ -149,6 +153,7 @@ int main(int argc, char** argv)
 	tf::Quaternion avg_orientation;
 	tf::TransformBroadcaster transform_broadcaster;
 
+	ros::Rate rate(update_freq);  // in Hz
 	while ( ros::ok() )
 	{
 		ros::spinOnce();
@@ -225,6 +230,6 @@ int main(int argc, char** argv)
 			}
 		}
 
-		ros::Duration(update_rate).sleep();
+		rate.sleep();  // try to keep looping at update_freq
 	}
 }

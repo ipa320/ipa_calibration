@@ -2,6 +2,10 @@
 # string
 checkerboard_frame: "checkerboard_detected"
 
-# pause time after each detection iteration [in sec]
+# update frequency (has to be positive) at which the detection will be tried to loop at [in Hz]
 # double
-update_rate: 0.5
+update_frequency: 10
+
+# defines how much (in percent) of the freshly detected transform will be used to update the tf checkerboard transform. range: [0.1, 1.0]
+# double
+update_percentage: 0.5
