@@ -112,17 +112,24 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 	// create calibration setups, check for errors
 	for ( int i=0; i<uncertainties_list.size(); i+=4 )
 	{
-		if ( !transform_listener_.frameExists(uncertainties_list[i]) || !transform_listener_.frameExists(uncertainties_list[i+1]) )
+		bool success = transform_listener_.waitForTransform(uncertainties_list[i], uncertainties_list[i+1], ros::Time(0), ros::Duration(0.5));
+
+		if ( !success )
 		{
-			ROS_ERROR("parent frame %s or child frame %s does not exist, skipping.", uncertainties_list[i].c_str(), uncertainties_list[i+1].c_str());
+			ROS_ERROR("Transform from parent frame %s to child frame %s does not exist, skipping.", uncertainties_list[i].c_str(), uncertainties_list[i+1].c_str());
 			continue;
 		}
 
-		if ( !transform_listener_.frameExists(uncertainties_list[i+2]) || !transform_listener_.frameExists(uncertainties_list[i+3]) )
+		// ToDo: Add 2 further frames to uncertainties list: last_reachable_parent_frame, last_reachable_child_frame
+		// Those frames have to be always accessible from tf and are used to build the chains, because the marker frames are not existing yet as they have to be detected first.
+
+		/*success = transform_listener_.waitForTransform(uncertainties_list[i+2], uncertainties_list[i+3], ros::Time(0), ros::Duration(0.5));
+
+		if ( !success )
 		{
-			ROS_ERROR("parent_marker frame %s or child_marker frame %s does not exist, skipping.", uncertainties_list[i+2].c_str(), uncertainties_list[i+3].c_str());
+			ROS_ERROR("Transform from parent_marker frame %s to child_marker frame %s does not exist, skipping.", uncertainties_list[i+2].c_str(), uncertainties_list[i+3].c_str());
 			continue;
-		}
+		}*/
 
 		std::string child = uncertainties_list[i+1];  // child
 		std::string actual_parent = "";
