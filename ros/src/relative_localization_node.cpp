@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 
 	// load parameters
 	std::string localization_method;
-	std::cout << "\n========== Relative Localization Parameters ==========\n";
+	std::cout << "\n========== Relative Localization Node Parameters ==========\n";
 	nh.param<std::string>("localization_method", localization_method, "");
 	std::cout << "localization_method: " << localization_method << std::endl;
 
