@@ -86,14 +86,14 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 		return;
 	}
 
-	if ( uncertainties_list_.size() % 4 != 0 )
-		ROS_WARN("Size of uncertainsties_list is not a factor of 4: [parent frame, child frame, parent marker, child marker]");
+	if ( uncertainties_list_.size() % 6 != 0 )
+		ROS_WARN("Size of uncertainsties_list is not a factor of 6: [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]");
 
 	std::cout << "uncertainties list: " << std::endl;
-	for ( int i=0; i<uncertainties_list_.size(); i+=4 )
+	for ( int i=0; i<uncertainties_list_.size(); i+=6 )
 	{
-		std::cout << (int(i/4)+1) << ". Uncertainty: From " << uncertainties_list_[i] << " [parent marker: " << uncertainties_list_[i+2] << "] to "
-				<< uncertainties_list_[i+1] << " [child marker: " << uncertainties_list_[i+3] << "]" << std::endl;
+		std::cout << (int(i/4)+1) << ". Uncertainty: From " << uncertainties_list_[i] << " [over " << uncertainties_list_[i+2] << " to parent marker: " << uncertainties_list_[i+4]
+				<< "] to " << uncertainties_list_[i+1] << " [over " << uncertainties_list_[i+3] << " to child marker: " << uncertainties_list_[i+5] << "]" << std::endl;
 	}
 
 	initialized_ = true;

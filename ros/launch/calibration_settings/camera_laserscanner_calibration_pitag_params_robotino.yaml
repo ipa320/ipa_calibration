@@ -74,16 +74,15 @@ reference_frame: "/landmark_reference_nav"
 # take into account that the transformations between the uncertainties have to be available from TF as well
 
 # [parent frame, child frame, parent marker, child marker]
-uncertainties_list: ["base_linkz","base_neck_link", "tag_25", "marker_25",
-                     "base_linkz","base_neck_link", "tag_36", "marker_36",
-                     "base_linkz","base_neck_link", "tag_38", "marker_38",
-                     "base_linkz","base_neck_link", "tag_48", "marker_48",
-                     "base_linkz","base_neck_link", "tag_55", "marker_55",
-                     "base_linkz","base_neck_link", "tag_64", "marker_64",
-                     "base_linkz","base_neck_link", "tag_69", "marker_69",
-                     "base_linkz","base_neck_link", "tag_73", "marker_73",
-                     "base_linkz","base_neck_link", "tag_79", "marker_79"]
-                     #"kinect_link","kinect_depth_frame"]"neck_pan_link","neck_tilt_link"]
+uncertainties_list: ["base_linkz","base_neck_link", "landmark_reference_front", "kinect_depth_optical_frame", "tag_25", "marker_25",
+                     "base_linkz","base_neck_link", "landmark_reference_front", "kinect_depth_optical_frame", "tag_36", "marker_36",
+                     "base_linkz","base_neck_link", "landmark_reference_front", "kinect_depth_optical_frame", "tag_38", "marker_38",
+                     "base_linkz","base_neck_link", "landmark_reference_left", "kinect_depth_optical_frame", "tag_48", "marker_48",
+                     "base_linkz","base_neck_link", "landmark_reference_left", "kinect_depth_optical_frame", "tag_55", "marker_55",
+                     "base_linkz","base_neck_link", "landmark_reference_left", "kinect_depth_optical_frame", "tag_64", "marker_64",
+                     "base_linkz","base_neck_link", "landmark_reference_ground", "kinect_depth_optical_frame", "tag_69", "marker_69",
+                     "base_linkz","base_neck_link", "landmark_reference_ground", "kinect_depth_optical_frame", "tag_73", "marker_73",
+                     "base_linkz","base_neck_link", "landmark_reference_ground", "kinect_depth_optical_frame", "tag_79", "marker_79"]
 
 # defines the order in which the uncertainties will be calibrated
 # each couple or uncertainty in the uncertainties_list increases the calibration_order list
