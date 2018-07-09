@@ -113,13 +113,12 @@ protected:
 
     void createStorageFolder();
 
-    bool getOrigin(const std::string parent_marker, const std::string child_marker, std::string &origin);  // returns mutual frame of parent_marker and child_marker back-chains
-
-    bool getChain(const std::string parent_marker, const std::string child_marker, const std::string origin,
-    				std::vector<std::string> &parent_marker_to_origin, std::vector<std::string> &child_marker_to_origin);
+    bool getOrigin(const std::string last_parent_branch_frame, const std::string last_child_branch_frame, std::string &origin);  // returns mutual frame of parent_marker and child_marker back-chains
 
     void feedCalibrationSetup(CalibrationSetup &setup, const std::string parent, const std::string child,
     							const std::string parent_marker, const std::string child_marker);  // extend existing calibration setup by new information given
+
+    bool getBackChain(const std::string frame_start, const std::string frame_end, std::vector<std::string> &backchain);
 
     bool acquireTFData(const bool load_data);
 
