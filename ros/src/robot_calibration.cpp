@@ -145,7 +145,8 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		transform_listener_.getParent(child, ros::Time(0), actual_parent);
 		if ( actual_parent.compare(parent) == 0 )  // compare actual parent of child with parent user has input
 		{
-			// get origin of parent and child branch chain, chains with same origin will be stored into one calibration setup
+			// get origin frame of parent and child branch chain
+			// uncertainties that have "similar" parent and child branches will be merged into one calibration setup
 			std::string origin = "";
 			if ( getOrigin(last_parent_branch_frame, last_child_branch_frame, origin) )
 			{
@@ -155,18 +156,37 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 				bool found = false;
 				for ( int j=0; j<calibration_setups_.size(); ++j )  // merge entries that have the origin
 				{
-					if ( origin.compare(calibration_setups_[j].origin_) == 0 )
+					// check if uncertainty lies on parent or child branch of any existing setup, if so, merge, otherwise create a new calibration setup
+					if ( isPartOfCalibrationSetup(parent, child, origin, calibration_setups_[j]) )
 					{
-						feedCalibrationSetup(calibration_setups_[j], parent, child, parent_marker, child_marker);
+						feedCalibrationSetup(calibration_setups_[j], parent, child, parent_marker, child_marker);  // merge
 						found = true;
 						break;
 					}
 				}
 
-				if ( !found )  // no match has been found -> create new calibration setup
+				if ( !found )  // no match has been found -> create new calibration setup if possible
 				{
+					std::vector<std::string> parent_branch_reversed;
+					std::vector<std::string> child_branch_reversed;
+
+					bool success = getBackChain(last_parent_branch_frame, origin, parent_branch_reversed);
+					success &= getBackChain(last_child_branch_frame, origin, child_branch_reversed);
+
+					if ( !success )
+					{
+						ROS_ERROR("Could not build parent- or child-branch, skipping uncertainty from %s to %s.", parent.c_str(), child.c_str());
+						continue;
+					}
+
 					CalibrationSetup setup;
 					setup.origin_ = origin;
+					getForwardChain(parent_branch_reversed, setup.parent_branch);
+					getForwardChain(child_branch_reversed, setup.child_branch);
+
+					if ( setup.parent_branch.size() == 0 || setup.child_branch.size() == 0 )
+						ROS_WARN("Parent- or child-branch is empty. Proceeding...");
+
 					feedCalibrationSetup(setup, parent, child, parent_marker, child_marker);
 					calibration_setups_.push_back(setup);
 				}
@@ -207,74 +227,22 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		}
 	}
 
-	// ToDo: Feed calibration setup with each last_parent_branch_frame and last_child_branch_frame as well.
-	// This is because each calibration setup can have several parent and child branches. Snapshots have to consider this as well!!!
-
 	// organize/sort calibration data
-	// the uncertainties_list_ vector for each setup is not useful for a calibration, as it is unsorted. Sort it now to make the process feasible.
+	// the uncertainties_list_ vector for each setup is not useful for snapshotting tf data, as it is unsorted. Sort it now to make the process feasible.
 	for ( int i=0; i<calibration_setups_.size(); ++i )
 	{
-		// 1. Retrieve the reversed parent and child branch (from last parent/child branch frame to their mutual origin)
-		std::vector<std::string> parent_branch_reversed;
-		std::vector<std::string> child_branch_reversed;
-		std::string last_parent_branch_frame = uncertainties_list[i+2];
-		std::string last_child_branch_frame = uncertainties_list[i+3];
+		// find natural order (as they appear in tf tree) of uncertainties within the parent branch or child branch
+		bool parent_branch = true;
+		sortUncertainties(parent_branch, calibration_setups_[i]);
+		sortUncertainties(!parent_branch, calibration_setups_[i]);
 
-		// retrieve backwards chains, that connect last_parent_branch_frame/last_child_branch_frame with its origin.
-		bool success = getBackChain(last_parent_branch_frame, calibration_setups_[i].origin_, parent_branch_reversed);
-		success &= getBackChain(last_child_branch_frame, calibration_setups_[i].origin_, child_branch_reversed);
+		ROS_WARN("PARAMS");
+		std::cout << "parent: " << calibration_setups_[i].parent_branch_uncertainties_.size() << std::endl;
+		std::cout << "child: " << calibration_setups_[i].child_branch_uncertainties_.size() << std::endl;
 
-		if ( !success )
-			continue;
-
-		std::cout << "FINDING RIGHT ORDER" << std::endl;
-
-		// 2. Find natural order of the frames to be calibrated within the parent branch and child branch
-		// search trafos_to_calibrate inside parent_branch_reversed backwards to iterate in natural order (from origin to last_parent_branch_frame)
-		for ( int j=parent_branch_reversed.size()-1; j>=0; --j )
-		{
-			calibration_setups_[i].parent_branch.push_back(parent_branch_reversed[j]);  // store parent branch in right order for later usage: from origin to last_parent_branch_frame
-
-			if ( j > 0 )  // don't execute in last iteration
-			{
-				for ( int k=0; k<calibration_setups_[i].uncertainties_list_.size(); ++k )
-				{
-					std::cout << "P_PARENT: " << parent_branch_reversed[j] << " to " << calibration_setups_[i].uncertainties_list_[k].parent_ << std::endl;
-					std::cout << "P_CHILD: " << parent_branch_reversed[j-1] << " to " << calibration_setups_[i].uncertainties_list_[k].child_ << std::endl;
-
-					if ( parent_branch_reversed[j].compare(calibration_setups_[i].uncertainties_list_[k].parent_) == 0 &&
-							parent_branch_reversed[j-1].compare(calibration_setups_[i].uncertainties_list_[k].child_) == 0 )
-					{
-						CalibrationInfo &info = calibration_setups_[i].uncertainties_list_[k];
-						calibration_setups_[i].origin_to_parent_marker_uncertainties_.push_back(info);  // now put the transforms in order, so that they reflect the order in which they appear in tf
-						std::cout << "P_PARENT: " << info.parent_ << "P_CHILD: " << info.child_ << std::endl;
-					}
-				}
-			}
-		}
-
-		// search trafos_to_calibrate inside child_branch_reversed backwards to iterate in natural order (from origin to last_child_branch_frame)
-		for ( int j=child_branch_reversed.size()-1; j>=0; --j )
-		{
-			calibration_setups_[i].child_branch.push_back(child_branch_reversed[j]);  // store child branch in right order for later usage: from origin to last_child_branch_frame
-
-			if ( j > 0 )  // don't execute in last execution
-			{
-				for ( int k=0; k<calibration_setups_[i].uncertainties_list_.size(); ++k )
-				{
-					std::cout << "C_PARENT: " << child_branch_reversed[j] << " to " << calibration_setups_[i].uncertainties_list_[k].parent_ << std::endl;
-					std::cout << "C_CHILD: " << child_branch_reversed[j-1] << " to " << calibration_setups_[i].uncertainties_list_[k].child_ << std::endl;
-
-					if ( child_branch_reversed[j].compare(calibration_setups_[i].uncertainties_list_[k].parent_) == 0 &&
-							child_branch_reversed[j-1].compare(calibration_setups_[i].uncertainties_list_[k].child_) == 0 )
-					{
-						CalibrationInfo &info = calibration_setups_[i].uncertainties_list_[k];
-						calibration_setups_[i].origin_to_child_marker_uncertainties_.push_back(info);  // now put the transforms in order, so that they reflect the order in which they appear in tf
-						std::cout << "C_PARENT: " << info.parent_ << " C_CHILD: " << info.child_ << std::endl;
-					}
-				}
-			}
-		}
+		// truncate parent- and child-branch so that they end at their last uncertainty, the rest can be retrieved via tf
+		truncateBranch(calibration_setups_[i].parent_branch, calibration_setups_[i].parent_branch_uncertainties_);
+		truncateBranch(calibration_setups_[i].child_branch, calibration_setups_[i].child_branch_uncertainties_);
 	}
 
 	if ( calibration_setups_.size() == 0 )
@@ -282,6 +250,13 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		ROS_WARN("No calibration setup entry found: Exiting.");
 		throw std::exception();
 	}
+
+	std::cout << "CALIB SETUPS: " << calibration_setups_.size() << std::endl;
+	for ( std::string str : calibration_setups_[0].parent_branch )
+		std::cout << str << std::endl;
+	std::cout << std::endl;
+	for ( std::string str : calibration_setups_[0].child_branch )
+		std::cout << str << std::endl;
 
 	node_handle_.param("optimization_iterations", optimization_iterations_, 1000);
 
@@ -353,6 +328,30 @@ bool RobotCalibration::getOrigin(const std::string last_parent_branch_frame, con
 	return false;
 }
 
+bool RobotCalibration::isPartOfCalibrationSetup(const std::string parent, const std::string child, const std::string origin, const CalibrationSetup &setup)
+{
+	if ( origin.compare(setup.origin_) == 0 )
+	{
+		for ( int i=0; i<setup.parent_branch.size()-1; i++ )
+		{
+			if ( parent.compare(setup.parent_branch[i]) == 0 && child.compare(setup.parent_branch[i+1]) )
+			{
+				return true;
+			}
+		}
+
+		for ( int i=0; i<setup.child_branch.size()-1; i++ )
+		{
+			if ( parent.compare(setup.child_branch[i]) == 0 && child.compare(setup.child_branch[i+1]) )
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 void RobotCalibration::feedCalibrationSetup(CalibrationSetup &setup, const std::string parent, const std::string child,
 		const std::string parent_marker, const std::string child_marker)
 {
@@ -385,12 +384,15 @@ void RobotCalibration::feedCalibrationSetup(CalibrationSetup &setup, const std::
 
 	if ( success )
 	{
+		info.branch_idx = -1;  // not yet, initialized later on
 		info.parent_ = parent;
 		info.child_ = child;
 		info.parent_markers_.push_back(parent_marker);
 		info.child_markers_.push_back(child_marker);
 		setup.uncertainties_list_.push_back(info);
 	}
+	else
+		ROS_WARN("Unable to get transform from %s to %s, skipping uncertainty.", parent.c_str(), child.c_str());
 }
 
 bool RobotCalibration::getBackChain(const std::string frame_start, const std::string frame_end, std::vector<std::string> &backchain)
@@ -411,10 +413,67 @@ bool RobotCalibration::getBackChain(const std::string frame_start, const std::st
 			}
 		}
 		while ( frame.compare(frame_end) != 0 );
-	}
-	backchain.push_back(frame_end);  // add origin as last frame to parent branch
 
+	}
+
+	backchain.push_back(frame_end);  // add origin as last frame to parent branch
 	return true;
+}
+
+void RobotCalibration::getForwardChain(const std::vector<std::string> &backchain, std::vector<std::string> &forwardchain)
+{
+	for ( int i=backchain.size()-1; i>=0; --i )
+	{
+		forwardchain.push_back(backchain[i]);
+	}
+}
+
+void RobotCalibration::sortUncertainties(const bool parent_branch, CalibrationSetup &setup)
+{
+	std::vector<std::string> &branch = (parent_branch ? setup.parent_branch : setup.child_branch);
+
+	for ( int i=0; i<branch.size()-1; ++i )
+	{
+		for ( int k=0; k<setup.uncertainties_list_.size(); ++k )
+		{
+			if ( branch[i].compare(setup.uncertainties_list_[k].parent_) == 0 &&
+					branch[i+1].compare(setup.uncertainties_list_[k].child_) == 0 )
+			{
+				CalibrationInfo &info = setup.uncertainties_list_[k];
+
+				if ( parent_branch )
+				{
+					info.parent_branch_uncertainty = true;
+					setup.parent_branch_uncertainties_.push_back(info);  // now put the transforms in order, so that they reflect the order in which they appear in tf
+					info.branch_idx = setup.parent_branch_uncertainties_.size()-1;
+				}
+				else
+				{
+					info.parent_branch_uncertainty = false;
+					setup.child_branch_uncertainties_.push_back(info);
+					info.branch_idx = setup.child_branch_uncertainties_.size()-1;
+				}
+			}
+		}
+	}
+}
+
+void RobotCalibration::truncateBranch(std::vector<std::string> &branch, std::vector<CalibrationInfo> &branch_uncertainties)
+{
+	if ( branch.size() == 0 )
+		return;
+
+	// take child frame of last uncertainty on respective branch or origin (and remove branch completely in this case)
+	std::string last_uncertainty_child = (branch_uncertainties.size() > 0) ? branch_uncertainties[branch_uncertainties.size()-1].child_ : branch[0];
+
+	for ( int i=0; i<branch.size()-1; ++i )
+	{
+		if ( branch[i].compare(last_uncertainty_child) == 0 )
+		{
+			branch.erase(branch.begin()+i+1, branch.end());  // erase everything that comes after last uncertainty child
+			break;
+		}
+	}
 }
 
 
@@ -447,8 +506,8 @@ bool RobotCalibration::startCalibration(const bool load_data_from_drive)
 		{
 			for ( int j=0; j<calibration_setups_[l].uncertainties_list_.size(); ++j )
 			{
-				// ToDo: HERE NEEDS TO BE AN ORDER IN PLACE SO USER CAN DEFINE IT!
-				if ( !extrinsicCalibration(calibration_setups_[l], j) )
+				// ToDo: Add a way here so that user can define order more easily?
+				if ( !extrinsicCalibration(l, j) )
 				{
 					ROS_ERROR("Calibration failed!");
 					return false;
@@ -506,10 +565,27 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 			calibration_interface_->preSnapshot(config_counter);  // give user possibility to execute code before snapshots take place
 
 			// grab transforms for each setup and store them
+			std::vector<TFSnapshot> snapshots(calibration_setups_.size());
+			bool skip_configuration = false;
 			for ( int i=0; i<calibration_setups_.size(); ++i )
 			{
-				// snapshot necessary tf data: 1) all transforms in parent and child branch, 2) all parent and child marker transforms for each uncertain trafo
-				populateTFSnapshot(calibration_setups_[i]);
+				TFSnapshot snapshot;
+				populateTFSnapshot(calibration_setups_[i], snapshot);
+
+				if ( snapshot.valid )
+				{
+					snapshots[i] = snapshot;
+				}
+				else
+				{
+					skip_configuration = true;
+					break;
+				}
+			}
+
+			if ( !skip_configuration )
+			{
+				tf_snapshots_.push_back(snapshots);
 			}
 		}
 
@@ -520,7 +596,7 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 		// ToDo: Ask whether everything has to be stored
 		// load data from file
 		/*cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
-		// discuss this functionality with Rirchard, would be hard to implement due to complex structs that have to be stored and loaded
+		// discuss this functionality with Richard, would be hard to implement due to complex structs that have to be stored and loaded
 		if (fs.isOpened())
 		{
 			fs["T_gapfirst_to_marker_vector"] >> T_gapfirst_to_marker_vector;
@@ -538,10 +614,10 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 	return true;
 }
 
-void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup)
+void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnapshot &snapshot)
 {
 	// populate parent branch trafos
-	TFSnapshot snapshot;
+	snapshot.valid = false;
 	cv::Mat trafo;
 	const double timeout = 1.0;
 	for ( int i=0; i<setup.parent_branch.size()-1; ++i )
@@ -579,13 +655,14 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup)
 		}
 	}
 
-	// populate parent and child markers of parent branch
-	std::string last_parent_branch_frame = setup.parent_branch[setup.parent_branch.size()-1];
-	std::string last_child_branch_frame = setup.child_branch[setup.child_branch.size()-1];
-	for ( int i=0; i<setup.origin_to_parent_marker_uncertainties_.size(); ++i )
+	// populate trafos to parent and child markers of parent branch
+	std::string last_parent_branch_frame = (setup.parent_branch.size() > 0) ? setup.parent_branch[setup.parent_branch.size()-1] : setup.origin_;
+	std::string last_child_branch_frame = (setup.child_branch.size() > 0) ? setup.child_branch[setup.child_branch.size()-1] : setup.origin_;
+
+	for ( int i=0; i<setup.parent_branch_uncertainties_.size(); ++i )
 	{
-		std::vector<TFInfo> parent_markers;  // store parent markers of parent branch
-		for ( std::string parent_marker : setup.origin_to_parent_marker_uncertainties_[i].parent_markers_ )
+		std::vector<TFInfo> to_parent_markers;  // from last_child_branch_frame to current parent markers
+		for ( std::string parent_marker : setup.parent_branch_uncertainties_[i].parent_markers_ )
 		{
 			TFInfo info;
 			if ( transform_utilities::getTransform(transform_listener_, last_parent_branch_frame, parent_marker, trafo, timeout) )
@@ -593,15 +670,14 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup)
 				info.parent_ = last_parent_branch_frame;
 				info.child_ = parent_marker;
 				info.transform_ = trafo.clone();
-				parent_markers.push_back(info);
 			}
 
-			// Even store info if it is empty (e.g. due to timeout), so parent_markers size is the same as setup.origin_to_parent_marker_uncertainties_[i].parent_markers_
-			parent_markers.push_back(info);
+			// Even store info if it is empty (e.g. due to timeout), so to_parent_markers size has the same as setup.parent_branch_uncertainties_[i].parent_markers_
+			to_parent_markers.push_back(info);
 		}
 
-		std::vector<TFInfo> child_markers;  // store child markers of parent branch
-		for ( std::string child_marker : setup.origin_to_parent_marker_uncertainties_[i].child_markers_ )
+		std::vector<TFInfo> to_child_markers;  // from last_parent_branch_frame to current child markers
+		for ( std::string child_marker : setup.parent_branch_uncertainties_[i].child_markers_ )
 		{
 			TFInfo info;
 			if ( transform_utilities::getTransform(transform_listener_, last_child_branch_frame, child_marker, trafo, timeout) )
@@ -611,37 +687,37 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup)
 				info.transform_ = trafo.clone();
 			}
 
-			// Also store empty info so that child_markers and parent_markers have same size, this way we can filter out bad entries easily
-			child_markers.push_back(info);
+			// Also store empty info so that to_child_markers and to_parent_markers have same size, this way we can filter out bad entries easily later on
+			to_child_markers.push_back(info);
 		}
 
 		// check for bad entries now
-		for ( int j=0; j<parent_markers.size(); ++j )  // parent_markers and child_markers have same size
+		for ( int j=0; j<to_parent_markers.size(); ++j )  // to_parent_markers and to_child_markers have same size
 		{
-			if ( parent_markers[j].transform_.empty() || child_markers[j].transform_.empty() )  // remove bad entries from both lists, so that both vectors always have same size
+			if ( to_parent_markers[j].transform_.empty() || to_child_markers[j].transform_.empty() )  // remove bad entries from both lists, so that both vectors always have same size
 			{
-				parent_markers.erase(parent_markers.begin()+j);
-				child_markers.erase(child_markers.begin()+j);
+				to_parent_markers.erase(to_parent_markers.begin()+j);
+				to_child_markers.erase(to_child_markers.begin()+j);
 			}
 		}
 
-		if ( parent_markers.size() > 0 && parent_markers.size() == child_markers.size() )
+		if ( to_parent_markers.size() > 0 && to_parent_markers.size() == to_child_markers.size() )
 		{
-			snapshot.parent_branch_parent_markers_.push_back(parent_markers);
-			snapshot.parent_branch_child_markers_.push_back(child_markers);
+			snapshot.pb_uncertainties_to_parent_markers_.push_back(to_parent_markers);
+			snapshot.pb_uncertainties_to_child_markers_.push_back(to_child_markers);
 		}
 		else
 		{
-			ROS_ERROR("Parent branch uncertainties: Parent marker vector is empty has not same size as child marker vector, skipping to snapshot current configuration!");
+			ROS_ERROR("Parent branch uncertainties: Parent marker vector is empty or has not same size as child marker vector, skipping to snapshot current configuration!");
 			return;
 		}
 	}
 
-	// populate parent and child markers of child branch
-	for ( int i=0; i<setup.origin_to_child_marker_uncertainties_.size(); ++i )
+	// populate trafos to parent and child markers of child branch
+	for ( int i=0; i<setup.child_branch_uncertainties_.size(); ++i )
 	{
-		std::vector<TFInfo> parent_markers;  // store parent markers of child branch
-		for ( std::string parent_marker : setup.origin_to_child_marker_uncertainties_[i].parent_markers_ )
+		std::vector<TFInfo> to_parent_markers;  // store parent markers of child branch
+		for ( std::string parent_marker : setup.child_branch_uncertainties_[i].parent_markers_ )
 		{
 			TFInfo info;
 			if ( transform_utilities::getTransform(transform_listener_, last_parent_branch_frame, parent_marker, trafo, timeout) )
@@ -651,11 +727,11 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup)
 				info.transform_ = trafo.clone();
 			}
 
-			parent_markers.push_back(info);
+			to_parent_markers.push_back(info);
 		}
 
-		std::vector<TFInfo> child_markers;  // store child markers of child branch
-		for ( std::string child_marker : setup.origin_to_child_marker_uncertainties_[i].child_markers_ )
+		std::vector<TFInfo> to_child_markers;  // store child markers of child branch
+		for ( std::string child_marker : setup.child_branch_uncertainties_[i].child_markers_ )
 		{
 			TFInfo info;
 			if ( transform_utilities::getTransform(transform_listener_, last_child_branch_frame, child_marker, trafo, timeout) )
@@ -665,23 +741,23 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup)
 				info.transform_ = trafo.clone();
 			}
 
-			child_markers.push_back(info);
+			to_child_markers.push_back(info);
 		}
 
 		// check for bad entries now
-		for ( int j=0; j<parent_markers.size(); ++j )  // parent_markers and child_markers have same size
+		for ( int j=0; j<to_parent_markers.size(); ++j )  // to_parent_markers and to_child_markers have same size
 		{
-			if ( parent_markers[j].transform_.empty() || child_markers[j].transform_.empty() )  // remove bad entries from both lists, so that both vectors always have same size
+			if ( to_parent_markers[j].transform_.empty() || to_child_markers[j].transform_.empty() )  // remove bad entries from both lists, so that both vectors always have same size
 			{
-				parent_markers.erase(parent_markers.begin()+j);
-				child_markers.erase(child_markers.begin()+j);
+				to_parent_markers.erase(to_parent_markers.begin()+j);
+				to_child_markers.erase(to_child_markers.begin()+j);
 			}
 		}
 
-		if ( parent_markers.size() > 0 && parent_markers.size() == child_markers.size() )
+		if ( to_parent_markers.size() > 0 && to_parent_markers.size() == to_child_markers.size() )
 		{
-			snapshot.child_branch_parent_markers_.push_back(parent_markers);
-			snapshot.child_branch_child_markers_.push_back(child_markers);
+			snapshot.cb_uncertainties_to_parent_markers_.push_back(to_parent_markers);
+			snapshot.cb_uncertainties_to_child_markers_.push_back(to_child_markers);
 		}
 		else
 		{
@@ -690,7 +766,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup)
 		}
 	}
 
-	tf_snapshots.push_back(snapshot);
+	snapshot.valid = true;
 }
 
 void RobotCalibration::displayAndSaveCalibrationResult(std::string output_file_name)
@@ -733,42 +809,42 @@ void RobotCalibration::displayAndSaveCalibrationResult(std::string output_file_n
 	}
 }
 
-bool RobotCalibration::extrinsicCalibration(CalibrationSetup &setup, const int current_uncertainty_idx)
+bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const int current_uncertainty_idx)
 {
-	// find in which branch the current uncertainty resides, build forward and backward chain based on that
-	int branch_idx = -1;
-
+	CalibrationSetup &setup = calibration_setups_[current_setup_idx];
 	CalibrationInfo &current_uncertainty = setup.uncertainties_list_[current_uncertainty_idx];
-	bool on_parent_branch = isParentBranchUncertainty(setup, current_uncertainty_idx, branch_idx);
+
+	int branch_idx = current_uncertainty.branch_idx;
 	if ( branch_idx > -1 )
 	{
+		bool on_parent_branch = current_uncertainty.parent_branch_uncertainty;
+
 		std::vector<cv::Point3d> points_3d_uncertainty_parent;  // parent marker points in uncertainty parent frame
 		std::vector<cv::Point3d> points_3d_uncertainty_child;  // child marker points in uncertainty child frame
 
-		for ( int i=0; i<tf_snapshots.size(); ++i )  // go through all snapshots for this setup and build
+		for ( int i=0; i<tf_snapshots_.size(); ++i )  // go through all snapshots for this setup and build
 		{
-			bool success = true;
 			std::vector<TFInfo>* branch_tmp;  			// either parent or child_branch
 			std::vector<TFInfo>* other_branch_tmp;		// if branch = child_branch then this is parent_branch and vice versa
 			std::vector<TFInfo>* parent_markers_tmp;	// points to markers of parent of current uncertainty
 			std::vector<TFInfo>* child_markers_tmp;		// points to markers of child of current uncertainty
 			if ( on_parent_branch )
 			{
-				branch_tmp = &tf_snapshots[i].parent_branch_;
-				other_branch_tmp = &tf_snapshots[i].child_branch_;
+				branch_tmp = &tf_snapshots_[i][current_setup_idx].parent_branch_;
+				other_branch_tmp = &tf_snapshots_[i][current_setup_idx].child_branch_;
 
-				// Why can we use branch_idx when it is actually the index for setup.origin_to_parent_marker_uncertainties_ here?
-				// Because for each uncertainty there will be a snapshot created of its own markers, therefore setup.origin_to_parent_marker_uncertainties_
-				// and tf_snapshots[i].parent_branch_parent_markers_ have the same size and have the same order (check populateTFSnapshot())
-				parent_markers_tmp = &tf_snapshots[i].parent_branch_parent_markers_[branch_idx];
-				child_markers_tmp = &tf_snapshots[i].parent_branch_child_markers_[branch_idx];
+				// Why can we use branch_idx when it is actually the index for setup.parent_branch_uncertainties_ here?
+				// Because for each uncertainty there will be a snapshot created of its own markers, therefore setup.parent_branch_uncertainties_
+				// and tf_snapshots_[i].pb_uncertainties_to_parent_markers_ have the same size and have the same order (check populateTFSnapshot())
+				parent_markers_tmp = &tf_snapshots_[i][current_setup_idx].pb_uncertainties_to_parent_markers_[branch_idx];
+				child_markers_tmp = &tf_snapshots_[i][current_setup_idx].pb_uncertainties_to_child_markers_[branch_idx];
 			}
 			else
 			{
-				branch_tmp = &tf_snapshots[i].child_branch_;
-				other_branch_tmp = &tf_snapshots[i].parent_branch_;
-				parent_markers_tmp = &tf_snapshots[i].child_branch_parent_markers_[branch_idx];
-				child_markers_tmp = &tf_snapshots[i].child_branch_child_markers_[branch_idx];
+				branch_tmp = &tf_snapshots_[i][current_setup_idx].child_branch_;
+				other_branch_tmp = &tf_snapshots_[i][current_setup_idx].parent_branch_;
+				parent_markers_tmp = &tf_snapshots_[i][current_setup_idx].cb_uncertainties_to_parent_markers_[branch_idx];
+				child_markers_tmp = &tf_snapshots_[i][current_setup_idx].cb_uncertainties_to_child_markers_[branch_idx];
 			}
 
 			// now with references
@@ -783,6 +859,7 @@ bool RobotCalibration::extrinsicCalibration(CalibrationSetup &setup, const int c
 				continue;
 			}
 
+			bool success = true;
 			cv::Mat uncertainty_child_to_premarker;  // uncertainty child to transform before child markers
 			cv::Mat uncertainty_parent_to_origin;  // uncertainty parent to origin
 			cv::Mat origin_to_premarker;  // origin to transform before parent markers
@@ -870,35 +947,6 @@ bool RobotCalibration::extrinsicCalibration(CalibrationSetup &setup, const int c
 	return false;
 }
 
-bool RobotCalibration::isParentBranchUncertainty(const CalibrationSetup &setup, const int uncertainty_idx, int &branch_idx)
-{
-	CalibrationInfo uncertainty = setup.uncertainties_list_[uncertainty_idx];
-	branch_idx = -1;
-	for ( int i=0; i<setup.origin_to_parent_marker_uncertainties_.size(); ++i )  // search in parent branch for uncertainty
-	{
-		CalibrationInfo current = setup.origin_to_parent_marker_uncertainties_[i];
-		if( uncertainty.parent_.compare(current.parent_) == 0 &&
-				uncertainty.child_.compare(current.child_) == 0 )
-		{
-			branch_idx = i;
-			return true;
-		}
-	}
-
-	for ( int i=0; i<setup.origin_to_child_marker_uncertainties_.size(); ++i )  // search in child branch for uncertainty
-	{
-		CalibrationInfo current = setup.origin_to_child_marker_uncertainties_[i];
-		if( uncertainty.parent_.compare(current.parent_) == 0 &&
-				uncertainty.child_.compare(current.child_) == 0 )
-		{
-			branch_idx = i;
-			return false;
-		}
-	}
-
-	return false;
-}
-
 bool RobotCalibration::buildTransformChain(const std::string start, const std::string end, const std::vector<TFInfo> &branch, cv::Mat &trafo)  // get transform chain
 {
 	// start and end are not necessarily next to one another
@@ -906,7 +954,7 @@ bool RobotCalibration::buildTransformChain(const std::string start, const std::s
 	int end_idx = -1;
 	for ( int i=0; i<branch.size(); ++i )  // find indexes of start and end point
 	{
-		if ( start.compare(branch[i].parent_) == 0 )  // only use parents to determine
+		if ( start.compare(branch[i].parent_) == 0 )  // use parents to determine indexes
 			start_idx = i;
 
 		if ( end.compare(branch[i].parent_) == 0 )
