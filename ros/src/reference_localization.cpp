@@ -112,9 +112,9 @@ ReferenceLocalization::~ReferenceLocalization()
 void ReferenceLocalization::dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig &config, uint32_t level)
 {
 	update_rate_ = config.update_rate;
-	reference_frame_ = config.child_frame_name;
+	reference_frame_ = config.reference_frame;
 	std::cout << "Reconfigure request with\n update_rate=" << update_rate_
-			<< "\n child_frame_name=" << reference_frame_ << "\n";
+			<< "\n reference_frame=" << reference_frame_ << "\n";
 }
 
 bool ReferenceLocalization::estimateFrontWall(std::vector<cv::Point2d>& scan_front, cv::Vec4d& line_front, const double inlier_ratio, const double success_probability,
