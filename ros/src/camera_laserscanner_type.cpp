@@ -298,12 +298,15 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 		ros::Duration(0.1f).sleep(); //Wait for child_frame transform to register properly
 	}
 
-	//Failed to set up child frame, exit
+	// Failed to set up child frame, exit
 	if ( !result )
 	{
 		ROS_FATAL("CameraBaseCalibrationMarker::CameraBaseCalibrationMarker: Reference frame has not been set up for 10 seconds.");
 		throw std::exception();
 	}
+
+	// Create a timer that loops and fills the reference frame history vector?
+	//ros::Timer timer = nh.createTimer(ros::Duration(0.1), timerCallback);
 }
 
 bool CameraLaserscannerType::moveRobot(int config_index)
@@ -317,7 +320,10 @@ bool CameraLaserscannerType::moveRobot(int config_index)
 			unsigned short error_code = moveBase(base_configurations_[config_index]);
 
 			if ( error_code == MOV_NO_ERR ) // Exit loop, as successfully executed move
+			{
+				std::cout << "Base configuration reached." << std::endl;
 				break;
+			}
 			else if ( error_code == MOV_ERR_SOFT ) // Retry last failed move
 			{
 				ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Could not execute moveBase, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
@@ -509,13 +515,13 @@ bool CameraLaserscannerType::isReferenceFrameValid(cv::Mat &T, unsigned short& e
 	average /= REF_FRAME_HISTORY_SIZE;
 
 	const double current_time = ros::Time::now().toSec();
-	if ( current_time - last_ref_history_update_ >= 0.1f )  // every 0.1 sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
+	if ( current_time - last_ref_history_update_ >= 0.05f )  // every 0.05 sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
 	{
 		last_ref_history_update_ = current_time;
 		ref_frame_history_[ ref_history_index_ < REF_FRAME_HISTORY_SIZE-1 ? ref_history_index_++ : (ref_history_index_ = 0) ] = currentSqNorm; // Update with new measurement
 	}
 
-	if ( average == 0.0 || fabs(1.0 - (currentSqNorm/average)) > 0.15  ) // Up to 15% deviation to average is allowed.
+	if ( average <= 0.0001 || fabs(1.0 - (currentSqNorm/average)) > 0.2  ) // Up to 20% deviation from average is allowed.
 	{
 		ROS_WARN("CameraBaseCalibrationMarker::isReferenceFrameValid: Reference frame can't be detected reliably. It's current deviation from the average is to too great.");
 		error_code = MOV_ERR_SOFT;
