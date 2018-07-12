@@ -68,7 +68,6 @@ struct CalibrationInfo  // defines one uncertain transform in the kinematic chai
 	std::vector<std::string> parent_markers_;  // marker frame one reaches from parent_ frame backwards
 	std::vector<std::string> child_markers_;  // marker_frame one reaches from child_ frame onwards
     cv::Mat current_trafo_;
-    int branch_idx;  // defines index on parent- or child-branch
 	bool parent_branch_uncertainty;  // defines where this uncertainty lies: on parent- or child-branch
 };
 
@@ -76,8 +75,6 @@ struct CalibrationSetup  // defines one calibration setup, consisting of x trans
 {
 	bool calibrated_;  // marks whether this setup has already been done
 	std::string origin_;  // this is not the robot's base, but the frame where two transformations chains meet
-	std::vector<CalibrationInfo> parent_branch_uncertainties_;  // parent branch uncertainties, sorted
-	std::vector<CalibrationInfo> child_branch_uncertainties_;  // child branch uncertainties, sorted
 	std::vector<CalibrationInfo> uncertainties_list_;  // unsorted list of uncertainties
 	std::vector<std::string> parent_branch;  // contains all frames from origin up to the last parent-branch uncertainty's child
 	std::vector<std::string> child_branch;  // contains all frames from origin up to the last child-branch uncertainty's child
@@ -90,12 +87,17 @@ struct TFInfo  // used to make snapshots from tf tree
 	cv::Mat transform_;
 };
 
+// Used to snapshot the tf transform between the last frame of a branch to the corresponding markers
+struct TFBranchEndsToMarkers
+{
+	std::vector<TFInfo> parent_end_to_parent_markers_;
+	std::vector<TFInfo> child_end_to_child_markers_;
+	int corresponding_uncertainty_idx;
+};
+
 struct TFSnapshot
 {
-	std::vector< std::vector<TFInfo> > pb_uncertainties_to_parent_markers_;  // pb = parent-branch. each uncertain trafo on parent branch can have a different set of parent_markers
-	std::vector< std::vector<TFInfo> > pb_uncertainties_to_child_markers_;  // each uncertain trafo on parent branch can have a different set of child_markers
-	std::vector< std::vector<TFInfo> > cb_uncertainties_to_parent_markers_;  // cb = child-branch. same for child branch
-	std::vector< std::vector<TFInfo> > cb_uncertainties_to_child_markers_;
+	std::vector<TFBranchEndsToMarkers> branch_ends_to_markers_;  // includes trafo between end of both parent- and child-branch to each child and parent marker of an uncertainty
 	std::vector<TFInfo> parent_branch_;
 	std::vector<TFInfo> child_branch_;
 	bool valid;  // whether this snapshot contains consistent data
@@ -127,13 +129,15 @@ protected:
 
     void getForwardChain(const std::vector<std::string> &backchain, std::vector<std::string> &forwardchain);  // takes backchain and reverses it
 
-    void sortUncertainties(const bool parent_branch, CalibrationSetup &setup);  // sorts parent- and child-branch uncertainties of passed calibration setup
+    void sortUncertainties(const bool parent_branch, CalibrationSetup &setup, std::vector<CalibrationInfo> &sorted_uncertainties);  // sorts parent- and child-branch uncertainties of passed calibration setup
 
     void truncateBranch(std::vector<std::string> &branch, std::vector<CalibrationInfo> &branch_uncertainties);
 
     bool acquireTFData(const bool load_data);
 
     void populateTFSnapshot(const CalibrationSetup &setup, TFSnapshot &snapshot);
+
+    void getBranchEndToMarkers(const int uncertainty_index, const bool parent_markers, const TFSnapshot &snapshot, std::vector<TFInfo> &end_to_markers);
 
     bool buildTransformChain(const std::string start, const std::string end, const std::vector<TFInfo> &branch, cv::Mat &trafo);  // returns the transform between two arbitrary points in a branch
 

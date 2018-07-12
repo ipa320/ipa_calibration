@@ -148,7 +148,7 @@ namespace transform_utilities
 
 	// computes the transform from source_frame to target_frame (i.e. transform arrow is pointing from source_frame to target_frame)
 	// ToDo: Change check_time to a float time_out float value
-	bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T, const double timeout, const bool report_timeout)
+	bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T, const double timeout, const bool report_error)
 	{
 		try
 		{
@@ -161,12 +161,7 @@ namespace transform_utilities
 				const double current_time = ros::Time::now().toSec();
 
 				if ( !Ts.stamp_.isValid() || current_time - Ts.stamp_.toSec() > timeout )
-				{
-					if ( report_timeout )
-						throw tf::TransformException("getTransform: Transform from "+target_frame+" to "+source_frame+" timed out.");
-					else
-						return false;
-				}
+					throw tf::TransformException("getTransform: Transform from "+target_frame+" to "+source_frame+" timed out.");
 			}
 
 			const tf::Matrix3x3& rot = Ts.getBasis();
@@ -186,7 +181,9 @@ namespace transform_utilities
 		}
 		catch (tf::TransformException& ex)
 		{
-			ROS_WARN("%s",ex.what());
+			if ( report_error )
+				ROS_WARN("%s",ex.what());
+
 			return false;
 		}
 
