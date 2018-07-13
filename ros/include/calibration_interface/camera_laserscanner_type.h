@@ -57,7 +57,7 @@
 #include <opencv2/opencv.hpp>
 
 
-#define REF_FRAME_HISTORY_SIZE 15 // 15 entries used to build the moving average upon
+#define REF_FRAME_HISTORY_SIZE 10 // 10 entries used to build the moving average upon
 
 enum MoveBaseErrorCode
 {

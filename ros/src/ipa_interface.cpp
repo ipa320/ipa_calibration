@@ -57,6 +57,7 @@
 #include <calibration_interface/raw_interface.h>
 #include <calibration_interface/cob_interface.h>
 #include <exception>
+#include <iostream>
 
 
 IPAInterface::IPAInterface()
@@ -136,6 +137,7 @@ int IPAInterface::getConfigurationCount()
 void IPAInterface::preSnapshot(int current_index)
 {
 	ros::Duration(2).sleep();  // wait some more to mitigate shaking effects as our robot's kinematics are not that stiff
+	std::cout << "Applying snapshots now..." << std::endl;
 }
 
 // we are not making use of marker_frame, as we do either use pitags or checkerboards throughout the whole calibration, so we do not mix markers

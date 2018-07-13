@@ -511,21 +511,31 @@ bool CameraLaserscannerType::isReferenceFrameValid(cv::Mat &T, unsigned short& e
 	// Avoid robot movement if reference frame is jumping around
 	double average = 0.0;
 	for ( int i=0; i<REF_FRAME_HISTORY_SIZE; ++i )
+	{
 		average += ref_frame_history_[i];
+		//std::cout << "AVG " << i << ": "  << ref_frame_history_[i] << std::endl;
+	}
 	average /= REF_FRAME_HISTORY_SIZE;
 
-	const double current_time = ros::Time::now().toSec();
-	if ( current_time - last_ref_history_update_ >= 0.05f )  // every 0.05 sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
-	{
-		last_ref_history_update_ = current_time;
-		ref_frame_history_[ ref_history_index_ < REF_FRAME_HISTORY_SIZE-1 ? ref_history_index_++ : (ref_history_index_ = 0) ] = currentSqNorm; // Update with new measurement
-	}
+	std::cout << "MA: " << currentSqNorm << "/" << average << std::endl;
 
 	if ( average <= 0.0001 || fabs(1.0 - (currentSqNorm/average)) > 0.2  ) // Up to 20% deviation from average is allowed.
 	{
 		ROS_WARN("CameraBaseCalibrationMarker::isReferenceFrameValid: Reference frame can't be detected reliably. It's current deviation from the average is to too great.");
 		error_code = MOV_ERR_SOFT;
 		return false;
+	}
+
+	// update moving average
+	const double current_time = ros::Time::now().toSec();
+	std::cout << "TIME: " << current_time << std::endl;
+	if ( current_time - last_ref_history_update_ >= 0.02f )  // every 0.02 sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
+	{
+		std::cout << "Updating MA" << std::endl;
+		last_ref_history_update_ = current_time;
+		ref_frame_history_[ref_history_index_] = currentSqNorm; // Update with new measurement
+		ref_history_index_ = (ref_history_index_+1 < REF_FRAME_HISTORY_SIZE) ? ref_history_index_+1 : 0;
+		std::cout << ref_history_index_ << std::endl;
 	}
 
 	return true;
