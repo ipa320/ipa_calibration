@@ -116,8 +116,6 @@ public:
 
 protected:
 
-    void createStorageFolder();
-
     bool getOrigin(const std::string last_parent_branch_frame, const std::string last_child_branch_frame, std::string &origin);  // returns mutual frame of parent_marker and child_marker back-chains
 
     bool isPartOfCalibrationSetup(const std::string parent, const std::string child, const std::string origin, const CalibrationSetup &setup);  // returns whether passed uncertainty is part of passed calibration setup
@@ -154,6 +152,7 @@ protected:
     tf::TransformListener transform_listener_;
     ros::NodeHandle node_handle_;
     std::string calibration_storage_path_;  // path to data
+    std::string snapshot_folder_;
     CalibrationInterface *calibration_interface_;
     std::vector<CalibrationSetup> calibration_setups_;
     std::vector< std::vector<TFSnapshot> > tf_snapshots_;  // each robot configuration has calibration setup count snapshopts

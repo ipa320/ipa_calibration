@@ -80,12 +80,9 @@ include_directories(
 add_library(CalibrationTools
 					ros/src/robot_calibration.cpp
 					ros/src/calibration_interface.cpp
-					#ros/src/camera_base_calibration_marker.cpp
-					#ros/src/camera_base_calibration_checkerboard.cpp
-					#ros/src/camera_base_calibration_pitag.cpp
-					#ros/src/arm_base_calibration.cpp
 					common/src/transformation_utilities.cpp
 					common/src/calibration_utilities.cpp
+					common/src/file_utilities.cpp
 )
 
 target_link_libraries(CalibrationTools

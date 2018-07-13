@@ -48,17 +48,15 @@
  *
  ****************************************************************/
 
+
 #include <robotino_calibration/transformation_utilities.h>
 
-// Eigen
-//#include <Eigen/Core>
 
-//Exception
 #include <tf/exceptions.h>
-
 #include <string>
 #include <ros/ros.h>
 #include <tf/LinearMath/Matrix3x3.h>
+
 
 namespace transform_utilities
 {

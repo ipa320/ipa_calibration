@@ -52,24 +52,22 @@
 #include <robotino_calibration/robot_calibration.h>
 #include <robotino_calibration/timer.h>
 #include <robotino_calibration/transformation_utilities.h>
+#include <robotino_calibration/file_utilities.h>
 
 //Exception
 #include <exception>
-#include <tf/exceptions.h>
 
 // File writing
 #include <sstream>
 #include <fstream>
-
-// Boost
-#include <boost/filesystem.hpp>
 
 
 // ToDo: Implement calibration order mechanics! [Already possible]
 // ToDo: Implement snapshot save/load system
 // ToDo: Move calibration_utilities to calibration_interface package and merge with interface header
 // ToDo: Create custom exception classes for exception handling
-// ToDo: Create snapshot folder as well
+// ToDo: Create snapshot folder as well [done]
+// ToDo: Use std::chrono for timing #include <chrono>
 
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface) :
@@ -260,28 +258,16 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
 
-	createStorageFolder();
+	// create folders that will contain calibration result and snapshot files for offline calibration
+	file_utilities::createStorageFolder(calibration_storage_path_);
+	snapshot_folder_ = "/snapshot";
+	file_utilities::createStorageFolder((calibration_storage_path_+snapshot_folder_));
 }
 
 RobotCalibration::~RobotCalibration()
 {
 	if ( calibration_interface_ != 0 )
 		delete calibration_interface_;
-}
-
-// create data storage path if it does not yet exist
-void RobotCalibration::createStorageFolder()
-{
-	boost::filesystem::path storage_path(calibration_storage_path_);
-
-	if (boost::filesystem::exists(storage_path) == false)
-	{
-		if (boost::filesystem::create_directories(storage_path) == false && boost::filesystem::exists(storage_path) == false)
-		{
-			ROS_ERROR("RobotCalibration: Could not create directory %s ", storage_path.c_str());
-			return;
-		}
-	}
 }
 
 bool RobotCalibration::getOrigin(const std::string last_parent_branch_frame, const std::string last_child_branch_frame, std::string &origin)
@@ -511,7 +497,7 @@ bool RobotCalibration::startCalibration(const bool load_data_from_drive)
 	// display and save calibration parameters
 	std::string output = calibration_interface_->getResultFileName();
 
-	// check for file extension
+	// check if file extension exists
 	if( output.rfind(".") == std::string::npos )
 	{
 		output += ".txt";
@@ -536,7 +522,7 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 			if ( !ros::ok() )
 				return false;
 
-			std::cout << "Configuration " << (config_counter+1) << "/" << num_configs << std::endl;
+			std::cout << std::endl << "Configuration " << (config_counter+1) << "/" << num_configs << std::endl;
 
 			// try to move robot
 			try
@@ -739,21 +725,10 @@ void RobotCalibration::displayAndSaveCalibrationResult(std::string output_file_n
 
 	std::cout << output.str();
 
-	if ( ros::ok() )
-	{
-		std::string path_file = calibration_storage_path_ + output_file_name;
-		std::fstream file_output;
-		file_output.open(path_file.c_str(), std::ios::out);
-		if (file_output.is_open())
-			file_output << output.str();
-		else
-			ROS_WARN("Failed to open %s, not saving calibration results!", path_file.c_str());
-		file_output.close();
-	}
+	if ( ros::ok() )  // if program has been killed, do not save results
+		file_utilities::saveCalibrationResult((calibration_storage_path_+output_file_name), output.str());  // save results to drive
 	else
-	{
 		ROS_WARN("Not saving calibration results.");
-	}
 }
 
 bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const int current_uncertainty_idx)
