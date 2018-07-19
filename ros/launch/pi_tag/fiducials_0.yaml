@@ -14,7 +14,7 @@ sharpness_calibration_parameter_n: -2670187.875850272       # -2.31534e+06
 # if true, the sharpness measurements are logged and saved to disc for calibration of the curve or directly calibrated within the program (aee also parameters m and n above)
 log_or_calibrate_sharpness_measurements: false
 # Publish coordinate systems of detected fiducials as marker_array for rviz
-publish_marker_array: true
+publish_marker_array: false
 # Publish TF
 publish_tf: true
 # Publish 2D image

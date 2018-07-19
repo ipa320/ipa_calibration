@@ -55,9 +55,10 @@
 #include <calibration_interface/calibration_type.h>
 #include <robotino_calibration/calibration_utilities.h>
 #include <opencv2/opencv.hpp>
+#include <robotino_calibration/timer.h>
 
 
-#define REF_FRAME_HISTORY_SIZE 10 // 10 entries used to build the moving average upon
+#define REF_FRAME_HISTORY_SIZE 20 // 20 entries used to build the moving average upon
 
 enum MoveBaseErrorCode
 {
@@ -89,9 +90,8 @@ protected:
     bool divergenceDetectedLocation(double error_x, double error_y, bool start_value);  // location controller diverges!
     void turnOffBaseMotion();  // set angular and linear speed to 0
 
-
     double ref_frame_history_[REF_FRAME_HISTORY_SIZE]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <REF_FRAME_HISTORY_SIZE> measurements.
-    int ref_history_index_; // Current index of history building
+    Timer ref_history_timer_;  // precisely update reference history
     double max_ref_frame_distance_;
 
     std::vector<calibration_utilities::BaseConfiguration> base_configurations_;  // wished base configurations used for calibration
@@ -103,6 +103,7 @@ protected:
 private:
 
     double last_ref_history_update_;  // used to update the ref_frame_history_ array cyclically and not upon every call of isReferenceFrameValid()
+    int ref_history_index_; // Current index of history building
 
     double start_error_phi_;	// Used for divergence detection
     double start_error_x_;	// Used for divergence detection
