@@ -60,6 +60,8 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
+#include <robotino_calibration/timer.h>
+
 
 struct CalibrationInfo  // defines one uncertain transform in the kinematic chain
 {
@@ -90,8 +92,8 @@ struct TFInfo  // used to make snapshots from tf tree
 // Used to snapshot the tf transform between the last frame of a branch to the corresponding markers
 struct TFBranchEndsToMarkers
 {
-	std::vector<TFInfo> parent_end_to_parent_markers_;
-	std::vector<TFInfo> child_end_to_child_markers_;
+	std::vector<TFInfo> branch_to_child_markers_;  // child markers are always on the branch where the uncertainty lies
+	std::vector<TFInfo> otherbranch_to_parent_markers_;  // parent markers are always on the other branch (which uncertainty is no part part of)
 	int corresponding_uncertainty_idx;
 };
 
@@ -135,7 +137,7 @@ protected:
 
     void populateTFSnapshot(const CalibrationSetup &setup, TFSnapshot &snapshot);
 
-    void getBranchEndToMarkers(const int uncertainty_index, const bool parent_markers, const TFSnapshot &snapshot, std::vector<TFInfo> &end_to_markers);
+    std::vector<TFInfo>& getBranchEndToMarkers(const int uncertainty_index, const bool parent_markers, TFSnapshot &snapshot);
 
     bool buildTransformChain(const std::string start, const std::string end, const std::vector<TFInfo> &branch, cv::Mat &trafo);  // returns the transform between two arbitrary points in a branch
 
@@ -156,6 +158,7 @@ protected:
     CalibrationInterface *calibration_interface_;
     std::vector<CalibrationSetup> calibration_setups_;
     std::vector< std::vector<TFSnapshot> > tf_snapshots_;  // each robot configuration has calibration setup count snapshopts
+
 
 };
 
