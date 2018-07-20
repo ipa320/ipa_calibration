@@ -14,11 +14,11 @@ use_range: true
 # ranges for the degrees of freedom of the robot
 # each parameter is set as [min_value, step, max_value]
 # double
-x_range: [-1.0, 1.0, -1.0]#[-1.25, 0.25, -0.75]       # in [m]
-y_range: [-1.0, 1.0, -1.0]#[-1.5, 0.5, -1.0]          # in [m], fixed y-coordinate
+x_range: [-1.25, 0.25, -0.75]       # in [m]
+y_range: [-1.5, 0.5, -1.0]          # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]          # in [rad], fixed phi-angle
 camera_ranges: [-1.2, 0.5, 0.2,
-                0.0, 1.0, 0.0]#-0.8, 0.4, 0.0]     # first pan then tilt in [rad]
+                -0.8, 0.8, 0.0]#-0.8, 0.4, 0.0]     # first pan then tilt in [rad]
 
 # list of robot configurations for observing the pitags measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker
 # includes 5 parameters per entry: robot pose: x, y, phi and camera angles at the end
