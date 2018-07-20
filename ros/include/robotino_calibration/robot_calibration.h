@@ -78,8 +78,8 @@ struct CalibrationSetup  // defines one calibration setup, consisting of x trans
 	bool calibrated_;  // marks whether this setup has already been done
 	std::string origin_;  // this is not the robot's base, but the frame where two transformations chains meet
 	std::vector<CalibrationInfo> uncertainties_list_;  // unsorted list of uncertainties
-	std::vector<std::string> parent_branch;  // contains all frames from origin up to the last parent-branch uncertainty's child
-	std::vector<std::string> child_branch;  // contains all frames from origin up to the last child-branch uncertainty's child
+	std::vector<std::string> parent_branch_;  // contains all frames from origin up to the last parent-branch uncertainty's child
+	std::vector<std::string> child_branch_;  // contains all frames from origin up to the last child-branch uncertainty's child
 };
 
 struct TFInfo  // used to make snapshots from tf tree
@@ -137,7 +137,7 @@ protected:
 
     void populateTFSnapshot(const CalibrationSetup &setup, TFSnapshot &snapshot);
 
-    std::vector<TFInfo>& getBranchEndToMarkers(const int uncertainty_index, const bool parent_markers, TFSnapshot &snapshot);
+    std::vector<TFInfo>* getBranchEndToMarkers(const int uncertainty_index, const bool parent_markers, TFSnapshot &snapshot);
 
     bool buildTransformChain(const std::string start, const std::string end, const std::vector<TFInfo> &branch, cv::Mat &trafo);  // returns the transform between two arbitrary points in a branch
 

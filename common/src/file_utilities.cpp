@@ -49,6 +49,7 @@
  ****************************************************************/
 
 
+#include <robotino_calibration/file_utilities.h>
 #include <ros/ros.h>
 #include <boost/filesystem.hpp>
 #include <fstream>
