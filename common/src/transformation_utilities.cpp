@@ -106,7 +106,7 @@ namespace transform_utilities
 				R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
 				R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
 				R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2),
-				0., 0., 0., 1);
+				0., 0., 0., 1.);
 		return T;
 	}
 

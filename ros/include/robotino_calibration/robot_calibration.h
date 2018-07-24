@@ -70,12 +70,12 @@ struct CalibrationInfo  // defines one uncertain transform in the kinematic chai
 	std::vector<std::string> parent_markers_;  // marker frame one reaches from parent_ frame backwards
 	std::vector<std::string> child_markers_;  // marker_frame one reaches from child_ frame onwards
     cv::Mat current_trafo_;
-	bool parent_branch_uncertainty;  // defines where this uncertainty lies: on parent- or child-branch
+    bool calibrated_;  // marks whether this uncertainty has already been calibrated
+	bool parent_branch_uncertainty_;  // defines where this uncertainty lies: on parent- or child-branch
 };
 
 struct CalibrationSetup  // defines one calibration setup, consisting of x transforms to be calibrated via parent and child marker
 {
-	bool calibrated_;  // marks whether this setup has already been done
 	std::string origin_;  // this is not the robot's base, but the frame where two transformations chains meet
 	std::vector<CalibrationInfo> uncertainties_list_;  // unsorted list of uncertainties
 	std::vector<std::string> parent_branch_;  // contains all frames from origin up to the last parent-branch uncertainty's child
