@@ -53,6 +53,7 @@
 #include <ros/ros.h>
 #include <boost/filesystem.hpp>
 #include <fstream>
+#include <sstream>
 
 
 namespace file_utilities
@@ -81,6 +82,57 @@ namespace file_utilities
 		else
 			ROS_WARN("Failed to open %s, not saving calibration results!", file_path.c_str());
 		file_output.close();
+	}
+
+	void saveSnapshots(const std::vector< std::vector<TFSnapshot> > &snapshots, std::string save_path)
+	{
+		std::stringstream stream;
+
+		stream << snapshots.size() << std::endl;
+		for ( int i=0; i<snapshots.size(); ++i )
+		{
+			stream << snapshots[i].size() << std::endl;
+			for ( TFSnapshot snap : snapshots[i] )
+			{
+				formatBETMs(stream, snap.branch_ends_to_markers_);
+				formatTFInfos(stream, snap.parent_branch_);
+				formatTFInfos(stream, snap.child_branch_);
+				stream << snap.valid_ << std::endl;
+			}
+		}
+
+		std::fstream file_output;
+		file_output.open(save_path.c_str(), std::ios::out | std::ios::trunc);  // append new results at end of file
+		if (file_output.is_open())
+			file_output << stream.str();
+		else
+			ROS_WARN("Failed to open %s, not saving snapshot data!", save_path.c_str());
+		file_output.close();
+	}
+
+	void formatBETMs(std::stringstream &stream, const std::vector<TFBranchEndsToMarkers> &BETMs)
+	{
+		stream << BETMs.size() << std::endl;
+		for ( int i=0; i<BETMs.size(); ++i )
+		{
+			formatTFInfos(stream, BETMs[i].branch_to_child_markers_);
+			formatTFInfos(stream, BETMs[i].otherbranch_to_parent_markers_);
+			stream << BETMs[i].corresponding_uncertainty_idx_ << std::endl;
+		}
+	}
+
+	void formatTFInfos(std::stringstream &stream, const std::vector<TFInfo> &TFInfos)
+	{
+		stream << TFInfos.size() << std::endl;
+		for ( TFInfo info : TFInfos )
+		{
+			stream << info.parent_ << ";" << info.child_ << ";" << info.transform_ << ";";
+		}
+		stream << std::endl;
+	}
+
+	void loadSnapshots(std::vector< std::vector<TFSnapshot> > &snapshots, std::string load_path)
+	{
 	}
 }
 

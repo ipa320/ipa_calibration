@@ -53,13 +53,49 @@
 
 
 #include <string>
+#include <vector>
+#include <opencv2/opencv.hpp>
+
+
+struct TFInfo  // used to make snapshots from tf tree
+{
+	std::string parent_;
+	std::string child_;
+	cv::Mat transform_;
+};
+
+// Used to snapshot the tf transform between the last frame of a branch to the corresponding markers
+struct TFBranchEndsToMarkers
+{
+	std::vector<TFInfo> branch_to_child_markers_;  // child markers are always on the branch where the uncertainty lies
+	std::vector<TFInfo> otherbranch_to_parent_markers_;  // parent markers are always on the other branch (which uncertainty is no part part of)
+	int corresponding_uncertainty_idx_;
+};
+
+struct TFSnapshot
+{
+	std::vector<TFBranchEndsToMarkers> branch_ends_to_markers_;  // includes trafo between end of both parent- and child-branch to each child and parent marker of an uncertainty
+	std::vector<TFInfo> parent_branch_;
+	std::vector<TFInfo> child_branch_;
+	bool valid_;  // whether this snapshot contains consistent data
+};
 
 
 namespace file_utilities
 {
+
 	void createStorageFolder(std::string folder_path);
 
 	void saveCalibrationResult(std::string file_path, std::string content);
+
+	void saveSnapshots(const std::vector< std::vector<TFSnapshot> > &snapshots, std::string save_path);
+
+	void formatBETMs(std::stringstream &stream, const std::vector<TFBranchEndsToMarkers> &BETMs);
+
+	void formatTFInfos(std::stringstream &stream, const std::vector<TFInfo> &TFInfos);
+
+	void loadSnapshots(std::vector< std::vector<TFSnapshot> > &snapshots, std::string load_path);
+
 }
 
 

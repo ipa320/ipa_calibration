@@ -51,7 +51,6 @@
 
 #include <robotino_calibration/robot_calibration.h>
 #include <robotino_calibration/transformation_utilities.h>
-#include <robotino_calibration/file_utilities.h>
 
 //Exception
 #include <exception>
@@ -548,7 +547,7 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 				TFSnapshot snapshot;
 				populateTFSnapshot(calibration_setups_[i], snapshot);
 
-				if ( !ros::ok() || !snapshot.valid )
+				if ( !ros::ok() || !snapshot.valid_ )
 				{
 					skip_configuration = true;
 					break;
@@ -575,13 +574,15 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 		}
 
 		// ToDo: Save snapshots to drive for offline calibration
+		file_utilities::saveSnapshots(tf_snapshots_, (calibration_storage_path_+"/snapshot"));
 	}
 	else
 	{
 		// ToDo: Ask whether everything has to be stored
+		file_utilities::loadSnapshots(tf_snapshots_, (calibration_storage_path_+"/snapshot"));
 		// load data from file
 		/*cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
-		// discuss this functionality with Richard, would be hard to implement due to complex structs that have to be stored and loaded
+
 		if (fs.isOpened())
 		{
 			fs["T_gapfirst_to_marker_vector"] >> T_gapfirst_to_marker_vector;
@@ -602,7 +603,7 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnapshot &snapshot)
 {
 	// populate parent branch trafos
-	snapshot.valid = false;
+	snapshot.valid_ = false;
 	const double timeout = 1.0;
 	for ( int i=0; i<setup.parent_branch_.size()-1; ++i )
 	{
@@ -662,7 +663,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 		}
 
 		TFBranchEndsToMarkers branch_ends_to_markers;
-		branch_ends_to_markers.corresponding_uncertainty_idx = i;
+		branch_ends_to_markers.corresponding_uncertainty_idx_ = i;
 		std::vector<TFInfo> &to_parent_markers = branch_ends_to_markers.otherbranch_to_parent_markers_;
 		for ( std::string parent_marker : setup.uncertainties_list_[i].parent_markers_ )
 		{
@@ -727,7 +728,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 		}
 	}
 
-	snapshot.valid = true;
+	snapshot.valid_ = true;
 }
 
 void RobotCalibration::displayAndSaveCalibrationResult(std::string output_file_name)
@@ -908,7 +909,7 @@ std::vector<TFInfo>* RobotCalibration::getBranchEndToMarkers(const int uncertain
 {
 	for ( int i=0; i<snapshot.branch_ends_to_markers_.size(); ++i )
 	{
-		if ( snapshot.branch_ends_to_markers_[i].corresponding_uncertainty_idx == uncertainty_index )  // snapshot entry found for our uncertainty
+		if ( snapshot.branch_ends_to_markers_[i].corresponding_uncertainty_idx_ == uncertainty_index )  // snapshot entry found for our uncertainty
 		{
 			if ( parent_markers )
 				return &snapshot.branch_ends_to_markers_[i].otherbranch_to_parent_markers_;

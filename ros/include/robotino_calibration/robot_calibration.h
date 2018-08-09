@@ -61,6 +61,7 @@
 #include <vector>
 
 #include <robotino_calibration/timer.h>
+#include <robotino_calibration/file_utilities.h>
 
 
 struct CalibrationInfo  // defines one uncertain transform in the kinematic chain
@@ -80,29 +81,6 @@ struct CalibrationSetup  // defines one calibration setup, consisting of x trans
 	std::vector<CalibrationInfo> uncertainties_list_;  // unsorted list of uncertainties
 	std::vector<std::string> parent_branch_;  // contains all frames from origin up to the last parent-branch uncertainty's child
 	std::vector<std::string> child_branch_;  // contains all frames from origin up to the last child-branch uncertainty's child
-};
-
-struct TFInfo  // used to make snapshots from tf tree
-{
-	std::string parent_;
-	std::string child_;
-	cv::Mat transform_;
-};
-
-// Used to snapshot the tf transform between the last frame of a branch to the corresponding markers
-struct TFBranchEndsToMarkers
-{
-	std::vector<TFInfo> branch_to_child_markers_;  // child markers are always on the branch where the uncertainty lies
-	std::vector<TFInfo> otherbranch_to_parent_markers_;  // parent markers are always on the other branch (which uncertainty is no part part of)
-	int corresponding_uncertainty_idx;
-};
-
-struct TFSnapshot
-{
-	std::vector<TFBranchEndsToMarkers> branch_ends_to_markers_;  // includes trafo between end of both parent- and child-branch to each child and parent marker of an uncertainty
-	std::vector<TFInfo> parent_branch_;
-	std::vector<TFInfo> child_branch_;
-	bool valid;  // whether this snapshot contains consistent data
 };
 
 
