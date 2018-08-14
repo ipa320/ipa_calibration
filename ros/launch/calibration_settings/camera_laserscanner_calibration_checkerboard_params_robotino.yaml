@@ -95,9 +95,9 @@ reference_frame: "/landmark_reference_nav"
 
 
 ### program sequence
-# loads calibration images and transforms from disk if set to true
+# loads snapshotted data from disk if set to true, for offline calibration
 # bool
-load_images: false
+load_data: true
 
 # number of optimization iterations
 # int

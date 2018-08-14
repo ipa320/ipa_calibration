@@ -14,8 +14,8 @@ use_range: true
 # ranges for the degrees of freedom of the robot
 # each parameter is set as [min_value, step, max_value]
 # double
-x_range: [-1.25, 0.5, -0.75]       # in [m]
-y_range: [-1.5, 0.5, -1.0]          # in [m], fixed y-coordinate
+x_range: [-1.0, 1.0, -1.0]#[-1.25, 0.5, -0.75]       # in [m]
+y_range: [-1.0, 1.0, -1.0]#[-1.5, 0.5, -1.0]          # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]          # in [rad], fixed phi-angle
 camera_ranges: [-1.2, 0.5, 0.2,
                 -0.8, 0.4, 0.0]     # first pan then tilt in [rad]
@@ -97,9 +97,9 @@ marker_frame_base_name: "tag"
 
 
 ### Program sequence
-# loads calibration images and transforms from disk if set to true
+# loads snapshotted data from disk if set to true, for offline calibration
 # bool
-load_images: false
+load_data: true
 
 # number of optimization iterations
 # int

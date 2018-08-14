@@ -109,9 +109,9 @@ optimization_iterations: 1 # no need to optimize here, as we only have one trans
 
 
 ### program sequence
-# loads calibration images and transforms from disk if set to true, for offline calibration
+# loads snapshotted data from disk if set to true, for offline calibration
 # bool
-load_images: false
+load_data: true
 
 # max allowed deviation a target angle is allowed to have in terms of the corresponding joint angle of the arm [in rad]
 # double
