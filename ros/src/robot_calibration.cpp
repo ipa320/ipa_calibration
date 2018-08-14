@@ -558,43 +558,23 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 				}
 			}
 
-			/*for ( int i=0; i<snapshots[0].branch_ends_to_markers_.size(); ++i )
-			{
-				for ( int j=0; j<snapshots[0].branch_ends_to_markers_[i].branch_to_child_markers_.size(); ++j )
-				{
-					std::cout << snapshots[0].branch_ends_to_markers_[i].otherbranch_to_parent_markers_[j].transform_ << "\t" << snapshots[0].branch_ends_to_markers_[i].branch_to_child_markers_[j].transform_ << std::endl;
-					std::cout << snapshots[0].branch_ends_to_markers_[i].otherbranch_to_parent_markers_[j].transform_.type() << "/" << snapshots[0].branch_ends_to_markers_[i].branch_to_child_markers_[j].transform_.type() << std::endl;
-				}
-			}*/
-
 			if ( !skip_configuration )
 			{
 				tf_snapshots_.push_back(snapshots);
 			}
 		}
 
-		// ToDo: Save snapshots to drive for offline calibration
-		file_utilities::saveSnapshots(tf_snapshots_, (calibration_storage_path_+"/snapshot"));
+		// save snapshots to drive for offline calibration
+		std::cout << std::endl << "Saving snapshots to disk..." << std::endl << std::endl;
+		file_utilities::saveSnapshots(tf_snapshots_, (calibration_storage_path_+"/snapshot/snapshot.txt"));
 	}
 	else
 	{
-		// ToDo: Ask whether everything has to be stored
-		file_utilities::loadSnapshots(tf_snapshots_, (calibration_storage_path_+"/snapshot"));
-		// load data from file
-		/*cv::FileStorage fs(path.str().c_str(), cv::FileStorage::READ);
+		std::cout << std::endl << "Loading snapshots from disk..." << std::endl << std::endl;
+		bool result = file_utilities::loadSnapshots(tf_snapshots_, (calibration_storage_path_+"/snapshot/snapshot.txt"));
 
-		if (fs.isOpened())
-		{
-			fs["T_gapfirst_to_marker_vector"] >> T_gapfirst_to_marker_vector;
-			fs["T_gaplast_to_marker_vector"] >> T_gaplast_to_marker_vector;
-			fs["T_between_gaps_vector"] >> T_between_gaps_vector;
-		}
-		else
-		{
-			ROS_WARN("Could not read transformations from file '%s'.", path.str().c_str());
-		}
-
-		fs.release();*/
+		if ( !result )
+			return false;
 	}
 
 	return true;
@@ -778,7 +758,6 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 		if ( &snapshot == 0 )  // should never happen that a snapshot is empty, but just in case
 			continue;
 
-		ROS_WARN("STEP 1");
 		if ( on_parent_branch )
 		{
 			branch_tmp = &snapshot.parent_branch_;
@@ -789,7 +768,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 			branch_tmp = &snapshot.child_branch_;
 			other_branch_tmp = &snapshot.parent_branch_;
 		}
-		ROS_WARN("STEP 2");
+
 		// now with references
 		std::vector<TFInfo> &branch = *branch_tmp;
 		std::vector<TFInfo> &other_branch = *other_branch_tmp;
@@ -797,7 +776,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 		bool parent_markers = true;
 		std::vector<TFInfo>* branch_last_to_child_markers_tmp = getBranchEndToMarkers(current_uncertainty_idx, parent_markers, snapshot);
 		std::vector<TFInfo>* otherbranch_last_to_parent_markers_tmp = getBranchEndToMarkers(current_uncertainty_idx, !parent_markers, snapshot);
-		ROS_WARN("STEP 3");
+
 		if ( branch_last_to_child_markers_tmp == 0 || otherbranch_last_to_parent_markers_tmp == 0 )
 		{
 			ROS_WARN("Child or parent markers vector cannot be found in current snapshot %d, skipping", i);
@@ -818,7 +797,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 			ROS_WARN("branch_to_child_markers vector and otherbranch_to_parent_markers vector do not have the same size in snapshot %d, skipping.", i);
 			continue;
 		}
-		ROS_WARN("STEP 4");
+
 		bool success = true;
 		cv::Mat uc_to_last_branch_frame;  // uc = uncertainty child, uncertainty child to last frame on branch
 		cv::Mat up_to_origin;  // up = uncertainty parent, uncertainty parent to origin
@@ -848,7 +827,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 			ROS_ERROR("Failed to build one or more necessary transforms, skipping snapshot %d.", i);
 			continue;
 		}
-		ROS_WARN("STEP 5");
+
 		// build marker points for extrinsic calibration of uncertainty parent
 		cv::Mat up_to_last_otherbranch_frame = up_to_origin * origin_to_last_otherbranch_frame;
 		for ( int j=0; j<otherbranch_last_to_parent_markers.size(); ++j )
@@ -865,7 +844,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 				points_3d_uncertainty_parent.push_back( cv::Point3d(point_parent.at<double>(0), point_parent.at<double>(1), point_parent.at<double>(2)) );
 			}
 		}
-		ROS_WARN("STEP 6");
+
 		// build marker points for extrinsic calibration of uncertainty child
 		for ( int j=0; j<branch_last_to_child_markers.size(); ++j )
 		{
@@ -881,7 +860,6 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 				points_3d_uncertainty_child.push_back( cv::Point3d(point_child.at<double>(0), point_child.at<double>(1), point_child.at<double>(2)) );
 			}
 		}
-		ROS_WARN("STEP 7");
 	}
 
 	if ( points_3d_uncertainty_parent.size() == 0 || points_3d_uncertainty_child.size() == 0 )

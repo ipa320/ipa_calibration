@@ -55,6 +55,7 @@
 #include <string>
 #include <vector>
 #include <opencv2/opencv.hpp>
+#include <fstream>
 
 
 struct TFInfo  // used to make snapshots from tf tree
@@ -84,17 +85,23 @@ struct TFSnapshot
 namespace file_utilities
 {
 
-	void createStorageFolder(std::string folder_path);
+	void createStorageFolder(const std::string &folder_path);
 
-	void saveCalibrationResult(std::string file_path, std::string content);
+	void saveCalibrationResult(const std::string &file_path, const std::string &content);
 
-	void saveSnapshots(const std::vector< std::vector<TFSnapshot> > &snapshots, std::string save_path);
+	void saveSnapshots(const std::vector< std::vector<TFSnapshot> > &snapshots, const std::string &save_path);
 
 	void formatBETMs(std::stringstream &stream, const std::vector<TFBranchEndsToMarkers> &BETMs);
 
 	void formatTFInfos(std::stringstream &stream, const std::vector<TFInfo> &TFInfos);
 
-	void loadSnapshots(std::vector< std::vector<TFSnapshot> > &snapshots, std::string load_path);
+	std::string trafoToString(const cv::Mat &trafo);
+
+	void buildTFInfos(std::fstream &file, std::vector<TFInfo> &TFInfos);
+
+	void stringToTrafo(std::string str, cv::Mat &trafo);
+
+	bool loadSnapshots(std::vector< std::vector<TFSnapshot> > &snapshots, const std::string &load_path);
 
 }
 
