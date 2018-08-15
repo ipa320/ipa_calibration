@@ -64,34 +64,14 @@
 #include <robotino_calibration/file_utilities.h>
 
 
-struct CalibrationInfo  // defines one uncertain transform in the kinematic chain
-{
-    std::string parent_;  // parent frame: start point of the vector
-    std::string child_;  // child frame: end point of the vector
-	std::vector<std::string> parent_markers_;  // marker frame one reaches from parent_ frame backwards
-	std::vector<std::string> child_markers_;  // marker_frame one reaches from child_ frame onwards
-    cv::Mat current_trafo_;
-    bool calibrated_;  // marks whether this uncertainty has already been calibrated
-	bool parent_branch_uncertainty_;  // defines where this uncertainty lies: on parent- or child-branch
-};
-
-struct CalibrationSetup  // defines one calibration setup, consisting of x transforms to be calibrated via parent and child marker
-{
-	std::string origin_;  // this is not the robot's base, but the frame where two transformations chains meet
-	std::vector<CalibrationInfo> uncertainties_list_;  // unsorted list of uncertainties
-	std::vector<std::string> parent_branch_;  // contains all frames from origin up to the last parent-branch uncertainty's child
-	std::vector<std::string> child_branch_;  // contains all frames from origin up to the last child-branch uncertainty's child
-};
-
-
 class RobotCalibration
 {
 public:
 
-    RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface);
+    RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface, const bool load_data_from_disk);
     ~RobotCalibration();
 
-    bool startCalibration(const bool load_data_from_drive);  // starts the calibration process
+    bool startCalibration();  // starts the calibration process
 
 
 protected:
@@ -111,7 +91,7 @@ protected:
 
     void truncateBranch(std::vector<std::string> &branch, std::vector<CalibrationInfo> &branch_uncertainties);
 
-    bool acquireTFData(const bool load_data);
+    bool acquireTFData();
 
     void populateTFSnapshot(const CalibrationSetup &setup, TFSnapshot &snapshot);
 
@@ -124,15 +104,17 @@ protected:
     bool extrinsicCalibration(const int current_setup_idx, const int current_uncertainty_idx);
 
     // displays the calibration result on the screen and also stores it to a file in the urdf file's format
-    void displayAndSaveCalibrationResult(std::string output_file_name);
+    void displayAndSaveCalibrationResult();
 
 
     int optimization_iterations_;	// number of iterations for optimization
     bool calibrated_;  // calibration has successfully been finished
+    bool load_data_from_disk_;
     tf::TransformListener transform_listener_;
     ros::NodeHandle node_handle_;
     std::string calibration_storage_path_;  // path to data
-    std::string snapshot_folder_;
+    std::string calib_data_folder_;
+    std::string calib_data_file_name_;
     CalibrationInterface *calibration_interface_;
     std::vector<CalibrationSetup> calibration_setups_;
     std::vector< std::vector<TFSnapshot> > tf_snapshots_;  // each robot configuration has calibration setup count snapshopts

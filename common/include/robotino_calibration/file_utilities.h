@@ -58,6 +58,25 @@
 #include <fstream>
 
 
+struct CalibrationInfo  // defines one uncertain transform in the kinematic chain
+{
+    std::string parent_;  // parent frame: start point of the vector
+    std::string child_;  // child frame: end point of the vector
+	std::vector<std::string> parent_markers_;  // marker frame one reaches from parent_ frame backwards
+	std::vector<std::string> child_markers_;  // marker_frame one reaches from child_ frame onwards
+    cv::Mat current_trafo_;
+    bool calibrated_;  // marks whether this uncertainty has already been calibrated
+	bool parent_branch_uncertainty_;  // defines where this uncertainty lies: on parent- or child-branch
+};
+
+struct CalibrationSetup  // defines one calibration setup, consisting of x transforms to be calibrated via parent and child marker
+{
+	std::string origin_;  // this is not the robot's base, but the frame where two transformations chains meet
+	std::vector<CalibrationInfo> uncertainties_list_;  // unsorted list of uncertainties
+	std::vector<std::string> parent_branch_;  // contains all frames from origin up to the last parent-branch uncertainty's child
+	std::vector<std::string> child_branch_;  // contains all frames from origin up to the last child-branch uncertainty's child
+};
+
 struct TFInfo  // used to make snapshots from tf tree
 {
 	std::string parent_;
@@ -89,7 +108,7 @@ namespace file_utilities
 
 	void saveCalibrationResult(const std::string &file_path, const std::string &content);
 
-	void saveSnapshots(const std::vector< std::vector<TFSnapshot> > &snapshots, const std::string &save_path);
+	void saveSnapshots(const std::vector< std::vector<TFSnapshot> > &snapshots, const std::string &save_path, const std::string &file_name);
 
 	void formatBETMs(std::stringstream &stream, const std::vector<TFBranchEndsToMarkers> &BETMs);
 
@@ -101,7 +120,15 @@ namespace file_utilities
 
 	void stringToTrafo(std::string str, cv::Mat &trafo);
 
-	bool loadSnapshots(std::vector< std::vector<TFSnapshot> > &snapshots, const std::string &load_path);
+	bool loadSnapshots(std::vector< std::vector<TFSnapshot> > &snapshots, const std::string &load_path, const std::string &file_name);
+
+	void saveCalibrationSetups(const std::vector<CalibrationSetup> &calibration_setups, const std::string &save_path, const std::string &file_name);
+
+	void formatStringVector(std::stringstream &stream, const std::vector<std::string> string_vector);
+
+	bool loadCalibrationSetups(std::vector<CalibrationSetup> &calibration_setups, const std::string &load_path, const std::string &file_name);
+
+	void buildStringVector(std::fstream &file, std::vector<std::string> &string_vector);
 
 }
 

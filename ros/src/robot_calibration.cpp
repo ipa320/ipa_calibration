@@ -68,8 +68,8 @@
 // ToDo: Use std::chrono for timing #include <chrono>
 
 
-RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface) :
-	node_handle_(nh), transform_listener_(nh), calibrated_(false), calibration_interface_(interface)
+RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface, const bool load_data_from_disk) :
+	node_handle_(nh), transform_listener_(nh), calibrated_(false), calibration_interface_(interface), load_data_from_disk_(load_data_from_disk)
 {
 	// load parameters
 	std::cout << "\n========== RobotCalibration Parameters ==========\n";
@@ -95,150 +95,174 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/calibration");
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
 
-	// load gaps including its initial values
-	std::vector<std::string> uncertainties_list;
-	calibration_interface_->getUncertainties(uncertainties_list);
+	// setup file name for storing calibration data that can be used for offline calibration
+	calib_data_file_name_ = calibration_interface_->getFileName("offline_data", false);
+	if ( calib_data_file_name_.empty() )
+		calib_data_file_name_ = "offline_data";
+	calib_data_file_name_ += ".txt";
 
-	if ( uncertainties_list.empty() )
+	// create folders that will contain calibration result and snapshot files for offline calibration
+	file_utilities::createStorageFolder(calibration_storage_path_);
+	calib_data_folder_ = "/calibration_data";
+	file_utilities::createStorageFolder((calibration_storage_path_+calib_data_folder_));
+
+	if ( !load_data_from_disk_ )
 	{
-		ROS_WARN("Uncertainties list is empty... nothing to do.");
-		return;
-	}
+		// load gaps including its initial values
+		std::vector<std::string> uncertainties_list;
+		calibration_interface_->getUncertainties(uncertainties_list);
 
-	if ( uncertainties_list.size() % 6 != 0 )
-		ROS_WARN("Size of uncertainsties_list is not a factor of 6: [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]");
-
-	// create calibration setups, check for errors
-	for ( int i=0; i<uncertainties_list.size(); i+=6 )
-	{
-		std::string parent = uncertainties_list[i];  // parent frame of uncertainty
-		std::string child = uncertainties_list[i+1];  // child frame of uncertainty
-		std::string last_parent_branch_frame = uncertainties_list[i+2];
-		std::string last_child_branch_frame = uncertainties_list[i+3];
-
-		bool success = transform_listener_.waitForTransform(parent, child, ros::Time(0), ros::Duration(0.5));
-		if ( !success )
+		if ( uncertainties_list.empty() )
 		{
-			ROS_ERROR("Transform from parent frame %s to child frame %s does not exist, skipping.", parent.c_str(), child.c_str());
-			continue;
+			ROS_WARN("Uncertainties list is empty... nothing to do.");
+			return;
 		}
 
-		success = transform_listener_.waitForTransform(parent, last_parent_branch_frame, ros::Time(0), ros::Duration(0.5));
-		if ( !success )
-		{
-			ROS_ERROR("Transform from parent frame %s to last parent-branch frame %s does not exist, skipping.", parent.c_str(), last_parent_branch_frame.c_str());
-			continue;
-		}
+		if ( uncertainties_list.size() % 6 != 0 )
+			ROS_WARN("Size of uncertainsties_list is not a factor of 6: [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]");
 
-		success = transform_listener_.waitForTransform(child, last_child_branch_frame, ros::Time(0), ros::Duration(0.5));
-		if ( !success )
+		// create calibration setups, check for errors
+		for ( int i=0; i<uncertainties_list.size(); i+=6 )
 		{
-			ROS_ERROR("Transform from child frame %s to last child-branch frame %s does not exist, skipping.", child.c_str(), last_child_branch_frame.c_str());
-			continue;
-		}
+			std::string parent = uncertainties_list[i];  // parent frame of uncertainty
+			std::string child = uncertainties_list[i+1];  // child frame of uncertainty
+			std::string last_parent_branch_frame = uncertainties_list[i+2];
+			std::string last_child_branch_frame = uncertainties_list[i+3];
 
-		std::string actual_parent = "";
-		transform_listener_.getParent(child, ros::Time(0), actual_parent);
-		if ( actual_parent.compare(parent) == 0 )  // compare actual parent of child with parent user has input
-		{
-			// get origin frame of parent and child branch chain
-			// uncertainties that have "similar" parent and child branches will be merged into one calibration setup
-			std::string origin = "";
-			if ( getOrigin(last_parent_branch_frame, last_child_branch_frame, origin) )
+			bool success = transform_listener_.waitForTransform(parent, child, ros::Time(0), ros::Duration(0.5));
+			if ( !success )
 			{
-				std::string parent_marker = uncertainties_list[i+4];
-				std::string child_marker = uncertainties_list[i+5];
+				ROS_ERROR("Transform from parent frame %s to child frame %s does not exist, skipping.", parent.c_str(), child.c_str());
+				continue;
+			}
 
-				bool found = false;
-				for ( int j=0; j<calibration_setups_.size(); ++j )  // merge entries that have the origin
+			success = transform_listener_.waitForTransform(parent, last_parent_branch_frame, ros::Time(0), ros::Duration(0.5));
+			if ( !success )
+			{
+				ROS_ERROR("Transform from parent frame %s to last parent-branch frame %s does not exist, skipping.", parent.c_str(), last_parent_branch_frame.c_str());
+				continue;
+			}
+
+			success = transform_listener_.waitForTransform(child, last_child_branch_frame, ros::Time(0), ros::Duration(0.5));
+			if ( !success )
+			{
+				ROS_ERROR("Transform from child frame %s to last child-branch frame %s does not exist, skipping.", child.c_str(), last_child_branch_frame.c_str());
+				continue;
+			}
+
+			std::string actual_parent = "";
+			transform_listener_.getParent(child, ros::Time(0), actual_parent);
+			if ( actual_parent.compare(parent) == 0 )  // compare actual parent of child with parent user has input
+			{
+				// get origin frame of parent and child branch chain
+				// uncertainties that have "similar" parent and child branches will be merged into one calibration setup
+				std::string origin = "";
+				if ( getOrigin(last_parent_branch_frame, last_child_branch_frame, origin) )
 				{
-					// check if uncertainty lies on parent or child branch of any existing setup, if so, merge, otherwise create a new calibration setup
-					if ( isPartOfCalibrationSetup(parent, child, origin, calibration_setups_[j]) )
+					std::string parent_marker = uncertainties_list[i+4];
+					std::string child_marker = uncertainties_list[i+5];
+
+					bool found = false;
+					for ( int j=0; j<calibration_setups_.size(); ++j )  // merge entries that have the origin
 					{
-						feedCalibrationSetup(calibration_setups_[j], parent, child, parent_marker, child_marker);  // merge
-						found = true;
-						break;
+						// check if uncertainty lies on parent or child branch of any existing setup, if so, merge, otherwise create a new calibration setup
+						if ( isPartOfCalibrationSetup(parent, child, origin, calibration_setups_[j]) )
+						{
+							feedCalibrationSetup(calibration_setups_[j], parent, child, parent_marker, child_marker);  // merge
+							found = true;
+							break;
+						}
+					}
+
+					if ( !found )  // no match has been found -> create new calibration setup if possible
+					{
+						std::vector<std::string> parent_branch_reversed;
+						std::vector<std::string> child_branch_reversed;
+
+						bool success = getBackChain(last_parent_branch_frame, origin, parent_branch_reversed);
+						success &= getBackChain(last_child_branch_frame, origin, child_branch_reversed);
+
+						if ( !success )
+						{
+							ROS_ERROR("Could not build parent- or child-branch, skipping uncertainty from %s to %s.", parent.c_str(), child.c_str());
+							continue;
+						}
+
+						CalibrationSetup setup;
+						setup.origin_ = origin;
+						getForwardChain(parent_branch_reversed, setup.parent_branch_);
+						getForwardChain(child_branch_reversed, setup.child_branch_);
+
+						if ( setup.parent_branch_.size() == 0 || setup.child_branch_.size() == 0 )
+							ROS_WARN("Parent- or child-branch is empty. Proceeding...");
+
+						feedCalibrationSetup(setup, parent, child, parent_marker, child_marker);
+						calibration_setups_.push_back(setup);
 					}
 				}
-
-				if ( !found )  // no match has been found -> create new calibration setup if possible
-				{
-					std::vector<std::string> parent_branch_reversed;
-					std::vector<std::string> child_branch_reversed;
-
-					bool success = getBackChain(last_parent_branch_frame, origin, parent_branch_reversed);
-					success &= getBackChain(last_child_branch_frame, origin, child_branch_reversed);
-
-					if ( !success )
-					{
-						ROS_ERROR("Could not build parent- or child-branch, skipping uncertainty from %s to %s.", parent.c_str(), child.c_str());
-						continue;
-					}
-
-					CalibrationSetup setup;
-					setup.origin_ = origin;
-					getForwardChain(parent_branch_reversed, setup.parent_branch_);
-					getForwardChain(child_branch_reversed, setup.child_branch_);
-
-					if ( setup.parent_branch_.size() == 0 || setup.child_branch_.size() == 0 )
-						ROS_WARN("Parent- or child-branch is empty. Proceeding...");
-
-					feedCalibrationSetup(setup, parent, child, parent_marker, child_marker);
-					calibration_setups_.push_back(setup);
-				}
+				else
+					ROS_WARN("No mutual origin found, skipping uncertainty from %s to %s.", parent.c_str(), child.c_str());
 			}
 			else
-				ROS_WARN("No mutual origin found, skipping uncertainty from %s to %s.", parent.c_str(), child.c_str());
-		}
-		else
-			ROS_WARN("Given parent frame does not match actual parent (%s) in tf tree. Given parent: %s, given child: %s", actual_parent.c_str(), uncertainties_list[i].c_str(), child.c_str());
-	}
-
-	// remove all corrupted entries in calibration setups vector
-	for ( int i=0; i<calibration_setups_.size(); ++i )
-	{
-		if ( calibration_setups_[i].uncertainties_list_.size() == 0 )  // remove corrupted setups
-		{
-			ROS_WARN("No transform to calibrate found in calibration setup -> removing setup.");
-			calibration_setups_.erase(calibration_setups_.begin()+i);
-			--i;
-			continue;
+				ROS_WARN("Given parent frame does not match actual parent (%s) in tf tree. Given parent: %s, given child: %s", actual_parent.c_str(), uncertainties_list[i].c_str(), child.c_str());
 		}
 
-		for ( int j=0; j<calibration_setups_[i].uncertainties_list_.size(); ++j )  // check for corrupted transforms
+		// remove all corrupted entries in calibration setups vector
+		for ( int i=0; i<calibration_setups_.size(); ++i )
 		{
-			if ( calibration_setups_[i].uncertainties_list_[j].parent_markers_.size() == 0 ||
-					calibration_setups_[i].uncertainties_list_[j].child_markers_.size() == 0 )
+			if ( calibration_setups_[i].uncertainties_list_.size() == 0 )  // remove corrupted setups
 			{
-				ROS_WARN("Empty parent or child_markers for %s to %s -> removing transform", calibration_setups_[i].uncertainties_list_[j].parent_.c_str(), calibration_setups_[i].uncertainties_list_[j].child_.c_str());
-				calibration_setups_[i].uncertainties_list_.erase(calibration_setups_[i].uncertainties_list_.begin()+j);
-				--j;
+				ROS_WARN("No transform to calibrate found in calibration setup -> removing setup.");
+				calibration_setups_.erase(calibration_setups_.begin()+i);
+				--i;
+				continue;
+			}
+
+			for ( int j=0; j<calibration_setups_[i].uncertainties_list_.size(); ++j )  // check for corrupted transforms
+			{
+				if ( calibration_setups_[i].uncertainties_list_[j].parent_markers_.size() == 0 ||
+						calibration_setups_[i].uncertainties_list_[j].child_markers_.size() == 0 )
+				{
+					ROS_WARN("Empty parent or child_markers for %s to %s -> removing transform", calibration_setups_[i].uncertainties_list_[j].parent_.c_str(), calibration_setups_[i].uncertainties_list_[j].child_.c_str());
+					calibration_setups_[i].uncertainties_list_.erase(calibration_setups_[i].uncertainties_list_.begin()+j);
+					--j;
+				}
+			}
+
+			if ( calibration_setups_[i].uncertainties_list_.size() == 0 )  // check again
+			{
+				ROS_WARN("No transform to calibrate found in calibration setup -> removing setup.");
+				calibration_setups_.erase(calibration_setups_.begin()+i);
+				--i;
 			}
 		}
 
-		if ( calibration_setups_[i].uncertainties_list_.size() == 0 )  // check again
+		// organize/sort calibration data
+		// the uncertainties_list_ vector for each setup is not useful for snapshotting tf data, as it is unsorted. Sort it now to make the process feasible.
+		for ( int i=0; i<calibration_setups_.size(); ++i )
 		{
-			ROS_WARN("No transform to calibrate found in calibration setup -> removing setup.");
-			calibration_setups_.erase(calibration_setups_.begin()+i);
-			--i;
+			// find natural order (as they appear in tf tree) of uncertainties within the parent branch or child branch
+			std::vector<CalibrationInfo> parent_branch_uncertainties;  // parent branch uncertainties ordered in the way they appear in tf tree
+			std::vector<CalibrationInfo> child_branch_uncertainties;  // same for child branch uncertainties
+
+			bool parent_branch = true;
+			sortUncertainties(parent_branch, calibration_setups_[i], parent_branch_uncertainties);
+			sortUncertainties(!parent_branch, calibration_setups_[i], child_branch_uncertainties);
+
+			// truncate parent- and child-branch so that they end at their last uncertainty, the rest can be retrieved via tf
+			truncateBranch(calibration_setups_[i].parent_branch_, parent_branch_uncertainties);
+			truncateBranch(calibration_setups_[i].child_branch_, child_branch_uncertainties);
 		}
 	}
-
-	// organize/sort calibration data
-	// the uncertainties_list_ vector for each setup is not useful for snapshotting tf data, as it is unsorted. Sort it now to make the process feasible.
-	for ( int i=0; i<calibration_setups_.size(); ++i )
+	else
 	{
-		// find natural order (as they appear in tf tree) of uncertainties within the parent branch or child branch
-		std::vector<CalibrationInfo> parent_branch_uncertainties;  // parent branch uncertainties ordered in the way they appear in tf tree
-		std::vector<CalibrationInfo> child_branch_uncertainties;  // same for child branch uncertainties
-
-		bool parent_branch = true;
-		sortUncertainties(parent_branch, calibration_setups_[i], parent_branch_uncertainties);
-		sortUncertainties(!parent_branch, calibration_setups_[i], child_branch_uncertainties);
-
-		// truncate parent- and child-branch so that they end at their last uncertainty, the rest can be retrieved via tf
-		truncateBranch(calibration_setups_[i].parent_branch_, parent_branch_uncertainties);
-		truncateBranch(calibration_setups_[i].child_branch_, child_branch_uncertainties);
+		std::cout << std::endl << "Loading calibration setups from disk..." << std::endl << std::endl;
+		bool result = file_utilities::loadCalibrationSetups(calibration_setups_, (calibration_storage_path_+calib_data_folder_), calib_data_file_name_);
+		if ( !result )
+		{
+			ROS_ERROR("Can't load calibration setups from disk: Exiting.");
+			throw std::exception();
+		}
 	}
 
 	if ( calibration_setups_.size() == 0 )
@@ -258,11 +282,6 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 	}
 
 	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
-
-	// create folders that will contain calibration result and snapshot files for offline calibration
-	file_utilities::createStorageFolder(calibration_storage_path_);
-	snapshot_folder_ = "/snapshot";
-	file_utilities::createStorageFolder((calibration_storage_path_+snapshot_folder_));
 }
 
 RobotCalibration::~RobotCalibration()
@@ -454,7 +473,7 @@ void RobotCalibration::truncateBranch(std::vector<std::string> &branch, std::vec
 }
 
 
-bool RobotCalibration::startCalibration(const bool load_data_from_drive)
+bool RobotCalibration::startCalibration()
 {
 	if ( calibration_interface_ == 0 ) // Throw exception, as we need an calibration interface in order to function properly!
 	{
@@ -465,7 +484,7 @@ bool RobotCalibration::startCalibration(const bool load_data_from_drive)
 	if ( calibration_setups_.size() == 0 )
 		return false;
 
-	if ( !acquireTFData(load_data_from_drive) )  // make snapshots of all relevant tf transforms for every robot configuration
+	if ( !acquireTFData() )  // make snapshots of all relevant tf transforms for every robot configuration
 		return false;
 
 	// extrinsic calibration optimization
@@ -493,27 +512,14 @@ bool RobotCalibration::startCalibration(const bool load_data_from_drive)
 		}
 	}
 
-	// display and save calibration parameters
-	std::string output = calibration_interface_->getResultFileName();
-
-	// check if file extension exists
-	if( output.rfind(".") == std::string::npos )
-	{
-		output += ".txt";
-	}
-
-	RobotCalibration::displayAndSaveCalibrationResult(output);
-
+	RobotCalibration::displayAndSaveCalibrationResult();
 	calibrated_ = true;
 	return true;
 }
 
-bool RobotCalibration::acquireTFData(const bool load_data)
+bool RobotCalibration::acquireTFData()
 {
-	//std::stringstream path;
-	//path << calibration_storage_path_ << "pitag_data.yml";  // retrieve from interface instead!
-
-	if ( load_data == false )
+	if ( !load_data_from_disk_ )
 	{
 		const int num_configs = calibration_interface_->getConfigurationCount();
 		for ( int config_counter = 0; config_counter < num_configs; ++config_counter )
@@ -564,14 +570,15 @@ bool RobotCalibration::acquireTFData(const bool load_data)
 			}
 		}
 
-		// save snapshots to drive for offline calibration
-		std::cout << std::endl << "Saving snapshots to disk..." << std::endl << std::endl;
-		file_utilities::saveSnapshots(tf_snapshots_, (calibration_storage_path_+"/snapshot/snapshot.txt"));
+		// save calibration setups and snapshots to disk for offline calibration
+		std::cout << std::endl << "Saving offline data to disk..." << std::endl << std::endl;
+		file_utilities::saveCalibrationSetups(calibration_setups_, (calibration_storage_path_+calib_data_folder_), calib_data_file_name_);
+		file_utilities::saveSnapshots(tf_snapshots_, (calibration_storage_path_+calib_data_folder_), calib_data_file_name_);
 	}
 	else
 	{
 		std::cout << std::endl << "Loading snapshots from disk..." << std::endl << std::endl;
-		bool result = file_utilities::loadSnapshots(tf_snapshots_, (calibration_storage_path_+"/snapshot/snapshot.txt"));
+		bool result = file_utilities::loadSnapshots(tf_snapshots_, (calibration_storage_path_+calib_data_folder_), calib_data_file_name_);
 
 		if ( !result )
 			return false;
@@ -711,8 +718,18 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 	snapshot.valid_ = true;
 }
 
-void RobotCalibration::displayAndSaveCalibrationResult(std::string output_file_name)
+void RobotCalibration::displayAndSaveCalibrationResult()
 {
+	// display and save calibration parameters
+	std::string output_file_name = calibration_interface_->getFileName("result", true);
+
+	if ( output_file_name.empty() )
+		output_file_name = "cailbration_result.txt";
+
+	// check if file extension exists
+	if( output_file_name.rfind(".") == std::string::npos )
+		output_file_name += ".txt";
+
 	std::stringstream output;
 
 	output << "----- Replace the follwing parameters within the urdf file of your robot ----- \n\n";
@@ -735,7 +752,7 @@ void RobotCalibration::displayAndSaveCalibrationResult(std::string output_file_n
 	std::cout << std::endl << std::endl << output.str();
 
 	if ( ros::ok() )  // if program has been killed, do not save results
-		file_utilities::saveCalibrationResult((calibration_storage_path_+"/"+output_file_name), output.str());  // save results to drive
+		file_utilities::saveCalibrationResult((calibration_storage_path_+"/"+output_file_name), output.str());  // save results to disk
 	else
 		ROS_WARN("Not saving calibration results.");
 }

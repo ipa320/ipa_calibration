@@ -79,13 +79,13 @@ namespace file_utilities
 		if (file_output.is_open())
 			file_output << content;
 		else
-			ROS_WARN("Failed to open %s, not saving calibration results!", file_path.c_str());
+			ROS_WARN("Failed to open %s, can't save calibration results!", file_path.c_str());
 		file_output.close();
 	}
 
-	void saveSnapshots(const std::vector< std::vector<TFSnapshot> > &snapshots, const std::string &save_path)
+	void saveSnapshots(const std::vector< std::vector<TFSnapshot> > &snapshots, const std::string &save_path, const std::string &file_name)
 	{
-		std::stringstream stream;
+		std::stringstream stream("");
 
 		for ( int i=0; i<snapshots.size(); ++i )  // go through robot setups (each robot config has a snapshot for each calibration setup)
 		{
@@ -95,21 +95,19 @@ namespace file_utilities
 				stream << "b{" << std::endl;
 				formatBETMs(stream, snap.branch_ends_to_markers_);
 				formatTFInfos(stream, snap.parent_branch_);
-				stream << "{}" << std::endl;
 				formatTFInfos(stream, snap.child_branch_);
-				stream << "{}" << std::endl;
 				stream << "b}" << std::endl;
 			}
-
 			stream << "a}" << std::endl;
 		}
 
 		std::fstream file_output;
-		file_output.open(save_path.c_str(), std::ios::out | std::ios::trunc);  // replace old file
+		std::string file_path = save_path+"/"+file_name;
+		file_output.open(file_path.c_str(), std::ios::out | std::ios::app);  // append to current file
 		if (file_output.is_open())
 			file_output << stream.str();
 		else
-			ROS_WARN("Failed to open %s, not saving snapshot data!", save_path.c_str());
+			ROS_WARN("Failed to open %s, can't save snapshot data!", file_path.c_str());
 		file_output.close();
 	}
 
@@ -119,9 +117,7 @@ namespace file_utilities
 		{
 			stream << "c{" << std::endl;
 			formatTFInfos(stream, BETMs[i].branch_to_child_markers_);
-			stream << "{}" << std::endl;
 			formatTFInfos(stream, BETMs[i].otherbranch_to_parent_markers_);
-			stream << "{}" << std::endl;
 			stream << BETMs[i].corresponding_uncertainty_idx_ << std::endl;
 			stream << "c}" << std::endl;
 		}
@@ -139,9 +135,9 @@ namespace file_utilities
 				return;
 			}
 
-			stream << "d{" << std::endl;
 			stream << info.parent_ << std::endl << info.child_ << std::endl << trafo << std::endl;
 		}
+		stream << "{}" << std::endl;
 	}
 
 	std::string trafoToString(const cv::Mat &trafo)
@@ -151,9 +147,9 @@ namespace file_utilities
 		if ( trafo.dims != 2 || trafo.cols*trafo.rows != 16 )
 			return "";
 
-		for ( int i=0; i<trafo.cols; ++i )
+		for ( int i=0; i<trafo.rows; ++i )
 		{
-			for ( int j=0; j<trafo.rows; ++j )
+			for ( int j=0; j<trafo.cols; ++j )
 			{
 				result << trafo.at<double>(i,j);
 
@@ -165,11 +161,12 @@ namespace file_utilities
 		return result.str();
 	}
 
-	bool loadSnapshots(std::vector< std::vector<TFSnapshot> > &snapshots, const std::string &load_path)
+	bool loadSnapshots(std::vector< std::vector<TFSnapshot> > &snapshots, const std::string &load_path, const std::string &file_name)
 	{
 		bool result = true;
 		std::fstream file_input;
-		file_input.open(load_path.c_str(), std::ios::in);  // read snapshot content
+		std::string file_path = load_path+"/"+file_name;
+		file_input.open(file_path.c_str(), std::ios::in);  // read snapshot content
 		if ( file_input.is_open() )
 		{
 			while ( !file_input.eof() )
@@ -230,12 +227,11 @@ namespace file_utilities
 		}
 		else
 		{
-			ROS_WARN("Failed to open %s, not loading snapshot data!", load_path.c_str());
+			ROS_WARN("Failed to open %s, can't load snapshot data!", file_path.c_str());
 			result = false;
 		}
 
 		file_input.close();
-
 		return result;
 	}
 
@@ -248,11 +244,11 @@ namespace file_utilities
 
 			if ( line.compare("{}") == 0 )
 				break;
-			if ( line.compare("d{") == 0 )
+			else
 			{
 				TFInfo info;
 
-				std::getline(file, info.parent_);
+				info.parent_ = line;
 				std::getline(file, info.child_);
 				std::string trafo = "";
 				std::getline(file, trafo);
@@ -296,6 +292,130 @@ namespace file_utilities
 							0., 1., 0., 0.,
 							0., 0., 1., 0.,
 							0., 0., 0., 1.);
+		}
+	}
+
+	void saveCalibrationSetups(const std::vector<CalibrationSetup> &calibration_setups, const std::string &save_path, const std::string &file_name)
+	{
+		std::stringstream stream("");
+
+		for ( int i=0; i<calibration_setups.size(); ++i )
+		{
+			stream << "1{" << std::endl;
+			stream << calibration_setups[i].origin_ << std::endl;
+
+			for ( CalibrationInfo info : calibration_setups[i].uncertainties_list_ )
+			{
+				stream << "2{" << std::endl;
+				stream << info.parent_ << std::endl;
+				stream << info.child_ << std::endl;
+				formatStringVector(stream, info.parent_markers_);
+				formatStringVector(stream, info.child_markers_);
+				stream << trafoToString(info.current_trafo_) << std::endl;
+				stream << info.parent_branch_uncertainty_ << std::endl;
+				stream << "2}" << std::endl;
+			}
+
+			formatStringVector(stream, calibration_setups[i].parent_branch_);
+			formatStringVector(stream, calibration_setups[i].child_branch_);
+		}
+
+		std::fstream file_output;
+		std::string file_path = save_path+"/"+file_name;
+		file_output.open(file_path.c_str(), std::ios::out | std::ios::trunc);  // replace old file -> every new calibration run generates fresh data
+		if (file_output.is_open())
+			file_output << stream.str();
+		else
+			ROS_WARN("Failed to open %s, can't save calibration setups!", file_path.c_str());
+		file_output.close();
+	}
+
+	void formatStringVector(std::stringstream &stream, const std::vector<std::string> string_vector)
+	{
+		for ( std::string str : string_vector )
+			stream << str << std::endl;
+
+		stream << "{}" << std::endl;
+	}
+
+	bool loadCalibrationSetups(std::vector<CalibrationSetup> &calibration_setups, const std::string &load_path, const std::string &file_name)
+	{
+		bool result = true;
+		std::fstream file_input;
+		std::string file_path = load_path+"/"+file_name;
+		file_input.open(file_path.c_str(), std::ios::in);  // read calibration setup content
+		if ( file_input.is_open() )
+		{
+			while ( !file_input.eof() )
+			{
+				std::string line = "";
+				std::getline(file_input, line);
+
+				if ( line.compare("1{") == 0 )
+				{
+					CalibrationSetup setup;
+
+					std::getline(file_input, setup.origin_);
+					bool corrupted = true;
+
+					while ( !file_input.eof() )
+					{
+						line = "";
+						std::getline(file_input, line);
+
+						if ( line.compare("2{") == 0 )
+						{
+							CalibrationInfo info;
+
+							std::getline(file_input, info.parent_);
+							std::getline(file_input, info.child_);
+							buildStringVector(file_input, info.parent_markers_);
+							buildStringVector(file_input, info.child_markers_);
+							std::string trafo = "";
+							std::getline(file_input, trafo);
+							stringToTrafo(trafo, info.current_trafo_);
+							std::string parent_branch_uncertainty = "";
+							std::getline(file_input, parent_branch_uncertainty);
+							info.parent_branch_uncertainty_ = (bool)std::stoi(parent_branch_uncertainty);
+							info.calibrated_ = false;
+
+							setup.uncertainties_list_.push_back(info);
+						}
+						else if ( line.compare("2}") == 0 )
+						{
+							buildStringVector(file_input, setup.parent_branch_);
+							buildStringVector(file_input, setup.child_branch_);
+							corrupted = false;
+							break;
+						}
+					}
+
+					if ( !corrupted )
+						calibration_setups.push_back(setup);
+				}
+
+			}
+		}
+		else
+		{
+			ROS_WARN("Failed to open %s, can't load calibration setups!", file_path.c_str());
+			result = false;
+		}
+
+		return result;
+	}
+
+	void buildStringVector(std::fstream &file, std::vector<std::string> &string_vector)
+	{
+		while ( !file.eof() )
+		{
+			std::string line = "";
+			std::getline(file, line);
+
+			if ( line.compare("{}") == 0 )
+				break;
+			else
+				string_vector.push_back(line);
 		}
 	}
 }
