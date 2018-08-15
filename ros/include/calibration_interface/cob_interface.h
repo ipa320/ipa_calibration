@@ -77,6 +77,8 @@ public:
 	CobInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration);
 	~CobInterface();
 
+	std::string getRobotName();
+
 	// camera calibration interface
 	void assignNewRobotVelocity(geometry_msgs::Twist newVelocity);
 	void assignNewCameraAngles(std_msgs::Float64MultiArray newAngles);

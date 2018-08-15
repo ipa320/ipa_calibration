@@ -112,8 +112,8 @@ int main(int argc, char** argv)
 	{
 		try
 		{
-			RobotCalibration calib_obj(nh, interface);
-			calib_obj.startCalibration(load_data);
+			RobotCalibration calib_obj(nh, interface, load_data);
+			calib_obj.startCalibration();
 		}
 		catch ( std::exception &e )
 		{

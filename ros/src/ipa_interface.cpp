@@ -156,18 +156,31 @@ void IPAInterface::getUncertainties(std::vector<std::string> &uncertainties_list
 		ROS_ERROR("IPAInterface::getUncertainties - Calibration type has not been created!");
 }
 
-std::string IPAInterface::getResultFileName()
+std::string IPAInterface::getFileName(const std::string &appendix, const bool file_extension)
 {
 	std::string file_name;
 
+	file_name = getRobotName();
+	file_name += "_";
+
 	if ( calibration_type_ != 0 )
-		file_name = calibration_type_->getString();
+		file_name += calibration_type_->getString();
 	else
-		file_name = "unspecified";
+		file_name += "unspecified";
 
 	if ( calibration_marker_ != 0 )
 		file_name += ("_"+calibration_marker_->getString());
 
-	file_name += "_result.txt";
+	if ( !appendix.empty() )
+		file_name += ("_"+appendix);
+
+	if ( file_extension )
+		file_name += ".txt";
+
 	return file_name;
+}
+
+std::string IPAInterface::getRobotName()
+{
+	return "IPA-Robot";
 }

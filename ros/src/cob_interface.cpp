@@ -146,6 +146,11 @@ std::vector<double>* CobInterface::getCurrentArmState()
 	return 0;
 }
 
+std::string CobInterface::getRobotName()
+{
+	return "COB-4";
+}
+
 
 
 

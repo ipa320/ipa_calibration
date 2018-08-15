@@ -183,6 +183,11 @@ std::vector<double>* RAWInterface::getCurrentArmState()
 }
 // END
 
+std::string RAWInterface::getRobotName()
+{
+	return "RAW-3-1";
+}
+
 
 
 

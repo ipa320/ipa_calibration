@@ -163,6 +163,11 @@ std::vector<double>* RobotinoInterface::getCurrentArmState()
 }
 // END
 
+std::string RobotinoInterface::getRobotName()
+{
+	return "Robotino";
+}
+
 
 
 
