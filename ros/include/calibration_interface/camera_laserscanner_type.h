@@ -53,7 +53,7 @@
 
 
 #include <calibration_interface/calibration_type.h>
-#include <robotino_calibration/calibration_utilities.h>
+#include <calibration_interface/pose_definition.h>
 #include <opencv2/opencv.hpp>
 #include <robotino_calibration/timer.h>
 
@@ -83,7 +83,7 @@ public:
 
 protected:
 
-    unsigned short moveBase(const calibration_utilities::BaseConfiguration &base_configuration);
+    unsigned short moveBase(const pose_definition::RobotConfiguration &base_configuration);
 
     bool isReferenceFrameValid(cv::Mat &T, unsigned short& error_code);  // returns wether reference frame is valid -> if so, it is save to move the robot base, otherwise stop!
     bool divergenceDetectedRotation(double error_phi, bool start_value);  // rotation controller diverges!
@@ -94,7 +94,7 @@ protected:
     Timer ref_history_timer_;  // precisely update reference history
     double max_ref_frame_distance_;
 
-    std::vector<calibration_utilities::BaseConfiguration> base_configurations_;  // wished base configurations used for calibration
+    std::vector<pose_definition::RobotConfiguration> base_configurations_;  // wished base configurations used for calibration
 
     std::string base_frame_;        // Name of base frame, needed for security measure
     std::string reference_frame_;  // name of reference frame, needed for security measure

@@ -92,6 +92,7 @@ add_executable(camera_laserscanner_calibration	ros/src/camera_laserscanner_calib
 												ros/src/calibration_marker.cpp
 												ros/src/checkerboard_marker.cpp
 												ros/src/pitag_marker.cpp
+												common/src/pose_definition.cpp
 )
 
 target_link_libraries(camera_laserscanner_calibration

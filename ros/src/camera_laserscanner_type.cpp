@@ -56,7 +56,7 @@
 
 
 CameraLaserscannerType::CameraLaserscannerType() :
-		last_ref_history_update_(0.0), start_error_x_(0.0), start_error_y_(0.0), start_error_phi_(0.0), ref_history_index_(0)
+		last_ref_history_update_(0.0), start_error_x_(0.0), start_error_y_(0.0), start_error_phi_(0.0), ref_history_index_(0), max_ref_frame_distance_(1.0)
 {
 
 }
@@ -85,7 +85,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 	node_handle_.param("use_range", use_range, false);
 	std::cout << "use_range: " << use_range << std::endl;
 
-	const int base_dof = NUM_BASE_PARAMS; // coming from calibration_utilities.h
+	const int base_dof = NUM_POSE_PARAMS; // coming from pose_definition.h
 	if (use_range == true)
 	{
 		// create robot configurations from regular grid
@@ -179,7 +179,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 		// Do actual preallocation
 		temp.clear();
 		temp.resize(base_dof);
-		base_configurations_.resize(num_configs, calibration_utilities::BaseConfiguration(temp));
+		base_configurations_.resize(num_configs, pose_definition::RobotConfiguration(temp));
 		temp.clear();
 		temp.resize(camera_dof_);
 		camera_configurations_.resize(num_configs, temp);
@@ -245,7 +245,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 			{
 				data.push_back(temp[num_params*i + j]);
 			}
-			base_configurations_.push_back(calibration_utilities::BaseConfiguration(data));
+			base_configurations_.push_back(pose_definition::RobotConfiguration(data));
 
 			data.clear();
 			for ( int j=base_dof; j<num_params; ++j ) // camera_dof_ iterations
@@ -259,7 +259,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 	// Display configurations
 	std::cout << "base configurations:" << std::endl;
 	for ( int i=0; i<base_configurations_.size(); ++i )
-		std::cout << base_configurations_[i].get() << std::endl;
+		std::cout << base_configurations_[i].getString() << std::endl;
 	std::cout << std::endl << "camera configurations:" << std::endl;
 	for ( int i=0; i<camera_configurations_.size(); ++i )
 	{
@@ -346,7 +346,7 @@ bool CameraLaserscannerType::moveRobot(int config_index)
 	return result;
 }
 
-unsigned short CameraLaserscannerType::moveBase(const calibration_utilities::BaseConfiguration &base_configuration)
+unsigned short CameraLaserscannerType::moveBase(const pose_definition::RobotConfiguration &base_configuration)
 {
 	const double k_base = 0.25;
 	const double k_phi = 0.25;
@@ -377,7 +377,7 @@ unsigned short CameraLaserscannerType::moveBase(const calibration_utilities::Bas
 
 	// do not move if close to goal
 	bool start_value = true; // for divergence detection
-	if (fabs(error_phi) > 0.03 || fabs(error_x) > 0.02 || fabs(error_y) > 0.02)
+	if ( fabs(error_phi) > 0.02 || fabs(error_x) > 0.01 || fabs(error_y) > 0.01 )
 	{
 		// control robot angle
 		while(true)
