@@ -60,7 +60,6 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-#include <robotino_calibration/timer.h>
 #include <robotino_calibration/file_utilities.h>
 
 

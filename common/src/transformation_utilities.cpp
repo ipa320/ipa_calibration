@@ -145,7 +145,6 @@ namespace transform_utilities
 	}*/
 
 	// computes the transform from source_frame to target_frame (i.e. transform arrow is pointing from source_frame to target_frame)
-	// ToDo: Change check_time to a float time_out float value
 	bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T, const double timeout, const bool report_error)
 	{
 		try

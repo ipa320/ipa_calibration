@@ -81,7 +81,6 @@ add_library(CalibrationTools
 					ros/src/robot_calibration.cpp
 					ros/src/calibration_interface.cpp
 					common/src/transformation_utilities.cpp
-					common/src/calibration_utilities.cpp
 					common/src/file_utilities.cpp
 )
 

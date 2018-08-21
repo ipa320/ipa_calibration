@@ -55,17 +55,17 @@
 //Exception
 #include <exception>
 
-// File writing
 #include <sstream>
-#include <fstream>
+#include <robotino_calibration/timer.h>
 
 
 // ToDo: Implement calibration order mechanics! [Already possible]
-// ToDo: Implement snapshot save/load system
-// ToDo: Move calibration_utilities to calibration_interface package and merge with interface header
+// ToDo: Implement snapshot save/load system [done]
+// ToDo: Move calibration_utilities to calibration_interface package and merge with interface header [done]
 // ToDo: Create custom exception classes for exception handling
 // ToDo: Create snapshot folder as well [done]
-// ToDo: Use std::chrono for timing #include <chrono>
+// ToDo: Use std::chrono for timing #include <chrono> [done with timer]
+// ToDo: Add a way here so that user can define order more easily?
 
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface, const bool load_data_from_disk) :
@@ -502,8 +502,7 @@ bool RobotCalibration::startCalibration()
 		{
 			for ( int j=0; j<calibration_setups_[l].uncertainties_list_.size(); ++j )
 			{
-				// ToDo: Add a way here so that user can define order more easily?
-				if ( !extrinsicCalibration(l, j) )
+				if ( !ros::ok() || !extrinsicCalibration(l, j) )
 				{
 					ROS_ERROR("Calibration failed!");
 					return false;
@@ -546,7 +545,8 @@ bool RobotCalibration::acquireTFData()
 			std::cout << "Populating snapshots..." << std::endl;
 
 			// grab transforms for each setup and store them
-			std::vector<TFSnapshot> snapshots(calibration_setups_.size());
+			std::vector<TFSnapshot> snapshots;
+			snapshots.reserve(calibration_setups_.size());
 			bool skip_configuration = false;
 			for ( int i=0; i<calibration_setups_.size(); ++i )
 			{
@@ -559,9 +559,7 @@ bool RobotCalibration::acquireTFData()
 					break;
 				}
 				else
-				{
-					snapshots[i] = snapshot;
-				}
+					snapshots.push_back(snapshot);
 			}
 
 			if ( !skip_configuration )
@@ -706,7 +704,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 		if ( to_parent_markers.size() > 0 )  // if to_parent_markers == 0 then to_child_markers == 0
 		{
 			snapshot.branch_ends_to_markers_.push_back(branch_ends_to_markers);
-			std::cout << "Markers found: " << to_parent_markers.size() << std::endl;
+			std::cout << "Markers found for '" << setup.uncertainties_list_[i].parent_ << "' to '" << setup.uncertainties_list_[i].child_ << "': " << to_parent_markers.size() << std::endl;
 		}
 		else
 		{
@@ -835,6 +833,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 		{
 			TFInfo last_trafo = other_branch[other_branch.size()-1];
 			success &= buildTransformChain(setup.origin_, last_trafo.child_, other_branch, origin_to_last_otherbranch_frame);
+			std::cout << setup.origin_ << " to " << last_trafo.child_ << std::endl;
 		}
 		else
 			origin_to_last_otherbranch_frame = cv::Mat::eye(4,4,CV_64FC1);
@@ -920,28 +919,23 @@ bool RobotCalibration::buildTransformChain(const std::string start, const std::s
 {
 	// start and end are not necessarily next to one another
 	int start_idx = -1;
-	bool start_child = false;
 	int end_idx = -1;
-	bool end_child = false;
-	for ( int i=0; i<branch.size(); ++i )  // find indexes of start and end point
+
+	std::vector<std::string> branch_chain;  // consecutive chain of transforms instead of parent and child
+	branch_chain.reserve(branch.size()+1);
+	for ( int i=0; i<branch.size(); ++i )
+		branch_chain.push_back(branch[i].parent_);
+
+	if ( branch.size() > 0 )  // add last child
+		branch_chain.push_back(branch[branch.size()-1].child_);
+
+	for ( int i=0; i<branch_chain.size(); ++i )  // find indexes of start and end point
 	{
-		if ( start_idx == -1 && start.compare(branch[i].parent_) == 0 )
+		if ( start_idx == -1 && start.compare(branch_chain[i]) == 0 )
 			start_idx = i;
 
-		if ( start_idx == -1 && i == branch.size()-1 && start.compare(branch[i].child_) == 0 )  // also consider the last child frame in branch so it does not slip through
-		{
-			start_idx = i;
-			start_child = true;
-		}
-
-		if ( end_idx == -1 && end.compare(branch[i].parent_) == 0 )
+		if ( end_idx == -1 && end.compare(branch_chain[i]) == 0 )
 			end_idx = i;
-
-		if ( end_idx == -1 && i == branch.size()-1 && end.compare(branch[i].child_) == 0 )
-		{
-			end_idx = i;
-			end_child = true;
-		}
 
 		if ( start_idx != -1 && end_idx != -1 )  // indexes found, exit loop
 			break;
@@ -958,7 +952,7 @@ bool RobotCalibration::buildTransformChain(const std::string start, const std::s
 		{
 			cv::Mat temp;
 
-			if ( retrieveTransform(branch[i].parent_, branch[i].child_, branch, temp) )
+			if ( retrieveTransform(branch_chain[i], branch_chain[i+1], branch, temp) )
 			{
 				if ( trafo.empty() )
 					trafo = temp;
@@ -968,28 +962,14 @@ bool RobotCalibration::buildTransformChain(const std::string start, const std::s
 			else
 				return false;
 		}
-
-		if ( end_child )  // get trafo to last child in branch
-		{
-			cv::Mat temp;
-			retrieveTransform(branch[branch.size()-1].parent_, end, branch, temp);
-
-			if ( trafo.empty() )
-				trafo = temp;
-			else
-				trafo *= temp;
-		}
 	}
 	else if ( start_idx > end_idx )  // return inverse
 	{
-		if ( start_child )
-			retrieveTransform(start, branch[branch.size()-1].parent_, branch, trafo);
-
-		for ( int i=end_idx-1; i>=start_idx; --i )  // retrieve trafo from end_idx to start_idx one by one
+		for ( int i=start_idx; i>end_idx; --i )  // retrieve trafo from end_idx to start_idx one by one
 		{
 			cv::Mat temp;
 
-			if ( retrieveTransform(branch[i].child_, branch[i].parent_, branch, temp) )
+			if ( retrieveTransform(branch_chain[i], branch_chain[i-1], branch, temp) )
 			{
 				if ( trafo.empty() )
 					trafo = temp;
@@ -1003,10 +983,9 @@ bool RobotCalibration::buildTransformChain(const std::string start, const std::s
 	else  // start_idx == end_idx -> return identity matrix
 	{
 		trafo = cv::Mat::eye(4,4,CV_64FC1);
-		return true;
 	}
 
-	return false;
+	return !trafo.empty();
 }
 
 bool RobotCalibration::retrieveTransform(const std::string parent, const std::string child, const std::vector<TFInfo> &branch, cv::Mat &trafo)  // get the next trafo
