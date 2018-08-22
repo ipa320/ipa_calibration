@@ -53,6 +53,7 @@
 #include <ros/ros.h>
 #include <boost/filesystem.hpp>
 #include <sstream>
+#include <robotino_calibration/time_utilities.h>
 
 
 namespace file_utilities
@@ -324,7 +325,7 @@ namespace file_utilities
 		std::string file_path = save_path+"/"+file_name;
 		file_output.open(file_path.c_str(), std::ios::out | std::ios::trunc);  // replace old file -> every new calibration run generates fresh data
 		if (file_output.is_open())
-			file_output << stream.str();
+			file_output << "Created at: " << time_utilities::getCurrentTimeStamp() << std::endl << stream.str();
 		else
 			ROS_WARN("Failed to open %s, can't save calibration setups!", file_path.c_str());
 		file_output.close();
