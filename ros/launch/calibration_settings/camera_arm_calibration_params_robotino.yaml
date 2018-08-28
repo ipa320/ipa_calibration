@@ -47,7 +47,7 @@ camera_optical_frame: "kinect_rgb_optical_frame"
 ### program sequence
 # loads snapshotted data from disk if set to true, for offline calibration
 # bool
-load_data: true
+#load_data: true
 
 # max allowed deviation a target angle is allowed to have in terms of the current joint angle [rad]
 # double

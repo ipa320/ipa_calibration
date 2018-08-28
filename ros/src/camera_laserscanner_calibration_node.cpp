@@ -106,7 +106,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	interface = IPAInterface::createInterfaceByID(calibration_ID, nh, calibration_type, marker, arm_calibration);
+	interface = IPAInterface::createInterfaceByID(calibration_ID, nh, calibration_type, marker, arm_calibration, load_data);
 
 	if ( interface != 0 )
 	{

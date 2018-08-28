@@ -79,15 +79,16 @@ protected:
 	CalibrationType* calibration_type_;
 	CalibrationMarker* calibration_marker_;
 	bool arm_calibration_;
+	bool load_data_;  // load stored calibration data from disk -> offline calibration
 
 
 public:
 
 	IPAInterface();
-	IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration);
+	IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
 	virtual ~IPAInterface();
 
-	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration); //Create corresponding robot interface by a user-defined ID.
+	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data); //Create corresponding robot interface by a user-defined ID.
 
 	bool moveRobot(int config_index);
 	int getConfigurationCount();

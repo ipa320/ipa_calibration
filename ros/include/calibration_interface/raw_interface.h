@@ -81,7 +81,7 @@ protected:
 
 
 public:
-	RAWInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration);
+	RAWInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
 	~RAWInterface();
 
 	std::string getRobotName();

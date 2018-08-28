@@ -71,7 +71,7 @@ int main(int argc, char** argv)
 	bool load_data = false;
 	std::cout << "\n========== Camera Arm Calibration Node Parameters ==========\n";
 	nh.param("load_data", load_data, false);
-	std::cout << "load_images: " << load_data << std::endl;
+	std::cout << "load_data: " << load_data << std::endl;
 	int calibration_ID = 0;
 	nh.param("calibration_ID", calibration_ID, 0);
 	std::cout << "calibration_ID: " << calibration_ID << std::endl;
@@ -91,7 +91,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	interface = IPAInterface::createInterfaceByID(calibration_ID, nh, calibration_type, marker, arm_calibration);
+	interface = IPAInterface::createInterfaceByID(calibration_ID, nh, calibration_type, marker, arm_calibration, load_data);
 
 	if ( interface != 0 )
 	{

@@ -64,15 +64,18 @@ IPAInterface::IPAInterface()
 {
 }
 
-IPAInterface::IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration) :
-				CalibrationInterface(nh), calibration_type_(calib_type), calibration_marker_(calib_marker), arm_calibration_(do_arm_calibration)
+IPAInterface::IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data) :
+				CalibrationInterface(nh), calibration_type_(calib_type), calibration_marker_(calib_marker), arm_calibration_(do_arm_calibration), load_data_(load_data)
 {
-	if ( calibration_type_ != 0 )
-		calibration_type_->initialize(nh, this);
-	else
+	if ( !load_data_ )  // calibration_type holds code for moving the robot which is in case of offline calibration not needed
 	{
-		ROS_FATAL("IPAInterface::IPAInterface - Calibration type has not been created!");
-		throw std::exception();
+		if ( calibration_type_ != 0 )
+			calibration_type_->initialize(nh, this);
+		else
+		{
+			ROS_FATAL("IPAInterface::IPAInterface - Calibration type has not been created!");
+			throw std::exception();
+		}
 	}
 
 	if ( calibration_marker_ != 0 )
@@ -94,18 +97,18 @@ IPAInterface::~IPAInterface()
 }
 
 // You can add further interfaces for other robots in here.
-CalibrationInterface* IPAInterface::createInterfaceByID(int ID, ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration)
+CalibrationInterface* IPAInterface::createInterfaceByID(int ID, ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data)
 {
 	switch(ID)
 	{
 		case ROB_ROBOTINO:
-				return (new RobotinoInterface(nh, calib_type, calib_marker, do_arm_calibration));
+				return (new RobotinoInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data));
 				break;
 		case ROB_RAW_3_1:
-				return (new RAWInterface(nh, calib_type, calib_marker, do_arm_calibration));
+				return (new RAWInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data));
 				break;
 		case ROB_COB:
-				return (new CobInterface(nh, calib_type, calib_marker, do_arm_calibration));
+				return (new CobInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data));
 				break;
 		default:
 				return 0;

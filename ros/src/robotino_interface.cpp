@@ -51,8 +51,8 @@
 #include <calibration_interface/robotino_interface.h>
 
 
-RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration) :
-				IPAInterface(nh, calib_type, calib_marker, do_arm_calibration), camera_state_current_(2, 0.), arm_state_current_(0)
+RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data) :
+				IPAInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data), camera_state_current_(2, 0.), arm_state_current_(0)
 {
 	std::cout << "\n========== RobotinoInterface Parameters ==========\n";
 

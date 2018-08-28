@@ -109,7 +109,7 @@ marker_frame_base_name: "tag"
 ### Program sequence
 # loads snapshotted data from disk if set to true, for offline calibration
 # bool
-load_data: false
+#load_data: true
 
 # number of optimization iterations
 # int

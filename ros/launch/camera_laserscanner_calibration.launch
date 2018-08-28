@@ -5,20 +5,25 @@
 	<arg name="reference" default="corner"/>	<!-- box or corner -->
 	<arg name="marker" default="pitag"/>		<!-- checkerboard or pitag -->
 	<arg name="robot" default="robotino"/>		<!-- robotino, cob or RAW -->
+	<arg name="load_data" default="false"/>		<!-- whether data that has been stored previously will be loaded, for offline calibration -->
 
-	<!-- Detect and publish reference frame using laserscanner -->
-	<include file="$(find relative_localization)/ros/launch/$(arg reference)_localization.launch"/>
+	<!-- Execute follwing group if data won't be loaded from disk -->
+	<group unless="$(arg load_data)">
+		<!-- Detect and publish reference frame using laserscanner -->
+		<include file="$(find relative_localization)/ros/launch/$(arg reference)_localization.launch"/>
 
-	<!-- Start markers and setup detection -->
-	<include file="$(find calibration_interface)/ros/launch/$(arg marker)_setup.launch">
-		<arg name="robot" value="$(arg robot)" />
-	</include>
+		<!-- Start markers and setup detection -->
+		<include file="$(find calibration_interface)/ros/launch/$(arg marker)_setup.launch">
+			<arg name="robot" value="$(arg robot)" />
+		</include>
+	</group>
 
 	<!-- Start camera-laserscanner calibration method -->
 	<node ns="camera_laserscanner_calibration" name="camera_laserscanner_calibration" pkg="calibration_interface" type="camera_laserscanner_calibration" output="screen">
 		<rosparam command="load" file="$(find calibration_interface)/ros/launch/robot_settings/$(arg robot)_settings.yaml"/>
 		<rosparam command="load" file="$(find calibration_interface)/ros/launch/calibration_settings/camera_laserscanner_calibration_$(arg marker)_params_$(arg robot).yaml"/>
 		<param name="marker_type" value="$(arg marker)" />
+		<param name="load_data" value="$(arg load_data)" />
 	</node>
 
 </launch>
