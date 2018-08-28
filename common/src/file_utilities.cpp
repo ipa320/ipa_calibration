@@ -97,7 +97,6 @@ namespace file_utilities
 				formatBETMs(stream, snap.branch_ends_to_markers_);
 				formatTFInfos(stream, snap.parent_branch_);
 				formatTFInfos(stream, snap.child_branch_);
-				stream << "b}" << std::endl;
 			}
 			stream << "a}" << std::endl;
 		}
@@ -120,8 +119,9 @@ namespace file_utilities
 			formatTFInfos(stream, BETMs[i].branch_to_child_markers_);
 			formatTFInfos(stream, BETMs[i].otherbranch_to_parent_markers_);
 			stream << BETMs[i].corresponding_uncertainty_idx_ << std::endl;
-			stream << "c}" << std::endl;
 		}
+
+		stream << "c}" << std::endl;
 	}
 
 	void formatTFInfos(std::stringstream &stream, const std::vector<TFInfo> &TFInfos)
@@ -195,9 +195,7 @@ namespace file_utilities
 								line = "";
 								std::getline(file_input, line);
 
-								if ( line.compare("b}") == 0 )
-									break;
-								else if ( line.compare("c{") == 0 )
+								if ( line.compare("c{") == 0 )
 								{
 									TFBranchEndsToMarkers BEM;
 
@@ -314,9 +312,9 @@ namespace file_utilities
 				formatStringVector(stream, info.child_markers_);
 				stream << trafoToString(info.current_trafo_) << std::endl;
 				stream << info.parent_branch_uncertainty_ << std::endl;
-				stream << "2}" << std::endl;
 			}
 
+			stream << "2}" << std::endl;
 			formatStringVector(stream, calibration_setups[i].parent_branch_);
 			formatStringVector(stream, calibration_setups[i].child_branch_);
 		}

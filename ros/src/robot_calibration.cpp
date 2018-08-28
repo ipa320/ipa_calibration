@@ -57,7 +57,6 @@
 
 #include <sstream>
 #include <robotino_calibration/time_utilities.h>
-//#include <robotino_calibration/timer.h>
 
 
 // ToDo: Implement calibration order mechanics! [Already possible]
@@ -65,16 +64,18 @@
 // ToDo: Move calibration_utilities to calibration_interface package and merge with interface header [done]
 // ToDo: Create custom exception classes for exception handling
 // ToDo: Create snapshot folder as well [done]
-// ToDo: Use std::chrono for timing #include <chrono> [done with timer]
+// ToDo: Use std::chrono for timing #include <chrono> [done]
 // ToDo: Add a way here so that user can define order more easily?
 // ToDo: Save snapshots one by one instead of just once at the end -> ability to restore current routine after crash
+// ToDo: Rename package to libextrinsic_calibration, also in CMakeList (but without lib tag there)
+// ToDo: Loading data from disk fails for more complex calibrations, check why
 
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface, const bool load_data_from_disk) :
 	node_handle_(nh), transform_listener_(nh), calibrated_(false), calibration_interface_(interface), load_data_from_disk_(load_data_from_disk)
 {
 	// load parameters
-	std::cout << "========== RobotCalibration Parameters ==========" << std::endl;
+	std::cout << std::endl << "========== RobotCalibration Parameters ==========" << std::endl;
 
 	// hack to fix tf::waitForTransform throwing error that transforms do not exist when now() == 0 at startup
 	ROS_INFO("Waiting for TF listener to initialize...");
@@ -275,6 +276,70 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 	}
 
 	std::cout << "calibration setups generated: " << calibration_setups_.size() << std::endl;
+
+	// ToDo: Cout calibration setups here
+	for ( int i=0; i<calibration_setups_.size(); ++i )
+	{
+		std::cout << std::endl << "Calibration Setup " << (i+1) << ":" << std::endl;
+		std::cout << "\tOrigin:\t" << calibration_setups_[i].origin_ << std::endl;
+
+		std::string branch = "";
+		for ( int j=0; j<calibration_setups_[i].parent_branch_.size(); ++j )  // parent branch
+		{
+			if ( j < calibration_setups_[i].parent_branch_.size()-1 )
+				branch += (calibration_setups_[i].parent_branch_[j] + ";");
+			else
+				branch += calibration_setups_[i].parent_branch_[j];
+		}
+		std::cout << "\tParent branch:\t" << branch << std::endl;
+		branch = "";
+		for ( int j=0; j<calibration_setups_[i].child_branch_.size(); ++j )  // child branch
+		{
+			if ( j < calibration_setups_[i].child_branch_.size()-1 )
+				branch += (calibration_setups_[i].child_branch_[j] + ";");
+			else
+				branch += calibration_setups_[i].child_branch_[j];
+		}
+		std::cout << "\tChild branch:\t" << branch << std::endl;
+
+		for ( int j=0; j<calibration_setups_[i].uncertainties_list_.size(); ++j )
+		{
+			const CalibrationInfo &uncertainty = calibration_setups_[i].uncertainties_list_[j];
+			std::cout << "\tUncertainty " << (j+1) << ":" << std::endl;
+			std::cout << "\t\tFrom <" << uncertainty.parent_ << "> to <" << uncertainty.child_ << ">" << std::endl;
+
+			std::string parent_markers = "";
+			std::string child_markers = "";
+			for ( int l=0; l<uncertainty.parent_markers_.size(); ++l )  // parent markers and child markers have same length
+			{
+				if ( l < uncertainty.parent_markers_.size()-1 )
+				{
+					parent_markers += (uncertainty.parent_markers_[l] + ";");
+					child_markers += (uncertainty.child_markers_[l] + ";");
+				}
+				else
+				{
+					parent_markers += uncertainty.parent_markers_[l];
+					child_markers += uncertainty.child_markers_[l];
+				}
+			}
+			std::cout << "\t\tParent markers:\t" << parent_markers << std::endl;
+			std::cout << "\t\tChild markers:\t" << child_markers << std::endl;
+			std::cout << "\t\tParent branch uncertainty: " << (uncertainty.parent_branch_uncertainty_ ? "True" : "False") << std::endl;
+			std::stringstream init_trafo("");
+			init_trafo << uncertainty.current_trafo_;
+			std::string line = "";
+			std::string trafo = "";
+			while ( std::getline(init_trafo, line) )
+			{
+				trafo += (line + "\n\t\t\t\t\t");
+			}
+			trafo = trafo.substr(0, trafo.length()-6);  // remove newline and tabs for last line
+			std::cout << "\t\tInitial transform:\t" << trafo << std::endl;
+		}
+
+	}
+	std::cout << std::endl;
 
 	node_handle_.param("optimization_iterations", optimization_iterations_, 1000);
 
@@ -774,7 +839,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 
 		if ( &snapshot == 0 )  // should never happen that a snapshot is empty, but just in case
 			continue;
-//std::cout << std::endl;
+
 		if ( on_parent_branch )
 		{
 			branch_tmp = &snapshot.parent_branch_;
@@ -886,7 +951,6 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 			}
 		}
 	}
-//std::cout << std::endl;
 
 	if ( points_3d_uncertainty_parent.size() == 0 || points_3d_uncertainty_child.size() == 0 )
 	{
