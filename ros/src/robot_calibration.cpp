@@ -77,19 +77,6 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 	// load parameters
 	std::cout << std::endl << "========== RobotCalibration Parameters ==========" << std::endl;
 
-	// hack to fix tf::waitForTransform throwing error that transforms do not exist when now() == 0 at startup
-	ROS_INFO("Waiting for TF listener to initialize...");
-	//Timer timeout;
-	const double start_time = time_utilities::getSystemTimeSec();
-	while ( time_utilities::getTimeElapsedSec(start_time) < 10.f )
-	{
-		if ( ros::Time::now().isValid() )
-			break;
-
-		ros::Duration(0.2f).sleep();
-	}
-	ROS_INFO("End waiting for TF to initialize.");
-
 	if (calibration_interface_ == 0) // Throw exception, as we need an calibration interface in order to function properly!
 	{
 		ROS_FATAL("Could not create a calibration interface.");
@@ -112,6 +99,18 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 	if ( !load_data_from_disk_ )
 	{
+		// hack to fix tf::waitForTransform throwing error that transforms do not exist when now() == 0 at startup
+		ROS_INFO("Waiting for TF listener to initialize...");
+		const double start_time = time_utilities::getSystemTimeSec();
+		while ( time_utilities::getTimeElapsedSec(start_time) < 10.f )
+		{
+			if ( ros::Time::now().isValid() )
+				break;
+
+			ros::Duration(0.2f).sleep();
+		}
+		ROS_INFO("End waiting for TF to initialize.");
+
 		// load gaps including its initial values
 		std::vector<std::string> uncertainties_list;
 		calibration_interface_->getUncertainties(uncertainties_list);
@@ -769,7 +768,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 		if ( to_parent_markers.size() > 0 )  // if to_parent_markers == 0 then to_child_markers == 0
 		{
 			snapshot.branch_ends_to_markers_.push_back(branch_ends_to_markers);
-			std::cout << "Markers found for '" << setup.uncertainties_list_[i].parent_ << "' to '" << setup.uncertainties_list_[i].child_ << "': " << to_parent_markers.size() << std::endl;
+			std::cout << "Markers found for <" << setup.uncertainties_list_[i].parent_ << "> to <" << setup.uncertainties_list_[i].child_ << ">: " << to_parent_markers.size() << std::endl;
 		}
 		else
 		{
