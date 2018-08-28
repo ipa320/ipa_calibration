@@ -53,6 +53,7 @@
 #include <calibration_interface/ipa_interface.h>
 #include <robotino_calibration/transformation_utilities.h>
 #include <geometry_msgs/Twist.h>
+#include <robotino_calibration/time_utilities.h>
 
 
 CameraLaserscannerType::CameraLaserscannerType() :
@@ -270,10 +271,10 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 
 	// Check whether relative_localization has initialized the reference frame yet.
 	// Do not let the robot start driving when the reference frame has not been set up properly! Bad things could happen!
-	Timer timeout;
+	const double start_time = time_utilities::getSystemTimeSec();
 	bool result = false;
 
-	while ( timeout.getElapsedTimeInSec() < 10.f )
+	while ( time_utilities::getTimeElapsedSec(start_time) < 10.f )
 	{
 		try
 		{
@@ -304,9 +305,6 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 		ROS_FATAL("CameraBaseCalibrationMarker::CameraBaseCalibrationMarker: Reference frame has not been set up for 10 seconds.");
 		throw std::exception();
 	}
-
-	// Create a timer that loops and fills the reference frame history vector?
-	//ros::Timer timer = nh.createTimer(ros::Duration(0.1), timerCallback);
 }
 
 bool CameraLaserscannerType::moveRobot(int config_index)
@@ -522,8 +520,8 @@ bool CameraLaserscannerType::isReferenceFrameValid(cv::Mat &T, unsigned short& e
 	}
 
 	// update moving average
-	const double current_time = ref_history_timer_.getElapsedTime();
-	if ( current_time - last_ref_history_update_ >= 0.05f )  // every 0.05 sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
+	const double current_time = time_utilities::getSystemTimeSec();
+	if ( time_utilities::getTimeElapsedSec(last_ref_history_update_) >= 0.05f )  // every 0.05 sec instead of every call -> safer, as history does not fill up so quickly (potentially with bad values)
 	{
 		last_ref_history_update_ = current_time;
 		ref_frame_history_[ref_history_index_] = currentSqNorm; // Update with new measurement

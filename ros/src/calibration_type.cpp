@@ -50,7 +50,7 @@
 
 #include <calibration_interface/calibration_type.h>
 #include <calibration_interface/ipa_interface.h>
-#include <robotino_calibration/timer.h>
+#include <robotino_calibration/time_utilities.h>
 #include <robotino_calibration/transformation_utilities.h>
 #include <numeric>  // std::inner_product
 #include <std_msgs/Float64MultiArray.h>
@@ -112,23 +112,6 @@ bool CalibrationType::moveRobot(int config_index)
 	}
 
 	return moveCamera(camera_configurations_[config_index]);
-	// Does not make too much sense here for now, as it only returns false in case of an dimension error
-	/*for ( short i=0; i<NUM_MOVE_TRIES; ++i )
-	{
-		if ( !moveCamera(camera_configurations_[config_index]) )
-		{
-			ROS_ERROR("RobotCalibration::moveRobot: Could not execute moveCamera, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
-			if ( i<NUM_MOVE_TRIES-1 )
-			{
-				ROS_INFO("RobotCalibration::moveRobot: Trying again in 1 sec.");
-				ros::Duration(1.f).sleep();
-			}
-			else
-				ROS_WARN("RobotCalibration::moveRobot: Skipping camera configuration %d.", config_index);
-		}
-		else
-			break;
-	}*/
 }
 
 bool CalibrationType::moveCamera(const std::vector<double> &cam_configuration)
@@ -151,8 +134,8 @@ bool CalibrationType::moveCamera(const std::vector<double> &cam_configuration)
 	// wait for pan tilt to arrive at goal position
 	if ( cur_state.size() > 0 )
 	{
-		Timer timeout;
-		while (timeout.getElapsedTimeInSec()<10.0)
+		const double start_time = time_utilities::getSystemTimeSec();
+		while ( time_utilities::getTimeElapsedSec(start_time) < 10.f )
 		{
 			ros::Rate(20).sleep(); // No need to iterate through this every tick
 			cur_state = *calibration_interface_->getCurrentCameraState();
@@ -171,7 +154,7 @@ bool CalibrationType::moveCamera(const std::vector<double> &cam_configuration)
 			ros::spinOnce();
 		}
 
-		if ( timeout.getElapsedTimeInSec() >= 10.0 )
+		if ( time_utilities::getTimeElapsedSec(start_time) >= 10.f )
 		{
 			ROS_WARN("Could not reach following camera configuration in time:");
 			for (int i = 0; i<cam_configuration.size(); ++i)

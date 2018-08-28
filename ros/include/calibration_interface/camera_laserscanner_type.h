@@ -55,7 +55,6 @@
 #include <calibration_interface/calibration_type.h>
 #include <calibration_interface/pose_definition.h>
 #include <opencv2/opencv.hpp>
-#include <robotino_calibration/timer.h>
 
 
 #define REF_FRAME_HISTORY_SIZE 20 // 20 entries used to build the moving average upon
@@ -91,7 +90,6 @@ protected:
     void turnOffBaseMotion();  // set angular and linear speed to 0
 
     double ref_frame_history_[REF_FRAME_HISTORY_SIZE]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <REF_FRAME_HISTORY_SIZE> measurements.
-    Timer ref_history_timer_;  // precisely update reference history
     double max_ref_frame_distance_;
 
     std::vector<pose_definition::RobotConfiguration> base_configurations_;  // wished base configurations used for calibration

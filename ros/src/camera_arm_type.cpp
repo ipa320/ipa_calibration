@@ -53,7 +53,7 @@
 #include <calibration_interface/ipa_interface.h>
 #include <opencv2/opencv.hpp>
 #include <std_msgs/Float64MultiArray.h>
-#include <robotino_calibration/timer.h>
+#include <robotino_calibration/time_utilities.h>
 
 
 CameraArmType::CameraArmType()
@@ -191,8 +191,8 @@ bool CameraArmType::moveArm(const std::vector<double>& arm_configuration)
 	//Wait for arm to move
 	if ( (*calibration_interface_->getCurrentArmState()).size() > 0 )
 	{
-		Timer timeout;
-		while (timeout.getElapsedTimeInSec()<10.0) //Max. 10 seconds to reach goal
+		const double start_time = time_utilities::getSystemTimeSec();
+		while ( time_utilities::getTimeElapsedSec(start_time) < 10.f ) //Max. 10 seconds to reach goal
 		{
 
 			boost::mutex::scoped_lock(arm_state_data_mutex_);
@@ -212,7 +212,7 @@ bool CameraArmType::moveArm(const std::vector<double>& arm_configuration)
 			ros::spinOnce();
 		}
 
-		if ( timeout.getElapsedTimeInSec()>=10.0 )
+		if ( time_utilities::getTimeElapsedSec(start_time) >= 10.f )
 		{
 			ROS_WARN("Could not reach following arm configuration in time:");
 			for (int i = 0; i<arm_configuration.size(); ++i)
