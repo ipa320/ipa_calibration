@@ -68,7 +68,7 @@
 // ToDo: Add a way here so that user can define order more easily?
 // ToDo: Save snapshots one by one instead of just once at the end -> ability to restore current routine after crash
 // ToDo: Rename package to libextrinsic_calibration, also in CMakeList (but without lib tag there)
-// ToDo: Loading data from disk fails for more complex calibrations, check why
+// ToDo: Loading data from disk fails for more complex calibrations, check why [Done]
 
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface, const bool load_data_from_disk) :
