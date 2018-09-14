@@ -126,22 +126,22 @@ void CobInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity)
 
 }
 
-void CobInterface::assignNewCameraAngles(std_msgs::Float64MultiArray newAngles)
+void CobInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray newAngles)
 {
 
 }
 
-std::vector<double>* CobInterface::getCurrentCameraState()
+std::vector<double>* CobInterface::getCurrentCameraState(const std::string &camera_name)
 {
 	return 0;
 }
 
-void CobInterface::assignNewArmJoints(std_msgs::Float64MultiArray newJointConfig)
+void CobInterface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray newJointConfig)
 {
 
 }
 
-std::vector<double>* CobInterface::getCurrentArmState()
+std::vector<double>* CobInterface::getCurrentArmState(const std::string &arm_name)
 {
 	return 0;
 }

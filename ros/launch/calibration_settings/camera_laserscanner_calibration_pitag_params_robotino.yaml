@@ -1,6 +1,6 @@
 # Degrees of freedom of camera
 # int
-camera_dof: 2
+# camera_dof: 2
 
 # max distance (radius) the referenece frame is allowed to be away in terms of the robot's base.
 # double

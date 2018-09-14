@@ -121,7 +121,7 @@ void RAWInterface::assignNewRobotVelocity(geometry_msgs::Twist new_velocity) // 
 	base_controller_.publish(new_velocity);
 }
 
-void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray new_angles)
+void RAWInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_angles)
 {
 	// Adjust here: Assign new camera tilt angle here
 	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
@@ -143,7 +143,7 @@ void RAWInterface::assignNewCameraAngles(std_msgs::Float64MultiArray new_angles)
 	ac.sendGoal(camGoal);
 }
 
-std::vector<double>* RAWInterface::getCurrentCameraState()
+std::vector<double>* RAWInterface::getCurrentCameraState(const std::string &camera_name)
 {
 	return &camera_state_current_;
 }
@@ -151,7 +151,7 @@ std::vector<double>* RAWInterface::getCurrentCameraState()
 
 
 // ARM CALIBRATION INTERFACE
-void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray new_joint_config)
+void RAWInterface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_joint_config)
 {
 	// Adjust here: Assign new joints to your robot arm
 	trajectory_msgs::JointTrajectoryPoint jointTrajPoint, currentPoint;
@@ -176,7 +176,7 @@ void RAWInterface::assignNewArmJoints(std_msgs::Float64MultiArray new_joint_conf
 	ac.sendGoal(armGoal);
 }
 
-std::vector<double>* RAWInterface::getCurrentArmState()
+std::vector<double>* RAWInterface::getCurrentArmState(const std::string &arm_name)
 {
 	boost::mutex::scoped_lock lock(arm_state_data_mutex_);
 	return &arm_state_current_->position;

@@ -87,16 +87,16 @@ public:
 
 	// camera calibration interface
 	void assignNewRobotVelocity(geometry_msgs::Twist new_velocity);
-	void assignNewCameraAngles(std_msgs::Float64MultiArray new_angles);
-	std::vector<double>* getCurrentCameraState();
+	void assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_angles);
+	std::vector<double>* getCurrentCameraState(const std::string &camera_name);
 
 	// callbacks
 	void cameraJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 	void armStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
 	// arm calibration interface
-	void assignNewArmJoints(std_msgs::Float64MultiArray new_joint_config);
-	std::vector<double>* getCurrentArmState();
+	void assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_joint_config);
+	std::vector<double>* getCurrentArmState(const std::string &arm_name);
 };
 
 

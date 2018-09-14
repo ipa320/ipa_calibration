@@ -63,21 +63,32 @@
 
 class IPAInterface;  // forward declaration
 
+struct camera_description
+{
+	std::string camera_name_;
+	int dof_count_;
+	std::vector< std::vector<double> > configurations_;
+};
+
 class CalibrationType
 {
 
 protected:
 
-	bool moveCamera(const std::vector<double> &cam_configuration);
+	bool moveCamera(const std::string &camera_name, const std::vector<double> &cam_configuration);
+	bool generateConfigs(const std::vector< std::vector<double> > &param_vector, std::vector< std::vector<double> > &configs);
 
 
 	ros::NodeHandle node_handle_;
     tf::TransformListener transform_listener_;
 	IPAInterface *calibration_interface_;
 
-    int camera_dof_;  // degrees of freedom the camera has
-    std::vector< std::vector<double> > camera_configurations_;  // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
+    //int camera_dof_;  // degrees of freedom the camera has
+    //std::vector< std::vector<double> > camera_configurations_;  // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
+	int configuration_count_;  // total count of configurations;
+	int cameras_count_;  // number of used cameras
 	std::vector<std::string> uncertainties_list_;
+	std::vector<camera_description> cameras_;  // list that holds all robot cameras that are involved in calibration
     bool initialized_;
 
 

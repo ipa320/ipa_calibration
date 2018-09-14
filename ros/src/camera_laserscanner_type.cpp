@@ -84,10 +84,10 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 
 	bool use_range = false;
 	node_handle_.param("use_range", use_range, false);
-	std::cout << "use_range: " << use_range << std::endl;
+	//std::cout << "use_range: " << use_range << std::endl;
 
 	const int base_dof = NUM_POSE_PARAMS; // coming from pose_definition.h
-	if (use_range == true)
+	if ( use_range == true )  // only works when there is only one camera in use
 	{
 		// create robot configurations from regular grid
 		std::vector<double> x_range;
@@ -105,15 +105,15 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 
 		std::vector<double> temp;
 		node_handle_.getParam("camera_ranges", temp);
-		if ( temp.size() % 3 != 0 || temp.size() != 3*camera_dof_ )
+		if ( temp.size() % 3 != 0 || temp.size() != 3*camera_dof )
 		{
 			ROS_ERROR("The camera range vector has the wrong size, each DOF needs three entries (start,step,stop)");
-			std::cout << "size: " << temp.size() << ", needed: " << (3*camera_dof_) << std::endl;
+			std::cout << "size: " << temp.size() << ", needed: " << (3*camera_dof) << std::endl;
 			return;
 		}
 
 		std::vector<std::vector<double>> cam_ranges;
-		for ( int i=0; i<camera_dof_; i++ )
+		for ( int i=0; i<camera_dof; i++ )
 		{
 			std::vector<double> range;
 			for ( int j=0; j<3; j++ )
@@ -130,7 +130,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 		if (phi_range[0] == phi_range[2] || phi_range[1] == 0.)
 			phi_range[1] = 1.0;
 
-		for ( int i=0; i<camera_dof_; ++i )
+		for ( int i=0; i<camera_dof; ++i )
 		{
 			if ( cam_ranges[i][0] == cam_ranges[i][2] || cam_ranges[i][1] == 0. )
 				cam_ranges[i][1] = 1.0;
@@ -156,7 +156,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 			values.push_back(phi);
 		param_vector.push_back(values);
 
-		for ( int i=0; i<camera_dof_; ++i )
+		for ( int i=0; i<camera_dof; ++i )
 		{
 			values.clear();
 			for ( double value=cam_ranges[i][0]; value<=cam_ranges[i][2]; value+=cam_ranges[i][1] )
@@ -182,7 +182,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 		temp.resize(base_dof);
 		base_configurations_.resize(num_configs, pose_definition::RobotConfiguration(temp));
 		temp.clear();
-		temp.resize(camera_dof_);
+		temp.resize(camera_dof);
 		camera_configurations_.resize(num_configs, temp);
 		temp.clear();
 
@@ -231,7 +231,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 		std::vector<double> temp;
 		node_handle_.getParam("robot_configurations", temp);
 
-		const int num_params = base_dof + camera_dof_;
+		const int num_params = base_dof + camera_dof;
 		const int num_configs = temp.size()/num_params;
 		if (temp.size()%num_params != 0 || temp.size() < 3*num_params)
 		{
@@ -249,7 +249,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 			base_configurations_.push_back(pose_definition::RobotConfiguration(data));
 
 			data.clear();
-			for ( int j=base_dof; j<num_params; ++j ) // camera_dof_ iterations
+			for ( int j=base_dof; j<num_params; ++j ) // camera_dof iterations
 			{
 				data.push_back(temp[num_params*i + j]);
 			}
