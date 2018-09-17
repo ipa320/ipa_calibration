@@ -57,7 +57,7 @@
 
 
 CalibrationType::CalibrationType() :
-					calibration_interface_(0), initialized_(false), configuration_count_(0), cameras_count_(0)
+					calibration_interface_(0), initialized_(false), configuration_count_(0), cameras_count_(0), current_camera_counter_(0), mapped_camera_index_(0)
 {
 
 }
@@ -89,7 +89,7 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 
 	if ( cameras_.size() <= 0 )
 	{
-		ROS_WARN("Invalid cameras size: %d", cameras_.size());
+		ROS_WARN("Invalid cameras size: %d", (int)cameras_.size());
 		return;
 	}
 
@@ -148,9 +148,9 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 			node_handle_.getParam("camera_configs_"+std::to_string(i+1), cam_configs);
 			const int camera_dof = cameras_[i].dof_count_;
 
-			if ( cam_configs.size() % camera_dof != 0 )
+			if ( cam_configs.size() == 0 || camera_dof == 0 || cam_configs.size() % camera_dof != 0 )
 			{
-				ROS_ERROR("camera_configs_%d for %s vector has the wrong size, camera dof %d", (i+1), cameras_[i].camera_name_.c_str(), camera_dof);
+				ROS_ERROR("camera_configs_%d vector for %s has wrong size, camera dof %d", (i+1), cameras_[i].camera_name_.c_str(), camera_dof);
 				return;
 			}
 
@@ -166,18 +166,28 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 		}
 	}
 
-	for ( int i=0; i<cameras_.size(); ++i )
-	{
-		if ( configuration_count_ == 0 )
-			configuration_count_ = cameras_[i].configurations_.size();
-		else
-			configuration_count_ *= cameras_[i].configurations_.size();
-	}
+	for ( int i=0; i<cameras_.size(); ++i )  // compute total configuration count (only for cameras here)
+		configuration_count_ += cameras_[i].configurations_.size();
 
 	if ( configuration_count_ <= 0 )
 	{
 		ROS_WARN("Invalid configuration_count for cameras: %d", configuration_count_);
 		return;
+	}
+	else if ( use_range )
+		std::cout << "Generated " << configuration_count_ << " camera configurations for calibration." << std::endl;
+
+	// Display camera configurations
+	for ( int i=0; i<cameras_.size(); ++i )
+	{
+		std::cout << cameras_[i].camera_name_ << " configurations:" << std::endl;
+		for ( int j=0; j<cameras_[i].configurations_.size(); ++j )
+		{
+			for ( int k=0; k<cameras_[i].configurations_[j].size(); ++k )
+				std::cout << cameras_[i].configurations_[j][k] << "\t";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
 	}
 
 	node_handle_.getParam("uncertainties_list", uncertainties_list_);
@@ -213,19 +223,26 @@ bool CalibrationType::moveRobot(int config_index)
 		return false;
 	}
 
-	for ( int i=0; i<cameras_.size(); ++i )
-	{
-		for ( int j=0; j<cameras_[i].configurations_.size(); ++j )
-		{
-			if ( cameras_[i].configurations_[j].order_index_ == config_index )
-			{
-				bool success = moveCamera(cameras_[i].camera_name_, cameras_[i].configurations_[j].config_);
+	if ( cameras_done_ )  // reset flag
+		cameras_done_ = false;
 
-				if ( !success )
-					ROS_WARN("CalibrationType::moveRobot - Could not move camera %s at index %d", cameras_[i].camera_name_.c_str(), config_index);
-			}
-		}
+	int current_count = cameras_[current_camera_counter_].configurations_.size();  // count of current configurations of current camera
+
+	if ( config_index > 0 && mapped_camera_index_ % current_count == 0 )
+	{
+		current_camera_counter_ = ( (current_camera_counter_+1 >= cameras_.size()) ? 0 : current_camera_counter_+1 );  // when previous camera has iterated through all its configs, do same with next camera
+		mapped_camera_index_ = 0;
+
+		if ( current_camera_counter_ == 0 )  // set for one call, reset on next call
+			cameras_done_ = true;
 	}
+
+	bool success = moveCamera(cameras_[current_camera_counter_].camera_name_, cameras_[current_camera_counter_].configurations_[mapped_camera_index_]);
+
+	if ( !success )
+		ROS_WARN("CalibrationType::moveRobot - Could not move camera %s at index %d", cameras_[current_camera_counter_].camera_name_.c_str(), mapped_camera_index_);
+
+	++mapped_camera_index_;
 
 	return true;
 }
@@ -263,7 +280,7 @@ bool CalibrationType::moveCamera(const std::string &camera_name, const std::vect
 
 			if ( length < 0.02 ) //Close enough to goal configuration
 			{
-				std::cout << "Camera configuration reached, deviation: " << length << std::endl;
+				std::cout << camera_name << " configuration reached, deviation: " << length << std::endl;
 				break;
 			}
 
@@ -297,8 +314,8 @@ void CalibrationType::getUncertainties(std::vector<std::string> &uncertainties_l
 	uncertainties_list = uncertainties_list_;
 }
 
-// Create robot_configurations grid. Do this by pairing every parameter value with every other parameter value
-// E.g. param_1={f}, param_2={d,e}, param_3={a,b,c}  <-- stored in param_vector
+// Create configuration vector out of several parameters (stored in param_vector) by pairing every parameter value with every other parameter value (like a grid)
+// E.g. param_1={f}, param_2={d,e}, param_3={a,b,c}  <-- each stored in param_vector
 // Resulting configs:
 // (param_1  param_2  param_3)
 //  f        d        a
@@ -307,7 +324,7 @@ void CalibrationType::getUncertainties(std::vector<std::string> &uncertainties_l
 //  f        e        a
 //  f        e        b
 //  f        e        c
-bool generateConfigs(const std::vector< std::vector<double> > &param_vector, std::vector< std::vector<double> > &configs)
+bool CalibrationType::generateConfigs(const std::vector< std::vector<double> > &param_vector, std::vector< std::vector<double> > &configs)
 {
 	int num_configs = 0;
 	const int num_params = param_vector.size();
@@ -325,8 +342,9 @@ bool generateConfigs(const std::vector< std::vector<double> > &param_vector, std
 		return false;
 	}
 
+	// preallocate memory
 	std::vector<double> temp;
-	temp.resize(num_params);
+	temp.resize(num_params);  // filled with zeros
 	configs.resize(num_configs, temp);
 
 	int repetition_pattern = 0; // Describes how often a value needs to be repeated, look at example param_2, d and e are there three times

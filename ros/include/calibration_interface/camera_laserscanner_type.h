@@ -107,6 +107,8 @@ private:
     double start_error_x_;	// Used for divergence detection
     double start_error_y_;	// Used for divergence detection
 
+	int mapped_base_index_;  // mapped index that accesses the correct vector element of the base_configurations_ vector
+
 
 };
 

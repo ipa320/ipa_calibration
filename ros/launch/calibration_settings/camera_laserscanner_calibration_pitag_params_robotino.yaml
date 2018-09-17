@@ -1,6 +1,9 @@
-# Degrees of freedom of camera
-# int
-# camera_dof: 2
+# List of cameras invloved in calibration
+# string vector
+# format: [camera1_name, camera1_dof,
+#          camera2_name, camera2_dof]
+# cameraX_name can be any name to distinguish different cameras inside the interface
+cameras_list: ["kinect_front", "2"]
 
 # max distance (radius) the referenece frame is allowed to be away in terms of the robot's base.
 # double
@@ -17,44 +20,57 @@ use_range: true
 x_range: [-1.25, 0.5, -0.75]#[-1.0, 1.0, -1.0]       # in [m]
 y_range: [-1.5, 0.5, -1.0]#[-1.0, 1.0, -1.0]          # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]          # in [rad], fixed phi-angle
-camera_ranges: [-1.2, 1.0, 0.2,
-                -0.8, 0.8, 0.0]     # first pan then tilt in [rad]
+camera_ranges_1: [-1.2, 1.0, 0.2,
+                  -0.8, 0.8, 0.0]     # first pan then tilt in [rad]
+#camera_ranges_2: []  # further cameras possible
+
+# manually input the camera configuration for 1st camera in cameras_list
+# used when use_range == false
+# vector<double>
+camera_configs_1: []
+
+# further cameras possible
+#camera_configs_2: []
+
+# list of robot's base configurations used in calibration for observing the pitags measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link
+# each base configuration will go through every camera's configuration
+base_configs: []
 
 # list of robot configurations for observing the pitags measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link facing the marker
 # includes 5 parameters per entry: robot pose: x, y, phi and camera angles at the end
-robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
-                       -1.5, -0.17, 0, 0.0, 0.3,
-                       -1.5, -0.17, 0, -0.15, 0.3,
-                       -1.5, -0.17, 0, -0.3, 0.3,
-                       -1.5, -0.17, 0, -0.5, 0.3,
-                       -1.5, -0.17, 0, 0.15, 0.05,
-                       -1.5, -0.17, 0, 0.0, 0.05,
-                       -1.5, -0.17, 0, -0.15, 0.05,
-                       -1.5, -0.17, 0, -0.3, 0.05,
-                       -1.5, -0.17, 0, -0.5, 0.05,
-                       -1.5, -0.17, 0, 0.15, -0.2,
-                       -1.5, -0.17, 0, 0.0, -0.2,
-                       -1.5, -0.17, 0, -0.15, -0.2,
-                       -1.5, -0.17, 0, -0.35, -0.2,
-                       -1.5, -0.17, 0, -0.5, -0.2,
-                       -1.0, -0.17, 0, 0.0, 0.2,
-                       -1.0, -0.17, 0, -0.2, 0.2,
-                       -1.0, -0.17, 0, -0.45, 0.2,
-                       -1.0, -0.17, 0, 0.0, 0.05,
-                       -1.0, -0.17, 0, -0.2, 0.05,
-                       -1.0, -0.17, 0, -0.45, 0.05,
-                       -1.0, -0.17, 0, 0.0, -0.15,
-                       -1.0, -0.17, 0, -0.2, -0.15,
-                       -1.0, -0.17, 0, -0.45, -0.15,
-                       -0.85, -0.17, 0, 0.0, 0.15,
-                       -0.85, -0.17, 0, -0.15, 0.15,
-                       -0.85, -0.17, 0, -0.35, 0.2,
-                       -0.85, -0.17, 0, 0.0, 0.05,
-                       -0.85, -0.17, 0, -0.15, 0.05,
-                       -0.85, -0.17, 0, -0.35, 0.05,
-                       -0.85, -0.17, 0, 0.0, -0.1,
-                       -0.85, -0.17, 0, -0.15, -0.1,
-                       -0.85, -0.17, 0, -0.35, -0.1]
+#robot_configurations: [-1.5, -0.17, 0, 0.15, 0.25,
+#                       -1.5, -0.17, 0, 0.0, 0.3,
+#                       -1.5, -0.17, 0, -0.15, 0.3,
+#                       -1.5, -0.17, 0, -0.3, 0.3,
+#                       -1.5, -0.17, 0, -0.5, 0.3,
+#                       -1.5, -0.17, 0, 0.15, 0.05,
+#                       -1.5, -0.17, 0, 0.0, 0.05,
+#                       -1.5, -0.17, 0, -0.15, 0.05,
+#                       -1.5, -0.17, 0, -0.3, 0.05,
+#                       -1.5, -0.17, 0, -0.5, 0.05,
+#                       -1.5, -0.17, 0, 0.15, -0.2,
+#                       -1.5, -0.17, 0, 0.0, -0.2,
+#                       -1.5, -0.17, 0, -0.15, -0.2,
+#                       -1.5, -0.17, 0, -0.35, -0.2,
+#                      -1.5, -0.17, 0, -0.5, -0.2,
+#                      -1.0, -0.17, 0, 0.0, 0.2,
+#                       -1.0, -0.17, 0, -0.2, 0.2,
+#                       -1.0, -0.17, 0, -0.45, 0.2,
+#                       -1.0, -0.17, 0, 0.0, 0.05,
+#                       -1.0, -0.17, 0, -0.2, 0.05,
+#                       -1.0, -0.17, 0, -0.45, 0.05,
+#                       -1.0, -0.17, 0, 0.0, -0.15,
+#                       -1.0, -0.17, 0, -0.2, -0.15,
+#                       -1.0, -0.17, 0, -0.45, -0.15,
+#                       -0.85, -0.17, 0, 0.0, 0.15,
+#                       -0.85, -0.17, 0, -0.15, 0.15,
+#                       -0.85, -0.17, 0, -0.35, 0.2,
+#                       -0.85, -0.17, 0, 0.0, 0.05,
+#                       -0.85, -0.17, 0, -0.15, 0.05,
+#                       -0.85, -0.17, 0, -0.35, 0.05,
+#                       -0.85, -0.17, 0, 0.0, -0.1,
+#                       -0.85, -0.17, 0, -0.15, -0.1,
+#                       -0.85, -0.17, 0, -0.35, -0.1]
 
 
 ### Robot link and topic names
@@ -94,23 +110,12 @@ uncertainties_list: ["base_linkz","base_neck_link", "landmark_reference_front", 
                      "kinect_link","kinect_depth_frame", "landmark_reference_ground", "kinect_depth_optical_frame", "tag_73", "marker_73",
                      "kinect_link","kinect_depth_frame", "landmark_reference_ground", "kinect_depth_optical_frame", "tag_79", "marker_79"]
 
-# defines the order in which the uncertainties will be calibrated
-# each couple or uncertainty in the uncertainties_list increases the calibration_order list
-# the value represents the index of an uncertainty in the uncertainties_list and the position of the index in the calibration_order list defines the actual order
-# i.e. the first element in the calibration_order will be calibrated first, then comes the second element and so on...
-# the more uncertain a transform is the earlier should its index be placed in the calibration_order list
-# so the index of the most uncertain transform should be the first element here
-#calibration_order: [1,2]
 
 # base name of all frames generated by cob_fiducials, each Pi tag number will be attached to this string.
 marker_frame_base_name: "tag"
 
 
 ### Program sequence
-# loads snapshotted data from disk if set to true, for offline calibration
-# bool
-#load_data: true
-
 # number of optimization iterations
 # int
 optimization_iterations: 10000

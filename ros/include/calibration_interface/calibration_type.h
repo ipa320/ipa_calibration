@@ -72,6 +72,11 @@ struct camera_description
 
 class CalibrationType
 {
+private:
+
+	int mapped_camera_index_;  // mapped index that accesses the correct vector element of the currently moved camera
+	int current_camera_counter_;  // used to determine which camera to move
+
 
 protected:
 
@@ -89,6 +94,7 @@ protected:
 	int cameras_count_;  // number of used cameras
 	std::vector<std::string> uncertainties_list_;
 	std::vector<camera_description> cameras_;  // list that holds all robot cameras that are involved in calibration
+	bool cameras_done_;  // set when all cameras have iterated through all their configs. used to determine when to move robot's base (every time cameras are done)
     bool initialized_;
 
 

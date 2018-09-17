@@ -57,7 +57,7 @@
 
 
 CameraLaserscannerType::CameraLaserscannerType() :
-		last_ref_history_update_(0.0), start_error_x_(0.0), start_error_y_(0.0), start_error_phi_(0.0), ref_history_index_(0), max_ref_frame_distance_(1.0)
+		last_ref_history_update_(0.0), start_error_x_(0.0), start_error_y_(0.0), start_error_phi_(0.0), ref_history_index_(0), max_ref_frame_distance_(1.0), mapped_base_index_(0)
 {
 
 }
@@ -103,38 +103,12 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 			return;
 		}
 
-		std::vector<double> temp;
-		node_handle_.getParam("camera_ranges", temp);
-		if ( temp.size() % 3 != 0 || temp.size() != 3*camera_dof )
-		{
-			ROS_ERROR("The camera range vector has the wrong size, each DOF needs three entries (start,step,stop)");
-			std::cout << "size: " << temp.size() << ", needed: " << (3*camera_dof) << std::endl;
-			return;
-		}
-
-		std::vector<std::vector<double>> cam_ranges;
-		for ( int i=0; i<camera_dof; i++ )
-		{
-			std::vector<double> range;
-			for ( int j=0; j<3; j++ )
-			{
-				range.push_back(temp[3*i + j]);
-			}
-			cam_ranges.push_back(range);
-		}
-
 		if (x_range[0] == x_range[2] || x_range[1] == 0.)		// this sets the step to something bigger than 0
 			x_range[1] = 1.0;
 		if (y_range[0] == y_range[2] || y_range[1] == 0.)
 			y_range[1] = 1.0;
 		if (phi_range[0] == phi_range[2] || phi_range[1] == 0.)
 			phi_range[1] = 1.0;
-
-		for ( int i=0; i<camera_dof; ++i )
-		{
-			if ( cam_ranges[i][0] == cam_ranges[i][2] || cam_ranges[i][1] == 0. )
-				cam_ranges[i][1] = 1.0;
-		}
 
 		// Build configurations from ranges
 		// Create a vector that contains each value list of each parameter that's varied
@@ -156,82 +130,24 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 			values.push_back(phi);
 		param_vector.push_back(values);
 
-		for ( int i=0; i<camera_dof; ++i )
-		{
-			values.clear();
-			for ( double value=cam_ranges[i][0]; value<=cam_ranges[i][2]; value+=cam_ranges[i][1] )
-				values.push_back(value);
-			param_vector.push_back(values);
-		}
+		std::vector< std::vector<double> > base_configs;
+		generateConfigs(param_vector, base_configs);
 
-		// Preallocate memory for base and camera configurations
-		// Compute number of configs
-		int num_configs = 1;
-		const int num_params = param_vector.size();
-		for ( int i=0; i<num_params; ++i )
-			num_configs *= param_vector[i].size();
+		base_configurations_.reserve(base_configs.size());
+		for ( int i=0; i<base_configs.size(); ++i )
+			base_configurations_.push_back(pose_definition::RobotConfiguration(base_configs[i]));
 
-		if ( num_configs == 0 || num_params == 0 )
-		{
-			ROS_ERROR("No base or camera configuration can be generated! Num. configs: %d, num. params per config: %d", num_configs, num_params);
-			return;
-		}
-
-		// Do actual preallocation
-		temp.clear();
-		temp.resize(base_dof);
-		base_configurations_.resize(num_configs, pose_definition::RobotConfiguration(temp));
-		temp.clear();
-		temp.resize(camera_dof);
-		camera_configurations_.resize(num_configs, temp);
-		temp.clear();
-
-		// Create robot_configurations grid. Do this by pairing every parameter value with every other parameter value
-		// E.g. param_1={f}, param_2={d,e}, param_3={a,b,c}
-		// Resulting robot configurations (separated into two lists, one for camera and one for base):
-		// (param_1  param_2  param_3)
-		//  f        d        a
-		//  f        d        b
-		//  f        d        c
-		//  f        e        a
-		//  f        e        b
-		//  f        e        c
-		int repetition_pattern = 0; // Describes how often a value needs to be repeated, look at example param_2, d and e are there three times
-		for ( int i=num_params-1; i>=0; --i ) // Fill robot_configurations_ starting from last parameter in param_vector
-		{
-			int counter = 0;
-			for ( int j=0; j<num_configs; ++j )
-			{
-				if ( repetition_pattern == 0 ) // executed initially
-					counter = j % param_vector[i].size(); // repeat parameters over and over again
-				else if ( j > 0 && (j % repetition_pattern == 0) )
-					counter = (counter+1) % param_vector[i].size();
-
-				// robot_configurations_[j][i] = param_vector[i][counter]; -> is now split into two lists
-				if ( i < base_dof )
-					//base_configurations_[j][i] = param_vector[i][counter]; // base_configurations_ is no vector anymore for better readability
-					base_configurations_[j].assign(i, param_vector[i][counter]);
-				else
-					camera_configurations_[j][i-base_dof] = param_vector[i][counter];
-			}
-
-			if ( repetition_pattern == 0 )
-				repetition_pattern = param_vector[i].size();
-			else
-				repetition_pattern *= param_vector[i].size();
-		}
-
-		std::cout << "Generated " << (int)camera_configurations_.size() << " robot configurations for calibration." << std::endl;
-		if ( (int)camera_configurations_.size() == 0 )
-			ROS_WARN("No robot configurations generated. Please check your ranges in the yaml file.");
+		std::cout << "Generated " << (int)base_configurations_.size() << " base configurations for calibration." << std::endl;
+		if ( (int)base_configurations_.size() == 0 )
+			ROS_WARN("No base configurations generated. Please check your ranges in the yaml file.");
 	}
 	else
 	{
 		// read out user-defined robot configurations
 		std::vector<double> temp;
-		node_handle_.getParam("robot_configurations", temp);
+		node_handle_.getParam("base_configs", temp);
 
-		const int num_params = base_dof + camera_dof;
+		const int num_params = base_dof;
 		const int num_configs = temp.size()/num_params;
 		if (temp.size()%num_params != 0 || temp.size() < 3*num_params)
 		{
@@ -247,27 +163,17 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 				data.push_back(temp[num_params*i + j]);
 			}
 			base_configurations_.push_back(pose_definition::RobotConfiguration(data));
-
-			data.clear();
-			for ( int j=base_dof; j<num_params; ++j ) // camera_dof iterations
-			{
-				data.push_back(temp[num_params*i + j]);
-			}
-			camera_configurations_.push_back(data);
 		}
 	}
 
-	// Display configurations
+	// Display base configurations
 	std::cout << "base configurations:" << std::endl;
 	for ( int i=0; i<base_configurations_.size(); ++i )
 		std::cout << base_configurations_[i].getString() << std::endl;
-	std::cout << std::endl << "camera configurations:" << std::endl;
-	for ( int i=0; i<camera_configurations_.size(); ++i )
-	{
-		for ( int j=0; j<camera_configurations_[i].size(); ++j )
-			std::cout << camera_configurations_[i][j] << "\t";
-		std::cout << std::endl;
-	}
+	std::cout << std::endl;
+
+	configuration_count_ *= base_configurations_.size();
+	std::cout << configuration_count_ << " configurations in total used for calibration." << std::endl;
 
 	// Check whether relative_localization has initialized the reference frame yet.
 	// Do not let the robot start driving when the reference frame has not been set up properly! Bad things could happen!
@@ -309,13 +215,16 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 
 bool CameraLaserscannerType::moveRobot(int config_index)
 {
-	bool result = CalibrationType::moveRobot(config_index);  // call parent
+	bool result = CalibrationType::moveRobot(config_index);  // call parent to move current camera
 
 	if ( result )
 	{
+		if ( cameras_done_ )  // go to new location only when all cameras are done with previous location
+			++mapped_base_index_;
+
 		for ( short i=0; i<NUM_MOVE_TRIES; ++i )
 		{
-			unsigned short error_code = moveBase(base_configurations_[config_index]);
+			unsigned short error_code = moveBase(base_configurations_[mapped_base_index_]);
 
 			if ( error_code == MOV_NO_ERR ) // Exit loop, as successfully executed move
 			{
@@ -331,7 +240,7 @@ bool CameraLaserscannerType::moveRobot(int config_index)
 					ros::Duration(2.f).sleep();
 				}
 				else
-					ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Skipping base configuration %d.", config_index);
+					ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Skipping base configuration %d.", mapped_base_index_);
 			}
 			else
 			{

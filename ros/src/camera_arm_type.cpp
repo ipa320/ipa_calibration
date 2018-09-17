@@ -84,7 +84,7 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 
 	std::vector<double> temp;
 	node_handle_.getParam("robot_configurations", temp);
-	const int num_params = arm_dof_ + camera_dof_;
+	const int num_params = arm_dof_;// + camera_dof_;
 
 	if ( temp.size() % num_params != 0 || temp.size() < 3*num_params )
 	{
@@ -102,12 +102,12 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 		}
 		arm_configurations_.push_back(angles);
 
-		angles.clear();
+/*		angles.clear();
 		for ( int j=arm_dof_; j<num_params; ++j ) // camera_dof_ iterations
 		{
 			angles.push_back(temp[num_params*i + j]);
 		}
-		camera_configurations_.push_back(angles);
+		camera_configurations_.push_back(angles); */
 	}
 
 	// Display configurations
@@ -118,13 +118,13 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 			std::cout << arm_configurations_[i][j] << "/t";
 		std::cout << std::endl;
 	}
-	std::cout << "camera configurations:" << std::endl;
+/*	std::cout << "camera configurations:" << std::endl;
 	for ( int i=0; i<camera_dof_; ++i )
 	{
 		for ( int j=0; j<camera_configurations_[i].size(); ++j )
 			std::cout << camera_configurations_[i][j] << "/t";
 		std::cout << std::endl;
-	}
+	}*/
 }
 
 bool CameraArmType::moveRobot(int config_index)
@@ -141,7 +141,7 @@ bool CameraArmType::moveRobot(int config_index)
 
 bool CameraArmType::moveArm(const std::vector<double>& arm_configuration)
 {
-	std_msgs::Float64MultiArray new_joint_config;
+/*	std_msgs::Float64MultiArray new_joint_config;
 	new_joint_config.data.resize(arm_configuration.size());
 
 	for ( int i=0; i<new_joint_config.data.size(); ++i )
@@ -224,7 +224,7 @@ bool CameraArmType::moveArm(const std::vector<double>& arm_configuration)
 		ros::Duration(1).sleep();
 
 	ros::spinOnce();
-	return true;
+	return true; */
 }
 
 std::string CameraArmType::getString()
