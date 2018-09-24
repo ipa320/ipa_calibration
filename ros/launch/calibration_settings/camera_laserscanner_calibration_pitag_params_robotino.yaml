@@ -1,9 +1,11 @@
 # List of cameras invloved in calibration
 # string vector
-# format: [camera1_name, camera1_dof,
-#          camera2_name, camera2_dof]
+# format: [camera1_name, camera1_dof, camera1_max_delta_angle
+#          camera2_name, camera2_dof, camera2_max_delta_angle]
 # cameraX_name can be any name to distinguish different cameras inside the interface
-cameras_list: ["kinect_front", "2"]
+# max_delta_angle is a security measure to avoid movement when target angles and current angles of a camera are not too far away from one another.
+# This can lead to collision issues for some cameras (e.g. when attached to an arm). Setting it to 0 turns it off (only recommended for pan/tilt cameras)
+cameras_list: ["kinect_front", "2", "0"]
 
 # max distance (radius) the referenece frame is allowed to be away in terms of the robot's base.
 # double
@@ -12,7 +14,7 @@ max_ref_frame_distance: 2.5
 ### Observation positions for capturing calibration images of the pitags
 # if this flag is true, then the robot configurations will be sampled on a equally spaced grid from the given ranges, if false, the user-provided configurations in robot_configurations will be used
 # bool
-use_range: true
+#use_range: true
 
 # ranges for the degrees of freedom of the robot
 # each parameter is set as [min_value, step, max_value]
@@ -20,17 +22,17 @@ use_range: true
 x_range: [-1.25, 0.5, -0.75]#[-1.0, 1.0, -1.0]       # in [m]
 y_range: [-1.5, 0.5, -1.0]#[-1.0, 1.0, -1.0]          # in [m], fixed y-coordinate
 phi_range: [0.0, 1.0, 0.0]          # in [rad], fixed phi-angle
-camera_ranges_1: [-1.2, 1.0, 0.2,
-                  -0.8, 0.8, 0.0]     # first pan then tilt in [rad]
-#camera_ranges_2: []  # further cameras possible
+kinect_front_ranges: [-1.2, 1.0, 0.2,
+                      -0.8, 0.8, 0.0]     # first pan then tilt in [rad]
+#<camera2_name>_ranges: []  # further cameras possible
 
-# manually input the camera configuration for 1st camera in cameras_list
+# manually input of configurations for corresponding camera in camera_list
 # used when use_range == false
 # vector<double>
-camera_configs_1: []
+#kincet_front_configs: []
 
 # further cameras possible
-#camera_configs_2: []
+#<camera2_name>_configs: []
 
 # list of robot's base configurations used in calibration for observing the pitags measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link
 # each base configuration will go through every camera's configuration

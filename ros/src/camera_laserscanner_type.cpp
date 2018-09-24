@@ -82,12 +82,33 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 	node_handle_.param("max_ref_frame_distance", max_ref_frame_distance_, 1.0);
 	std::cout << "max_ref_frame_distance: " << max_ref_frame_distance_ << std::endl;
 
-	bool use_range = false;
-	node_handle_.param("use_range", use_range, false);
-	//std::cout << "use_range: " << use_range << std::endl;
-
 	const int base_dof = NUM_POSE_PARAMS; // coming from pose_definition.h
-	if ( use_range == true )  // only works when there is only one camera in use
+
+	// read out user-defined robot configurations
+	std::vector<double> base_data;
+	node_handle_.getParam("base_configs", base_data);
+
+	if ( !base_data.empty() )  // configs has been found
+	{
+		const int num_params = base_dof;
+		const int num_configs = base_data.size()/num_params;
+		if (base_data.size() % num_params != 0 || base_data.size() < 3*num_params)
+		{
+			ROS_ERROR("The base_configs vector should contain at least 3 configurations with %d values each.", num_params);
+			return;
+		}
+
+		for ( int i=0; i<num_configs; ++i )
+		{
+			std::vector<double> data;
+			for ( int j=0; j<base_dof; ++j )
+			{
+				data.push_back(base_data[num_params*i + j]);
+			}
+			base_configurations_.push_back(pose_definition::RobotConfiguration(data));
+		}
+	}
+	else
 	{
 		// create robot configurations from regular grid
 		std::vector<double> x_range;
@@ -138,31 +159,11 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 			base_configurations_.push_back(pose_definition::RobotConfiguration(base_configs[i]));
 
 		std::cout << "Generated " << (int)base_configurations_.size() << " base configurations for calibration." << std::endl;
-		if ( (int)base_configurations_.size() == 0 )
-			ROS_WARN("No base configurations generated. Please check your ranges in the yaml file.");
-	}
-	else
-	{
-		// read out user-defined robot configurations
-		std::vector<double> temp;
-		node_handle_.getParam("base_configs", temp);
 
-		const int num_params = base_dof;
-		const int num_configs = temp.size()/num_params;
-		if (temp.size()%num_params != 0 || temp.size() < 3*num_params)
+		if ( base_configurations_.empty() )
 		{
-			ROS_ERROR("The robot_configurations vector should contain at least 3 configurations with %d values each.", num_params);
+			ROS_ERROR("No base configurations generated. Please check your ranges in the yaml file.");
 			return;
-		}
-
-		for ( int i=0; i<num_configs; ++i )
-		{
-			std::vector<double> data;
-			for ( int j=0; j<base_dof; ++j )
-			{
-				data.push_back(temp[num_params*i + j]);
-			}
-			base_configurations_.push_back(pose_definition::RobotConfiguration(data));
 		}
 	}
 
@@ -172,8 +173,8 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 		std::cout << base_configurations_[i].getString() << std::endl;
 	std::cout << std::endl;
 
-	configuration_count_ *= base_configurations_.size();
-	std::cout << configuration_count_ << " configurations in total used for calibration." << std::endl;
+	total_configuration_count_ *= base_configurations_.size();
+	std::cout << total_configuration_count_ << " configurations in total used for calibration." << std::endl;
 
 	// Check whether relative_localization has initialized the reference frame yet.
 	// Do not let the robot start driving when the reference frame has not been set up properly! Bad things could happen!
@@ -211,6 +212,8 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 		ROS_FATAL("CameraBaseCalibrationMarker::CameraBaseCalibrationMarker: Reference frame has not been set up for 10 seconds.");
 		throw std::exception();
 	}
+
+	initialized_ = true;
 }
 
 bool CameraLaserscannerType::moveRobot(int config_index)
@@ -233,18 +236,18 @@ bool CameraLaserscannerType::moveRobot(int config_index)
 			}
 			else if ( error_code == MOV_ERR_SOFT ) // Retry last failed move
 			{
-				ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Could not execute moveBase, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
+				ROS_WARN("CameraLaserscannerType::moveRobot: Could not execute moveBase, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
 				if ( i<NUM_MOVE_TRIES-1 )
 				{
-					ROS_INFO("CameraBaseCalibrationMarker::moveRobot: Trying again in 2 sec.");
+					ROS_INFO("CameraLaserscannerType::moveRobot: Trying again in 2 sec.");
 					ros::Duration(2.f).sleep();
 				}
 				else
-					ROS_WARN("CameraBaseCalibrationMarker::moveRobot: Skipping base configuration %d.", mapped_base_index_);
+					ROS_WARN("CameraLaserscannerType::moveRobot: Skipping base configuration %d.", mapped_base_index_);
 			}
 			else
 			{
-				ROS_FATAL("CameraBaseCalibrationMarker::moveRobot: Exiting calibration, to avoid potential damage.");
+				ROS_FATAL("CameraLaserscannerType::moveRobot: Exiting calibration, to avoid potential damage.");
 				throw std::exception();
 			}
 		}
@@ -392,12 +395,12 @@ unsigned short CameraLaserscannerType::moveBase(const pose_definition::RobotConf
 		turnOffBaseMotion();
 	}
 
-	ros::spinOnce();
 	return error_code;
 }
 
 bool CameraLaserscannerType::isReferenceFrameValid(cv::Mat &T, unsigned short& error_code) // Safety measure, to avoid undetermined motion
 {
+	ros::spinOnce();  // get newest messages
 	if (!transform_utilities::getTransform(transform_listener_, reference_frame_, base_frame_, T, true)) // from reference frame to base frame, swapped order is correct here!
 	{
 		ROS_WARN("CameraBaseCalibrationMarker::isReferenceFrameValid: Can't retrieve transform between base of robot and reference frame.");

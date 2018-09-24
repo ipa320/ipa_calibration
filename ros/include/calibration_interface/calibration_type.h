@@ -60,6 +60,13 @@
 
 #define NUM_MOVE_TRIES 4
 
+enum MoveErrorCode
+{
+    MOV_NO_ERR		= 0,	// Everthing is ok
+    MOV_ERR_SOFT	= 1,	// Retry to move after a delay
+    MOV_ERR_FATAL	= 2		// No retry
+};
+
 
 class IPAInterface;  // forward declaration
 
@@ -67,7 +74,8 @@ struct camera_description
 {
 	std::string camera_name_;
 	int dof_count_;
-	std::vector< std::vector<double> > configurations_;
+	double max_delta_angle_;
+	std::vector< std::vector<double> > configurations_;  // wished camera configurations. Can be used to calibrate the whole workspace of the arm.
 };
 
 class CalibrationType
@@ -80,22 +88,22 @@ private:
 
 protected:
 
-	bool moveCamera(const std::string &camera_name, const std::vector<double> &cam_configuration);
+	unsigned short moveCamera(const camera_description &camera, const std::vector<double> &cam_configuration);
 	bool generateConfigs(const std::vector< std::vector<double> > &param_vector, std::vector< std::vector<double> > &configs);
+	bool checkForMaxDeltaAngle(const std::vector<double> &state, const std::vector<double> &target, const double max_angle, int &bad_idx);
 
 
 	ros::NodeHandle node_handle_;
     tf::TransformListener transform_listener_;
 	IPAInterface *calibration_interface_;
 
-    //int camera_dof_;  // degrees of freedom the camera has
-    //std::vector< std::vector<double> > camera_configurations_;  // wished camera configurations. Can be used to calibrate the whole workspace of the arm. Extracted from robot_configurations (yaml)
-	int configuration_count_;  // total count of configurations;
-	int cameras_count_;  // number of used cameras
 	std::vector<std::string> uncertainties_list_;
+
+	int total_configuration_count_;  // total count of configurations including all types of movable entities (cameras, arms, base)
 	std::vector<camera_description> cameras_;  // list that holds all robot cameras that are involved in calibration
 	bool cameras_done_;  // set when all cameras have iterated through all their configs. used to determine when to move robot's base (every time cameras are done)
-    bool initialized_;
+
+    bool initialized_;  // set this in child class once everything has initialized
 
 
 public:

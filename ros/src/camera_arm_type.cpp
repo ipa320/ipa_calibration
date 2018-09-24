@@ -70,16 +70,78 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 
 	std::cout << "\n========== Camera-Arm Parameters ==========\n";
 
-	node_handle_.param("arm_dof", arm_dof_, 0);
+	// arms list format: [arm_name, DoF-count, max_delta_angle]
+	std::vector<std::string> arms_list;
+	node_handle_.getParam("arms_list", arms_list);
+	std::cout << "arms_list:" << std::endl;
+	for ( int i=0; i<arms_list.size(); i+=3 )
+	{
+		arm_description arm_desc;
+		arm_desc.arm_name_ = arms_list[i];
+		arm_desc.dof_count_ = std::stoi(arms_list[i+1]);
+		arm_desc.max_delta_angle_ = fabs(std::stod(arms_list[i+2]));
+
+		if ( arm_desc.dof_count_ < 1 )
+		{
+			ROS_WARN("Invalid DoF count %d for arm %s, skipping arm.", arm_desc.dof_count_, arm_desc.arm_name_.c_str());
+			continue;
+		}
+
+		arms_.push_back(arm_desc);
+		std::cout << arms_list[i] << ": DoF " << arms_list[i+1] << ", max delta angle: " << arms_list[i+2] << std::endl;
+	}
+
+	if ( arms_.empty() )
+	{
+		ROS_ERROR("Arms list empty, check yaml file");
+		return;
+	}
+
+	// Read in arm data
+	for ( int i=0; i<arms_.size(); ++i )
+	{
+		std::vector<double> arm_data;  // raw data that will be read in
+		node_handle_.getParam((arms_[i].arm_name_+"_configs"), arm_data);
+		const int arm_dof = arms_[i].dof_count_;
+
+		if ( !arm_data.empty() )  // configs has been found
+		{
+			if ( arm_dof == 0 || arm_data.size() % arm_dof != 0 )
+			{
+				ROS_ERROR("%s_configs vector has wrong size, arm DoF %d", arms_[i].arm_name_.c_str(), arm_dof);
+				return;
+			}
+
+			for ( int j=0; j<arm_data.size(); j+=arm_dof )
+			{
+				std::vector<double> values;
+				values.reserve(arm_dof);
+				for ( int k=j; k<j+arm_dof; ++k )
+					values.push_back(arm_data[k]);
+
+				arms_[i].configurations_.push_back(values);
+			}
+		}
+		else  // remove entry
+		{
+			ROS_WARN("");
+			arms_.erase(arms_.begin()+i);
+			--i;
+		}
+	}
+
+
+
+	/*node_handle_.param("arm_dof", arm_dof_, 0);
 	std::cout << "arm_dof: " << arm_dof_ << std::endl;
 
 	if ( arm_dof_ < 1 )
 	{
 		std::cout << "Error: Invalid arm_dof: " << arm_dof_ << ". Setting arm_dof to 1." << std::endl;
 		arm_dof_ = 1;
-	}
+	}*/
 
-	node_handle_.param("max_angle_deviation", max_angle_deviation_, 0.5);
+	/*node_handle_.param("max_angle_deviation", max_angle_deviation_, 0.5);
 	std::cout << "max_angle_deviation: " << max_angle_deviation_ << std::endl;
 
 	std::vector<double> temp;
@@ -102,12 +164,12 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 		}
 		arm_configurations_.push_back(angles);
 
-/*		angles.clear();
+		angles.clear();
 		for ( int j=arm_dof_; j<num_params; ++j ) // camera_dof_ iterations
 		{
 			angles.push_back(temp[num_params*i + j]);
 		}
-		camera_configurations_.push_back(angles); */
+		camera_configurations_.push_back(angles);
 	}
 
 	// Display configurations
@@ -117,7 +179,7 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 		for ( int j=0; j<arm_configurations_[i].size(); ++j )
 			std::cout << arm_configurations_[i][j] << "/t";
 		std::cout << std::endl;
-	}
+	}*/
 /*	std::cout << "camera configurations:" << std::endl;
 	for ( int i=0; i<camera_dof_; ++i )
 	{
@@ -125,18 +187,27 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 			std::cout << camera_configurations_[i][j] << "/t";
 		std::cout << std::endl;
 	}*/
+
+	initialized_ = true;
 }
 
 bool CameraArmType::moveRobot(int config_index)
 {
-	bool result = CalibrationType::moveRobot(config_index);  // call parent
+	// Cameras move only when their assigned arms have finished moving
+	// How detect when an arm has finished moving?
+	// Camera moves -> arm moves in whole field of view of camera (corners, middle, etc), after that, camera moves and arm does same procedure again
+
+
+
+	/*bool result = CalibrationType::moveRobot(config_index);  // call parent
 
 	if ( result )
 	{
 		result &= moveArm(arm_configurations_[config_index]);
 	}
 
-	return result;
+	return result;*/
+	return true;
 }
 
 bool CameraArmType::moveArm(const std::vector<double>& arm_configuration)

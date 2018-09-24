@@ -55,6 +55,14 @@
 #include <calibration_interface/calibration_type.h>
 
 
+struct arm_description
+{
+	std::string arm_name_;
+	int dof_count_;
+	double max_delta_angle_;
+	std::vector< std::vector<double> > configurations_;  // wished arm configurations used for calibration
+};
+
 class CameraArmType : public CalibrationType
 {
 
@@ -74,10 +82,11 @@ protected:
 	bool moveArm(const std::vector<double>& arm_configuration);
 
 
-    int arm_dof_;					// degrees of freedom the arm has
+    /*int arm_dof_;					// degrees of freedom the arm has
     double max_angle_deviation_;	// max value an angle of the target arm configuration is allowed to differ from the current arm configuration. Avoid collision issues! [rad]
 
-    std::vector< std::vector<double> > arm_configurations_; // wished arm configurations used for calibration
+    std::vector< std::vector<double> > arm_configurations_;*/
+	std::vector<arm_description> arms_;
 
 
 };

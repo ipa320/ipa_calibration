@@ -59,13 +59,6 @@
 
 #define REF_FRAME_HISTORY_SIZE 20 // 20 entries used to build the moving average upon
 
-enum MoveBaseErrorCode
-{
-    MOV_NO_ERR		= 0,	// Everthing is ok
-    MOV_ERR_SOFT	= 1,	// Retry to move after a delay
-    MOV_ERR_FATAL	= 2		// No retry
-};
-
 
 class CameraLaserscannerType : public CalibrationType
 {
