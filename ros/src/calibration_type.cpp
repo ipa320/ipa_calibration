@@ -57,8 +57,7 @@
 
 
 CalibrationType::CalibrationType() :
-					calibration_interface_(0), initialized_(false), total_configuration_count_(0),
-					current_camera_counter_(0), mapped_camera_index_(0), cameras_done_(false)
+					calibration_interface_(0), initialized_(false), max_configuration_count(0)
 {
 
 }
@@ -183,15 +182,6 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 		}
 	}
 
-	for ( int i=0; i<cameras_.size(); ++i )  // compute total configuration count (only for cameras here)
-		total_configuration_count_ += cameras_[i].configurations_.size();
-
-	if ( total_configuration_count_ <= 0 )
-	{
-		ROS_WARN("Invalid total configuration count for cameras: %d", total_configuration_count_);
-		return;
-	}
-
 	// Display camera configurations
 	for ( int i=0; i<cameras_.size(); ++i )
 	{
@@ -203,6 +193,16 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 			std::cout << std::endl;
 		}
 		std::cout << std::endl;
+	}
+
+	int total_cameras_configs = 0;
+	for ( int i=0; i<cameras_.size(); ++i )  // compute total configuration count (only for cameras here)
+		total_cameras_configs += cameras_[i].configurations_.size();
+
+	if ( total_cameras_configs <= 0 )
+	{
+		ROS_WARN("Invalid total configuration count for cameras: %d", total_cameras_configs);
+		return;
 	}
 
 	node_handle_.getParam("uncertainties_list", uncertainties_list_);
@@ -236,48 +236,7 @@ bool CalibrationType::moveRobot(int config_index)
 		return false;
 	}
 
-	if ( cameras_done_ )  // reset flag after it was set the last call
-		cameras_done_ = false;
-
-	int current_count = cameras_[current_camera_counter_].configurations_.size();  // count of current configurations of current camera
-
-	if ( config_index > 0 && mapped_camera_index_ % current_count == 0 )  // cameras move one after an other
-	{
-		current_camera_counter_ = ( (current_camera_counter_+1 >= cameras_.size()) ? 0 : current_camera_counter_+1 );  // when previous camera has iterated through all its configs, do same with next camera
-		mapped_camera_index_ = 0;
-
-		if ( current_camera_counter_ == 0 )  // set for one call, reset on next call
-			cameras_done_ = true;
-	}
-
-	for ( short i=0; i<NUM_MOVE_TRIES; ++i )
-	{
-		unsigned short error_code = moveCamera(cameras_[current_camera_counter_], cameras_[current_camera_counter_].configurations_[mapped_camera_index_]);
-
-		if ( error_code == MOV_NO_ERR ) // Exit loop, as successfully executed move
-		{
-			break;
-		}
-		else if ( error_code == MOV_ERR_SOFT ) // Retry last failed move
-		{
-			ROS_WARN("CalibrationType::moveRobot: Could not execute moveCamera, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
-			if ( i<NUM_MOVE_TRIES-1 )
-			{
-				ROS_INFO("CalibrationType::moveRobot: Trying again in 2 sec.");
-				ros::Duration(2.f).sleep();
-			}
-			else
-				ROS_WARN("CalibrationType::moveRobot: Skipping camera configuration %d of %s.", mapped_camera_index_, cameras_[current_camera_counter_].camera_name_.c_str());
-		}
-		else
-		{
-			ROS_FATAL("CalibrationType::moveRobot: Exiting calibration.");
-			throw std::exception();
-		}
-	}
-
-	++mapped_camera_index_;
-	return true;
+	return moveCameras(config_index);
 }
 
 unsigned short CalibrationType::moveCamera(const camera_description &camera, const std::vector<double> &cam_configuration)
@@ -293,6 +252,13 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 
 	ros::spinOnce();
 	std::vector<double> cur_state = *calibration_interface_->getCurrentCameraState(camera_name);
+
+	if ( cur_state.empty() )
+	{
+		ROS_ERROR("Can't retrieve state of current camera %s.", camera_name.c_str());
+		return MOV_ERR_FATAL;
+	}
+
 	if ( cur_state.size() != cam_configuration.size() )
 	{
 		ROS_ERROR("Size of target camera configuration and count of camera joints do not match! Please adjust the yaml file.");
@@ -336,6 +302,7 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 		while ( time_utilities::getTimeElapsedSec(start_time) < 10.f )
 		{
 			ros::Rate(20).sleep(); // No need to iterate through this every tick
+			ros::spinOnce();
 			cur_state = *calibration_interface_->getCurrentCameraState(camera_name);
 			std::vector<double> difference(cur_state.size());
 			for (int i = 0; i<cur_state.size(); ++i)
@@ -348,8 +315,6 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 				std::cout << camera_name << " configuration reached, deviation: " << length << std::endl;
 				break;
 			}
-
-			ros::spinOnce();
 		}
 
 		if ( time_utilities::getTimeElapsedSec(start_time) >= 10.f )
@@ -358,6 +323,8 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 			for (int i = 0; i<cam_configuration.size(); ++i)
 				std::cout << cam_configuration[i] << "\t";
 			std::cout << std::endl;
+
+			return MOV_ERR_SOFT;
 		}
 	}
 	else
@@ -370,7 +337,7 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 
 int CalibrationType::getConfigurationCount()
 {
-	return total_configuration_count_;
+	return max_configuration_count;
 }
 
 void CalibrationType::getUncertainties(std::vector<std::string> &uncertainties_list)

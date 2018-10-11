@@ -124,69 +124,50 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 		}
 		else  // remove entry
 		{
-			ROS_WARN("");
+			ROS_WARN("No configurations has been generated for arm %s, removing arm.", arms_[i].arm_name_.c_str());
 			arms_.erase(arms_.begin()+i);
 			--i;
 		}
 	}
 
-
-
-	/*node_handle_.param("arm_dof", arm_dof_, 0);
-	std::cout << "arm_dof: " << arm_dof_ << std::endl;
-
-	if ( arm_dof_ < 1 )
+	// Compute maximum configuration count over all entities (cameras and arms)
+	max_configuration_count = 0;
+	for ( int i=0; i<cameras_.size(); ++i )  // get max count of configs over all cameras
 	{
-		std::cout << "Error: Invalid arm_dof: " << arm_dof_ << ". Setting arm_dof to 1." << std::endl;
-		arm_dof_ = 1;
-	}*/
+		int cam_configs = cameras_[i].configurations_.size();
 
-	/*node_handle_.param("max_angle_deviation", max_angle_deviation_, 0.5);
-	std::cout << "max_angle_deviation: " << max_angle_deviation_ << std::endl;
+		if ( cam_configs > max_configuration_count )
+			max_configuration_count = cam_configs;
+	}
 
-	std::vector<double> temp;
-	node_handle_.getParam("robot_configurations", temp);
-	const int num_params = arm_dof_;// + camera_dof_;
-
-	if ( temp.size() % num_params != 0 || temp.size() < 3*num_params )
+	int total_arms_configs = 0;
+	for ( int i=0; i<arms_.size(); ++i )  // get max count of configs over all arms and total count
 	{
-		ROS_ERROR("The robot_configurations vector should contain at least 3 configurations with %d values each.", num_params);
+		int arm_configs = arms_[i].configurations_.size();
+		total_arms_configs += arm_configs;
+
+		if ( arm_configs > max_configuration_count )
+			max_configuration_count = arm_configs;
+	}
+
+	// Display arm configurations
+	for ( int i=0; i<arms_.size(); ++i )
+	{
+		std::cout << arms_[i].arm_name_ << " configurations:" << std::endl;
+		for ( int j=0; j<arms_[i].configurations_.size(); ++j )
+		{
+			for ( int k=0; k<arms_[i].configurations_[j].size(); ++k )
+				std::cout << arms_[i].configurations_[j][k] << "\t";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	if ( total_arms_configs <= 0 )
+	{
+		ROS_WARN("Invalid total configuration count for arms: %d", total_arms_configs);
 		return;
 	}
-	const int num_configs = temp.size()/num_params;
-
-	for ( int i=0; i<num_configs; ++i )
-	{
-		std::vector<double> angles;
-		for ( int j=0; j<arm_dof_; ++j )
-		{
-			angles.push_back(temp[num_params*i + j]);
-		}
-		arm_configurations_.push_back(angles);
-
-		angles.clear();
-		for ( int j=arm_dof_; j<num_params; ++j ) // camera_dof_ iterations
-		{
-			angles.push_back(temp[num_params*i + j]);
-		}
-		camera_configurations_.push_back(angles);
-	}
-
-	// Display configurations
-	std::cout << "arm configurations:" << std::endl;
-	for ( int i=0; i<arm_dof_; ++i )
-	{
-		for ( int j=0; j<arm_configurations_[i].size(); ++j )
-			std::cout << arm_configurations_[i][j] << "/t";
-		std::cout << std::endl;
-	}*/
-/*	std::cout << "camera configurations:" << std::endl;
-	for ( int i=0; i<camera_dof_; ++i )
-	{
-		for ( int j=0; j<camera_configurations_[i].size(); ++j )
-			std::cout << camera_configurations_[i][j] << "/t";
-		std::cout << std::endl;
-	}*/
 
 	initialized_ = true;
 }
@@ -197,105 +178,171 @@ bool CameraArmType::moveRobot(int config_index)
 	// How detect when an arm has finished moving?
 	// Camera moves -> arm moves in whole field of view of camera (corners, middle, etc), after that, camera moves and arm does same procedure again
 
+	bool result = CalibrationType::moveRobot(config_index);  // call parent
 
-
-	/*bool result = CalibrationType::moveRobot(config_index);  // call parent
-
+	// Move arms
 	if ( result )
 	{
-		result &= moveArm(arm_configurations_[config_index]);
+		for ( int i=0; i<arms_.size(); ++i )  // move one arm after the other
+		{
+			if ( config_index >= arms_[i].configurations_.size() )  // this arm has finished, continue with next
+				continue;
+
+			for ( short j=0; j<NUM_MOVE_TRIES; ++j )
+			{
+				unsigned short error_code = moveArm(arms_[i], arms_[i].configurations_[config_index]);
+
+				if ( error_code == MOV_NO_ERR ) // Exit loop, as successfully executed move
+				{
+					break;
+				}
+				else if ( error_code == MOV_ERR_SOFT ) // Retry last failed move
+				{
+					ROS_WARN("CameraArmType::moveRobot: Could not execute moveRobot, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
+					if ( i<NUM_MOVE_TRIES-1 )
+					{
+						ROS_INFO("CameraArmType::moveRobot: Trying again in 2 sec.");
+						ros::Duration(2.f).sleep();
+					}
+					else
+						ROS_WARN("CameraArmType::moveRobot: Skipping arm configuration %d of %s.", config_index, arms_[i].arm_name_.c_str());
+				}
+				else
+				{
+					ROS_FATAL("CameraArmType::moveRobot: Exiting calibration.");
+					throw std::exception();
+				}
+			}
+		}
 	}
 
-	return result;*/
+	return result;
 	return true;
 }
 
-bool CameraArmType::moveArm(const std::vector<double>& arm_configuration)
+bool CameraArmType::moveCameras(int config_index)
 {
-/*	std_msgs::Float64MultiArray new_joint_config;
+	for ( int i=0; i<cameras_.size(); ++i )  // move one camera after the other
+	{
+		if ( config_index >= cameras_[i].configurations_.size() )  // this camera has finished, continue with next
+			continue;
+
+		for ( short j=0; j<NUM_MOVE_TRIES; ++j )
+		{
+			unsigned short error_code = moveCamera(cameras_[i], cameras_[i].configurations_[config_index]);
+
+			if ( error_code == MOV_NO_ERR ) // Exit loop, as successfully executed move
+			{
+				break;
+			}
+			else if ( error_code == MOV_ERR_SOFT ) // Retry last failed move
+			{
+				ROS_WARN("CalibrationType::moveRobot: Could not execute moveCamera, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
+				if ( i<NUM_MOVE_TRIES-1 )
+				{
+					ROS_INFO("CalibrationType::moveRobot: Trying again in 2 sec.");
+					ros::Duration(2.f).sleep();
+				}
+				else
+					ROS_WARN("CalibrationType::moveRobot: Skipping camera configuration %d of %s.", config_index, cameras_[i].camera_name_.c_str());
+			}
+			else
+			{
+				ROS_FATAL("CalibrationType::moveRobot: Exiting calibration.");
+				throw std::exception();
+			}
+		}
+	}
+
+	return true;
+}
+
+unsigned short CameraArmType::moveArm(const arm_description &arm, const std::vector<double>& arm_configuration)
+{
+	std_msgs::Float64MultiArray new_joint_config;
 	new_joint_config.data.resize(arm_configuration.size());
+
+	unsigned short error_code = MOV_NO_ERR;
+	const std::string &arm_name = arm.arm_name_;
 
 	for ( int i=0; i<new_joint_config.data.size(); ++i )
 		new_joint_config.data[i] = arm_configuration[i];
 
-	std::vector<double> cur_state = *calibration_interface_->getCurrentArmState();
+	ros::spinOnce();
+	std::vector<double> cur_state = *calibration_interface_->getCurrentArmState(arm_name);
+
+	if ( cur_state.empty() )
+	{
+		ROS_ERROR("Can't retrieve state of current arm %s.", arm_name.c_str());
+		return MOV_ERR_FATAL;
+	}
+
 	if ( cur_state.size() != arm_configuration.size() )
 	{
 		ROS_ERROR("Size of target arm configuration and count of arm joints do not match! Please adjust the yaml file.");
-		return false;
+		return MOV_ERR_FATAL;
 	}
 
 	// Ensure that target angles and current angles are not too far away from one another to avoid collision issues!
-	for ( size_t i=0; i<cur_state.size(); ++i )
+	const double &max_delta_angle = arm.max_delta_angle_;
+	if ( max_delta_angle > 0.f )
 	{
-		double delta_angle = 0.0;
-
-		do
+		int bad_index = -1;
+		if ( checkForMaxDeltaAngle(cur_state, arm_configuration, max_delta_angle, bad_index) )
 		{
-			cur_state = *calibration_interface_->getCurrentArmState();
-			delta_angle = arm_configuration[i] - cur_state[i];
-
-			while (delta_angle < -CV_PI)
-				delta_angle += 2*CV_PI;
-			while (delta_angle > CV_PI)
-				delta_angle -= 2*CV_PI;
-
-			if ( fabs(delta_angle) > max_angle_deviation_ )
+			if ( bad_index == -1 )
 			{
-				ROS_WARN("%d. target angle exceeds max allowed deviation of %f!\n"
-						 "Please move the arm manually closer to the target position to avoid collision issues. Waiting 5 seconds...", (int)(i+1), max_angle_deviation_);
+				ROS_ERROR("Size of target arm configuration and count of arm joints do not match! Please adjust the yaml file.");
+				return MOV_ERR_FATAL;
+			}
+			else
+			{
+				ROS_WARN("Angle number %d in target configuration of arm %s exceeds max allowed deviation %f!\n"
+						 "Please move the arm manually closer to the target position to avoid collision issues.", bad_index, arm_name.c_str(), max_delta_angle);
 				std::cout << "Current arm state: ";
 				for ( size_t j=0; j<cur_state.size(); ++j )
 					std::cout << cur_state[j] << (j<cur_state.size()-1 ? "\t" : "\n");
 				std::cout << "Target arm state: ";
-				for ( size_t j=0; j<cur_state.size(); ++j )
-					std::cout << arm_configuration[j] << (j<cur_state.size()-1 ? "\t" : "\n");
-				ros::Duration(5).sleep();
-				ros::spinOnce();
+				for ( size_t j=0; j<arm_configuration.size(); ++j )
+					std::cout << arm_configuration[j] << (j<arm_configuration.size()-1 ? "\t" : "\n");
 			}
-		} while ( fabs(delta_angle) > max_angle_deviation_ && ros::ok() );
+
+			return MOV_ERR_SOFT;
+		}
 	}
 
-	//arm_joint_controller_.publish(new_joint_config);
-	calibration_interface_->assignNewArmJoints(new_joint_config);
+	calibration_interface_->assignNewArmJoints(arm_name, new_joint_config);
 
-	//Wait for arm to move
-	if ( (*calibration_interface_->getCurrentArmState()).size() > 0 )
+	const double start_time = time_utilities::getSystemTimeSec();
+	while ( time_utilities::getTimeElapsedSec(start_time) < 10.f ) //Max. 10 seconds to reach goal
 	{
-		const double start_time = time_utilities::getSystemTimeSec();
-		while ( time_utilities::getTimeElapsedSec(start_time) < 10.f ) //Max. 10 seconds to reach goal
+		ros::Rate(20).sleep(); // No need to iterate through this every tick
+		ros::spinOnce();
+		cur_state = *calibration_interface_->getCurrentArmState(arm_name);
+		std::vector<double> difference(cur_state.size());
+		for (int i = 0; i<cur_state.size(); ++i)
+			difference[i] = arm_configuration[i]-cur_state[i];
+
+		double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
+
+		if ( length < 0.025 ) //Close enough to goal configuration
 		{
-
-			boost::mutex::scoped_lock(arm_state_data_mutex_);
-			cur_state = *calibration_interface_->getCurrentArmState();
-			std::vector<double> difference(cur_state.size());
-			for (int i = 0; i<cur_state.size(); ++i)
-				difference[i] = arm_configuration[i]-cur_state[i];
-
-			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
-
-			if ( length < 0.025 ) //Close enough to goal configuration (~1° deviation allowed)
-			{
-				std::cout << "Arm configuration reached, deviation: " << length << std::endl;
-				break;
-			}
-
-			ros::spinOnce();
-		}
-
-		if ( time_utilities::getTimeElapsedSec(start_time) >= 10.f )
-		{
-			ROS_WARN("Could not reach following arm configuration in time:");
-			for (int i = 0; i<arm_configuration.size(); ++i)
-				std::cout << arm_configuration[i] << "\t";
-			std::cout << std::endl;
+			std::cout << "Arm configuration reached, deviation: " << length << std::endl;
+			break;
 		}
 	}
-	else
-		ros::Duration(1).sleep();
 
-	ros::spinOnce();
-	return true; */
+	if ( time_utilities::getTimeElapsedSec(start_time) >= 10.f )
+	{
+		ROS_WARN("Could not reach following arm configuration in time:");
+		for (int i = 0; i<arm_configuration.size(); ++i)
+			std::cout << arm_configuration[i] << "\t";
+		std::cout << std::endl;
+
+		return MOV_ERR_SOFT;
+	}
+
+	return true;
 }
 
 std::string CameraArmType::getString()

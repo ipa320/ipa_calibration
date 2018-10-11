@@ -59,7 +59,7 @@ struct arm_description
 {
 	std::string arm_name_;
 	int dof_count_;
-	double max_delta_angle_;
+	double max_delta_angle_;  // in [rad]
 	std::vector< std::vector<double> > configurations_;  // wished arm configurations used for calibration
 };
 
@@ -79,14 +79,15 @@ protected:
 
 	void initialize(ros::NodeHandle nh, IPAInterface* calib_interface);
 
-	bool moveArm(const std::vector<double>& arm_configuration);
-
-
-    /*int arm_dof_;					// degrees of freedom the arm has
-    double max_angle_deviation_;	// max value an angle of the target arm configuration is allowed to differ from the current arm configuration. Avoid collision issues! [rad]
-
-    std::vector< std::vector<double> > arm_configurations_;*/
+	bool moveCameras(int config_index);
+	unsigned short moveArm(const arm_description &arm, const std::vector<double>& arm_configuration);
 	std::vector<arm_description> arms_;
+
+
+private:
+
+	int current_arm_index_;  // mapped index that accesses the correct vector element of the base_configurations_ vector
+	int current_camera_index_;  // mapped index that accesses the correct vector element of the currently moved camera
 
 
 };

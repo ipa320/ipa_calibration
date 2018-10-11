@@ -74,20 +74,16 @@ struct camera_description
 {
 	std::string camera_name_;
 	int dof_count_;
-	double max_delta_angle_;
+	double max_delta_angle_;  // in [rad]
 	std::vector< std::vector<double> > configurations_;  // wished camera configurations. Can be used to calibrate the whole workspace of the arm.
 };
 
 class CalibrationType
 {
-private:
-
-	int mapped_camera_index_;  // mapped index that accesses the correct vector element of the currently moved camera
-	int current_camera_counter_;  // used to determine which camera to move
-
 
 protected:
 
+	virtual bool moveCameras(int config_index) = 0;  // determines when and how cameras will be moved, the actual movement however is done in moveCamera(). Has to be implemented in child classes
 	unsigned short moveCamera(const camera_description &camera, const std::vector<double> &cam_configuration);
 	bool generateConfigs(const std::vector< std::vector<double> > &param_vector, std::vector< std::vector<double> > &configs);
 	bool checkForMaxDeltaAngle(const std::vector<double> &state, const std::vector<double> &target, const double max_angle, int &bad_idx);
@@ -99,9 +95,8 @@ protected:
 
 	std::vector<std::string> uncertainties_list_;
 
-	int total_configuration_count_;  // total count of configurations including all types of movable entities (cameras, arms, base)
+	int max_configuration_count;  // set in child classes. it's used as exit condition for the calibration library
 	std::vector<camera_description> cameras_;  // list that holds all robot cameras that are involved in calibration
-	bool cameras_done_;  // set when all cameras have iterated through all their configs. used to determine when to move robot's base (every time cameras are done)
 
     bool initialized_;  // set this in child class once everything has initialized
 

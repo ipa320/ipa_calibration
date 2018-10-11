@@ -75,6 +75,7 @@ public:
 
 protected:
 
+	bool moveCameras(int config_index);
     unsigned short moveBase(const pose_definition::RobotConfiguration &base_configuration);
 
     bool isReferenceFrameValid(cv::Mat &T, unsigned short& error_code);  // returns wether reference frame is valid -> if so, it is save to move the robot base, otherwise stop!
@@ -101,6 +102,9 @@ private:
     double start_error_y_;	// Used for divergence detection
 
 	int mapped_base_index_;  // mapped index that accesses the correct vector element of the base_configurations_ vector
+	int mapped_camera_index_;  // mapped index that accesses the correct vector element of the currently moved camera
+	int current_camera_counter_;  // used to determine which camera to move
+	bool cameras_done_;  // set when all cameras have iterated through all their configs. used to determine when to move robot's base (every time cameras are done)
 
 
 };
