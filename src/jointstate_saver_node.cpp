@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	while (ros::ok())
+	while ( ros::ok() )
 	{
 		char input = '0';
 
@@ -145,6 +145,7 @@ int main(int argc, char **argv)
 		{
 			std::fstream file_output;
 			std::string filecontent = "";
+			bool write_to_file = false;
 
 			// First, read current data from file
 			file_output.open(path_file.c_str(), std::ios::in );
@@ -155,7 +156,7 @@ int main(int argc, char **argv)
 					std::string line;
 					std::getline(file_output,line);
 					filecontent += line;
-					if ( !file_output.eof() ) // Restore newline characters which became lost by calling getline()
+					if ( !file_output.eof() ) // Restore newline characters which were lost by calling getline()
 						filecontent += "\n";
 				}
 
@@ -168,62 +169,86 @@ int main(int argc, char **argv)
 
 			bool is_empty = filecontent.empty();
 
-			if ( is_empty ) // Initialize file content
-				filecontent = "robot_configurations: []";
-
-			std::vector<double> robot_config;
-			robot_config.insert(robot_config.begin(), current_arm_state.begin(), current_arm_state.end()); // First add arm configs
-			robot_config.insert(robot_config.end(), current_cam_state.begin(), current_cam_state.end());   // Append camera configs to the end
-
-			// Write current robot config to stringstream
-			std::stringstream new_data("");
-			if ( !is_empty )
-				new_data << ",\n";
-
-			for ( size_t i=0; i<robot_config.size(); ++i )
-				new_data << robot_config[i] << (i == robot_config.size()-1 ? "]" : ", ");
-
-			size_t idx = filecontent.find("]");
-
-			if ( idx != std::string::npos ) // ] has been found
+			// Clear text file and write whole data to it
+			file_output.open(path_file.c_str(), std::ios::out | std::ios::trunc);
+			if ( !file_output.is_open() )
 			{
-				filecontent.replace(idx,1,new_data.str()); // Update content
-
-				// Clear text file and write whole updated data to it afterwards
-				file_output.open(path_file.c_str(), std::ios::out | std::ios::trunc);
-				if ( !file_output.is_open() )
+				std::cout << "Error, cannot open storage file " << file_name << "!" << std::endl;
+				if ( !is_empty )
 				{
-					std::cout << "Error, cannot open storage file " << file_name << "!" << std::endl;
-					if ( !is_empty )
-					{
-						std::cout << "Printing all data to screen to prevent data loss:" << std::endl;
-						std::cout << filecontent << std::endl;
-					}
-
-					continue;
+					std::cout << "Printing all data to screen to prevent data loss:" << std::endl;
+					std::cout << filecontent << std::endl;
 				}
 
-				// Write to file
-				file_output << filecontent;
-				file_output.close();
+				continue;
+			}
 
-				// Print to screen
-				std::cout << "robot_config: [";
-					for (size_t i=0; i<robot_config.size(); ++i)
-						std::cout << robot_config[i] << (i==robot_config.size()-1 ? "]\n" : ", ");
-				std::cout << "arm: [";
-				for (size_t i=0; i<current_arm_state.size(); ++i)
-					std::cout << current_arm_state[i] << (i==current_arm_state.size()-1 ? "]\n" : ", ");
-				std::cout << "camera: [";
-					for (size_t i=0; i<current_cam_state.size(); ++i)
-						std::cout << current_cam_state[i] << (i==current_cam_state.size()-1 ? "]\n" : ", ");
-				std::cout << std::endl;
-			}
-			else
+			if ( is_empty ) // Initialize file content
+				filecontent = "Arm_Configurations: []\n\nCamera_Configurations: []";
+
+			if ( current_arm_state.size() > 0 )  // fill file content with current arm state
 			{
-				std::cout << "Output file " << file_name << " is corrupted, please delete it!" << std::endl;
-				return -1;
+				std::stringstream new_data("");
+				if ( !is_empty )
+					new_data << ",\n";
+
+				for ( size_t i=0; i<current_arm_state.size(); ++i )
+					new_data << current_arm_state[i] << (i == current_arm_state.size()-1 ? "]" : ", ");
+
+				size_t idx = filecontent.find("]");
+
+				if ( idx != std::string::npos )
+				{
+					filecontent.replace(idx,1,new_data.str());
+					write_to_file = true;
+				}
+				else
+				{
+					std::cout << "Output file " << file_name << " is corrupted, please delete it!" << std::endl;
+					file_output.close();
+					return -1;
+				}
 			}
+
+			if ( current_cam_state.size() > 0 )  // fill file content with current camera state
+			{
+				std::stringstream new_data("");
+				if ( !is_empty )
+					new_data << ",\n";
+
+				for ( size_t i=0; i<current_cam_state.size(); ++i )
+					new_data << current_cam_state[i] << (i == current_cam_state.size()-1 ? "]" : ", ");
+
+				size_t idx = filecontent.rfind("]");
+
+				if ( idx != std::string::npos )
+				{
+					filecontent.replace(idx,1,new_data.str());
+					write_to_file = true;
+				}
+				else
+				{
+					std::cout << "Output file " << file_name << " is corrupted, please delete it!" << std::endl;
+					file_output.close();
+					return -1;
+				}
+			}
+
+			// Write to file
+			if ( write_to_file )
+				file_output << filecontent;
+
+			file_output.close();
+
+			// Print to screen
+			std::cout << "arm state: [";
+			for (size_t i=0; i<current_arm_state.size(); ++i)
+				std::cout << current_arm_state[i] << (i==current_arm_state.size()-1 ? "]\n" : ", ");
+			std::cout << "camera state: [";
+				for (size_t i=0; i<current_cam_state.size(); ++i)
+					std::cout << current_cam_state[i] << (i==current_cam_state.size()-1 ? "]\n" : ", ");
+			std::cout << std::endl;
+
 		}
 		else
 		{
