@@ -1,4 +1,3 @@
-### checkerboard parameters
 # side length of the chessboard squares
 # double
 chessboard_cell_size: 0.03
@@ -6,9 +5,7 @@ chessboard_cell_size: 0.03
 # number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
 chessboard_pattern_size: [10,6]
 
-
-### observation positions
-cameras_list: ["ensenso", "2", "0"]
+cameras_list: ["ids_ueye", "2", "0"]
 arms_list: ["arm1", "6", "3"]
 
 # arm configurations that are used for the calibration routine
@@ -73,7 +70,7 @@ arm1_configs: [0.290486, -1.59249, -1.66967, -1.59205, -1.70336, -0.964658,
 -0.82061, -2.1899, -1.59903, -0.817661, -2.04856, 0.348477]
 
 # camera configurations that are used for the calibration routine
-ensenso_configs: [1.30348, -0.300788,
+ids_ueye_configs: [1.30348, -0.300788,
 1.30348, -0.300788,
 1.30348, -0.300788,
 1.30348, -0.300788,
@@ -136,22 +133,23 @@ ensenso_configs: [1.30348, -0.300788,
 # collection of uncertainties. each uncertainty consists of 5 parameters:
 # [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]
 # the uncertainties will be calibrated in the same order they appear in the uncertainties_list
-uncertainties_list: ["base_link","arm_base_link", "landmark_reference_front", "", "tag_25", "marker_25",
-                     "base_link","arm_base_link", "landmark_reference_front", "", "tag_36", "marker_36",
-                     "base_link","arm_base_link", "landmark_reference_front", "", "tag_38", "marker_38",
-                     "base_link","arm_base_link", "landmark_reference_left", "", "tag_48", "marker_48",
-                     "base_link","arm_base_link", "landmark_reference_left", "", "tag_55", "marker_55",
-                     "base_link","arm_base_link", "landmark_reference_left", "", "tag_64", "marker_64",
-                     "base_link","arm_base_link", "landmark_reference_ground", "", "tag_69", "marker_69",
-                     "base_link","arm_base_link", "landmark_reference_ground", "", "tag_73", "marker_73",
-                     "base_link","arm_base_link", "landmark_reference_ground", "", "tag_79", "marker_79",]
+# last parent-branch frame and last child-branch frame have to be available from TF from the very beginning, so that the routine can build the kinematic chains
+# only transforms prior to last parent-branch frame and last child-branch frame can be used as uncertainties
+uncertainties_list: ["base_link","arm_base_link", "landmark_reference_front", "ensenso_frame", "tag_25", "marker_25",
+                     "base_link","arm_base_link", "landmark_reference_front", "ensenso_frame", "tag_36", "marker_36",
+                     "base_link","arm_base_link", "landmark_reference_front", "ensenso_frame", "tag_38", "marker_38",
+                     "base_link","arm_base_link", "landmark_reference_left", "ensenso_frame", "tag_48", "marker_48",
+                     "base_link","arm_base_link", "landmark_reference_left", "ensenso_frame", "tag_55", "marker_55",
+                     "base_link","arm_base_link", "landmark_reference_left", "ensenso_frame", "tag_64", "marker_64",
+                     "base_link","arm_base_link", "landmark_reference_ground", "ensenso_frame", "tag_69", "marker_69",
+                     "base_link","arm_base_link", "landmark_reference_ground", "ensenso_frame", "tag_73", "marker_73",
+                     "base_link","arm_base_link", "landmark_reference_ground", "ensenso_frame", "tag_79", "marker_79"]
 
 
-### program sequence
 # number of optimization iterations
 # int
-optimization_iterations: 1 # no need to optimize here, as we only have one transform to calibrate
+optimization_iterations: 10000
 
 # storage folder that holds the calibration output
 # string
-calibration_storage_path: "raw_calibration/arm_calibration"
+calibration_storage_path: "raw_calibration/camera_arm_calibration"
