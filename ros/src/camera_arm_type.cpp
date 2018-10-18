@@ -342,7 +342,7 @@ unsigned short CameraArmType::moveArm(const arm_description &arm, const std::vec
 		return MOV_ERR_SOFT;
 	}
 
-	return true;
+	return error_code;
 }
 
 std::string CameraArmType::getString()

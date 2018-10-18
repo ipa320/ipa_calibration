@@ -295,41 +295,33 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 
 	calibration_interface_->assignNewCameraAngles(camera_name, angles);
 
-	// wait for pan tilt to arrive at goal position
-	if ( cur_state.size() > 0 )
+	const double start_time = time_utilities::getSystemTimeSec();
+	while ( time_utilities::getTimeElapsedSec(start_time) < 10.f )
 	{
-		const double start_time = time_utilities::getSystemTimeSec();
-		while ( time_utilities::getTimeElapsedSec(start_time) < 10.f )
+		ros::Rate(20).sleep(); // No need to iterate through this every tick
+		ros::spinOnce();
+		cur_state = *calibration_interface_->getCurrentCameraState(camera_name);
+		std::vector<double> difference(cur_state.size());
+		for (int i = 0; i<cur_state.size(); ++i)
+			difference[i] = cam_configuration[i]-cur_state[i];
+
+		double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
+
+		if ( length < 0.02 ) //Close enough to goal configuration
 		{
-			ros::Rate(20).sleep(); // No need to iterate through this every tick
-			ros::spinOnce();
-			cur_state = *calibration_interface_->getCurrentCameraState(camera_name);
-			std::vector<double> difference(cur_state.size());
-			for (int i = 0; i<cur_state.size(); ++i)
-				difference[i] = cam_configuration[i]-cur_state[i];
-
-			double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
-
-			if ( length < 0.02 ) //Close enough to goal configuration
-			{
-				std::cout << camera_name << " configuration reached, deviation: " << length << std::endl;
-				break;
-			}
-		}
-
-		if ( time_utilities::getTimeElapsedSec(start_time) >= 10.f )
-		{
-			ROS_WARN("Could not reach following camera configuration in time:");
-			for (int i = 0; i<cam_configuration.size(); ++i)
-				std::cout << cam_configuration[i] << "\t";
-			std::cout << std::endl;
-
-			return MOV_ERR_SOFT;
+			std::cout << camera_name << " configuration reached, deviation: " << length << std::endl;
+			break;
 		}
 	}
-	else
+
+	if ( time_utilities::getTimeElapsedSec(start_time) >= 10.f )
 	{
-		ros::Duration(1).sleep();
+		ROS_WARN("Could not reach following camera configuration in time:");
+		for (int i = 0; i<cam_configuration.size(); ++i)
+			std::cout << cam_configuration[i] << "\t";
+		std::cout << std::endl;
+
+		return MOV_ERR_SOFT;
 	}
 
 	return error_code;

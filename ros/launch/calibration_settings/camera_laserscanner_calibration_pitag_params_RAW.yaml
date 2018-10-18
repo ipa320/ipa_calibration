@@ -39,30 +39,30 @@ reference_frame: "/landmark_reference_nav"
 
 # max distance (radius) the referenece_frame is allowed to be away in terms of the robot's base_frame
 # double
-max_ref_frame_distance: 2.5
+max_ref_frame_distance: 4.0
 
 # collection of uncertainties. each uncertainty consists of 5 parameters:
 # [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]
 # the uncertainties will be calibrated in the same order they appear in the uncertainties_list
-uncertainties_list: ["base_link","torso_0_link", "landmark_reference_front", "ensenso_frame", "tag_25", "marker_25",
-                     "base_link","torso_0_link", "landmark_reference_front", "ensenso_frame", "tag_36", "marker_36",
-                     "base_link","torso_0_link", "landmark_reference_front", "ensenso_frame", "tag_38", "marker_38",
-                     "base_link","torso_0_link", "landmark_reference_left", "ensenso_frame", "tag_48", "marker_48",
-                     "base_link","torso_0_link", "landmark_reference_left", "ensenso_frame", "tag_55", "marker_55",
-                     "base_link","torso_0_link", "landmark_reference_left", "ensenso_frame", "tag_64", "marker_64",
-                     "base_link","torso_0_link", "landmark_reference_ground", "ensenso_frame", "tag_69", "marker_69",
-                     "base_link","torso_0_link", "landmark_reference_ground", "ensenso_frame", "tag_73", "marker_73",
-                     "base_link","torso_0_link", "landmark_reference_ground", "ensenso_frame", "tag_79", "marker_79",
+uncertainties_list: ["base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_25", "marker_25",
+                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_36", "marker_36",
+                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_38", "marker_38",
+                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_48", "marker_48",
+                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_55", "marker_55",
+                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_64", "marker_64",
+                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_69", "marker_69",
+                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_73", "marker_73",
+                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_79", "marker_79",
 
-                     "torso_knob_link","ensenso_frame", "landmark_reference_front", "ensenso_frame", "tag_25", "marker_25",
-                     "torso_knob_link","ensenso_frame", "landmark_reference_front", "ensenso_frame", "tag_36", "marker_36",
-                     "torso_knob_link","ensenso_frame", "landmark_reference_front", "ensenso_frame", "tag_38", "marker_38",
-                     "torso_knob_link","ensenso_frame", "landmark_reference_left", "ensenso_frame", "tag_48", "marker_48",
-                     "torso_knob_link","ensenso_frame", "landmark_reference_left", "ensenso_frame", "tag_55", "marker_55",
-                     "torso_knob_link","ensenso_frame", "landmark_reference_left", "ensenso_frame", "tag_64", "marker_64",
-                     "torso_knob_link","ensenso_frame", "landmark_reference_ground", "ensenso_frame", "tag_69", "marker_69",
-                     "torso_knob_link","ensenso_frame", "landmark_reference_ground", "ensenso_frame", "tag_73", "marker_73",
-                     "torso_knob_link","ensenso_frame", "landmark_reference_ground", "ensenso_frame", "tag_79", "marker_79"]
+                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_25", "marker_25",
+                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_36", "marker_36",
+                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_38", "marker_38",
+                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_48", "marker_48",
+                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_55", "marker_55",
+                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_64", "marker_64",
+                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_69", "marker_69",
+                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_73", "marker_73",
+                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_79", "marker_79"]
 
 
 # number of optimization iterations

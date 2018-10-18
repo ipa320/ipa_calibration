@@ -4,7 +4,7 @@
 
 	<arg name="reference" default="corner"/>	<!-- box or corner -->
 	<arg name="marker" default="pitag"/>		<!-- checkerboard or pitag -->
-	<arg name="robot" default="robotino"/>		<!-- robotino, cob or RAW -->
+	<arg name="robot" default="RAW"/>		<!-- robotino, cob or RAW -->
 	<arg name="load_data" default="false"/>		<!-- whether data that has been stored previously will be loaded, for offline calibration -->
 
 	<!-- Execute follwing group if data won't be loaded from disk -->
