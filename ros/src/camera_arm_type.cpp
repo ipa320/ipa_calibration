@@ -217,7 +217,6 @@ bool CameraArmType::moveRobot(int config_index)
 	}
 
 	return result;
-	return true;
 }
 
 bool CameraArmType::moveCameras(int config_index)
@@ -313,21 +312,25 @@ unsigned short CameraArmType::moveArm(const arm_description &arm, const std::vec
 
 	calibration_interface_->assignNewArmJoints(arm_name, new_joint_config);
 
+	// wait for arm to arrive at goal
 	const double start_time = time_utilities::getSystemTimeSec();
 	while ( time_utilities::getTimeElapsedSec(start_time) < 10.f ) //Max. 10 seconds to reach goal
 	{
 		ros::Rate(20).sleep(); // No need to iterate through this every tick
 		ros::spinOnce();
 		cur_state = *calibration_interface_->getCurrentArmState(arm_name);
-		std::vector<double> difference(cur_state.size());
+
+		double norm = 0.f;
 		for (int i = 0; i<cur_state.size(); ++i)
-			difference[i] = arm_configuration[i]-cur_state[i];
-
-		double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
-
-		if ( length < 0.025 ) //Close enough to goal configuration
 		{
-			std::cout << "Arm configuration reached, deviation: " << length << std::endl;
+			double error = arm_configuration[i]-cur_state[i];
+			norm += error*error;  // sum over squared errors
+		}
+		norm = std::sqrt(norm);  // take root
+
+		if ( norm < 0.025 ) //Close enough to goal configuration
+		{
+			std::cout << "Arm configuration reached, deviation: " << norm << std::endl;
 			break;
 		}
 	}

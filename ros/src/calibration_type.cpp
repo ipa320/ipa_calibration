@@ -52,7 +52,6 @@
 #include <calibration_interface/ipa_interface.h>
 #include <robotino_calibration/time_utilities.h>
 #include <robotino_calibration/transformation_utilities.h>
-#include <numeric>  // std::inner_product
 #include <std_msgs/Float64MultiArray.h>
 
 
@@ -295,21 +294,25 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 
 	calibration_interface_->assignNewCameraAngles(camera_name, angles);
 
+	// wait for camera to arrive at goal
 	const double start_time = time_utilities::getSystemTimeSec();
 	while ( time_utilities::getTimeElapsedSec(start_time) < 10.f )
 	{
 		ros::Rate(20).sleep(); // No need to iterate through this every tick
 		ros::spinOnce();
 		cur_state = *calibration_interface_->getCurrentCameraState(camera_name);
-		std::vector<double> difference(cur_state.size());
+
+		double norm = 0.f;
 		for (int i = 0; i<cur_state.size(); ++i)
-			difference[i] = cam_configuration[i]-cur_state[i];
-
-		double length = std::sqrt(std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0)); //Length of difference vector in joint space
-
-		if ( length < 0.02 ) //Close enough to goal configuration
 		{
-			std::cout << camera_name << " configuration reached, deviation: " << length << std::endl;
+			double error = cam_configuration[i]-cur_state[i];
+			norm += error*error;  // sum over squared errors
+		}
+		norm = std::sqrt(norm);  // take root
+
+		if ( norm < 0.02 ) //Close enough to goal configuration
+		{
+			std::cout << camera_name << " configuration reached, deviation: " << norm << std::endl;
 			break;
 		}
 	}
