@@ -1,6 +1,22 @@
+# side length of the chessboard squares
+# double
+checkerboard_cell_size: 0.018
+
+# number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
+# vector<double>
+checkerboard_pattern_size: [9,6]
+
 # name of detected checkerboard frame
 # string
 checkerboard_frame: "checkerboard_detected"
+
+# name of camera frame (on which the image is based on)
+# string
+camera_frame: "kinect_depth_optical_frame"
+
+# image topic
+# string
+camera_image_topic: "/kinect/rgb/image_raw"
 
 # update frequency (has to be positive) at which the detection will be tried to loop at [in Hz]
 # double

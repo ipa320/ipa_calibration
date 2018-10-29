@@ -7,10 +7,12 @@
 
 	<!-- Execute follwing group if data won't be loaded from disk -->
 	<group unless="$(arg load_data)">
+
 		<!-- Start markers and setup detection -->
 		<include file="$(find calibration_interface)/ros/launch/$(arg marker)_setup.launch">
 			<arg name="robot" value="$(arg robot)"/>
 		</include>
+
 	</group>
 
 	<!-- Start camera-arm calibration method -->
