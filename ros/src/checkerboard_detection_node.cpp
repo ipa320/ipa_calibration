@@ -56,6 +56,8 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <message_filters/subscriber.h>
 #include <robotino_calibration/transformation_utilities.h>
 #include <calibration_interface/checkerboard_marker.h>
 #include <tf/tf.h>
@@ -66,6 +68,9 @@
 boost::mutex camera_data_mutex;
 cv::Mat camera_image;
 ros::Time latest_image_time;
+cv::Mat cam_matrix;// = cv::Mat::eye(3, 3, CV_64F);
+cv::Mat distortion;// = cv::Mat::zeros(8, 1, CV_64F);
+bool initialized = false;
 
 
 bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
@@ -82,6 +87,24 @@ bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_
 	image = image_ptr->image.clone();
 
 	return true;
+}
+
+void infoCallback(const sensor_msgs::CameraInfoConstPtr& camera_info_msg)
+{
+	if ( !initialized )
+	{
+		cam_matrix = (cv::Mat_<double>(3,3) <<
+					camera_info_msg->K[0], camera_info_msg->K[1], camera_info_msg->K[2],
+					camera_info_msg->K[3], camera_info_msg->K[4], camera_info_msg->K[5],
+					camera_info_msg->K[6], camera_info_msg->K[7], camera_info_msg->K[8]);
+
+		// forcing plumb-bob model here
+		distortion = (cv::Mat_<double>(5,1) << camera_info_msg->D[0], camera_info_msg->D[1], camera_info_msg->D[2],
+				camera_info_msg->D[3], camera_info_msg->D[4]);
+
+		if ( !cam_matrix.empty() && !distortion.empty() )
+			initialized = true;
+	}
 }
 
 void imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
@@ -147,11 +170,28 @@ int main(int argc, char** argv)
 	update_pct = fmin( fmax(update_pct, 0.1), 1.0 );  // between [0.1, 1]
 	std::cout << "update_percentage: " << update_pct << std::endl;
 
+	std::string camera_info;
+	node_handle.param<std::string>("camera_info_topic", camera_info, "");
+	std::cout << "camera_info_topic: " << camera_info << std::endl;
+	ros::Subscriber info_sub = node_handle.subscribe<sensor_msgs::CameraInfo>(camera_info, 0, infoCallback);
+	//message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub;
+	//info_sub.subscribe(node_handle, camera_info, 1);
+	//info_sub.registerCallback(boost::bind(&infoCallback, _1));
+
 	// Set up callback
 	image_transport::ImageTransport it(node_handle);
 	image_transport::SubscriberFilter color_image_sub;
 	color_image_sub.subscribe(it, camera_image_topic, 1);
 	color_image_sub.registerCallback(boost::bind(&imageCallback, _1));
+
+	// wait for intrinsic parameters to initialize
+	while ( !initialized )
+	{
+		ros::spinOnce();
+		ros::Duration(0.25).sleep();
+	}
+
+	std::cout << "Intrinsic parameters initialized" << std::endl;
 
 	// Cyclically detect checkerboard and publish resulting frame to tf
 	tf::Vector3 avg_translation;
@@ -195,21 +235,22 @@ int main(int argc, char** argv)
 					CheckerboardMarker::getPatternPoints3D(pattern_points_3d, checkerboard_pattern_size, checkerboard_cell_size);
 
 					// get rotation and translation vectors
-					cv::Mat cam_matrix = cv::Mat::eye(3, 3, CV_64F);
-					cv::Mat distortion = cv::Mat::zeros(8, 1, CV_64F);
+					//cv::Mat cam_matrix = cv::Mat::eye(3, 3, CV_64F);
+					//cv::Mat distortion = cv::Mat::zeros(8, 1, CV_64F);
 
 					std::vector<std::vector< cv::Point3f> > pattern_points_3d_arr(1, pattern_points_3d);
 					std::vector<std::vector< cv::Point2f> > checkerboard_points_2d_arr(1, checkerboard_points_2d);
-					std::vector<cv::Mat> rvec, tvec;
+					cv::Mat rvec, tvec;
 
-					cv::calibrateCamera(pattern_points_3d_arr, checkerboard_points_2d_arr, cv::Size(image_width, image_height), cam_matrix, distortion, rvec, tvec);
+					cv::solvePnPRansac(pattern_points_3d, checkerboard_points_2d, cam_matrix, distortion, rvec, tvec);
+					//cv::calibrateCamera(pattern_points_3d_arr, checkerboard_points_2d_arr, cv::Size(image_width, image_height), cam_matrix, distortion, rvec, tvec);
 
 					if ( rvec.empty() || rvec.size() != tvec.size() )  // check for valid size, we should have a size of one for both vectors
 						continue;
 
 					cv::Mat R;
-					cv::Rodrigues(rvec[0], R);
-					tf::Vector3 translation(tvec[0].at<double>(0), tvec[0].at<double>(1), tvec[0].at<double>(2));
+					cv::Rodrigues(rvec, R);
+					tf::Vector3 translation(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2));
 					/*ROS_WARN("VALUES");
 					std::cout << R << std::endl << translation.x() << "," << translation.y() << "," << translation.z() << std::endl;*/
 					cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(R);
