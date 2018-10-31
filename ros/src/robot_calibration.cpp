@@ -72,7 +72,7 @@
 
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface, const bool load_data_from_disk) :
-	node_handle_(nh), transform_listener_(nh), calibrated_(false), calibration_interface_(interface), load_data_from_disk_(load_data_from_disk)
+	node_handle_(nh), transform_listener_(nh), calibrated_(false), calibration_interface_(interface), load_data_from_disk_(load_data_from_disk), transform_discard_timeout_(1.0)
 {
 	// load parameters
 	std::cout << std::endl << "========== RobotCalibration Parameters ==========" << std::endl;
@@ -82,6 +82,14 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		ROS_FATAL("Could not create a calibration interface.");
 		throw std::exception();
 	}
+
+	node_handle_.param("optimization_iterations", optimization_iterations_, 1000);
+	if ( optimization_iterations_ <= 0 )
+	{
+		std::cout << "Invalid optimization_iterations value: " << optimization_iterations_ << " -> Setting value to 1000." << std::endl;
+		optimization_iterations_ = 1000;
+	}
+	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
 
 	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/calibration");
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
@@ -99,6 +107,10 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 	if ( !load_data_from_disk_ )
 	{
+		node_handle_.param("transform_discard_timeout", transform_discard_timeout_, 1.0);
+		transform_discard_timeout_ = fmax(transform_discard_timeout_, 0.1);
+		std::cout << "transform_discard_timeout: " << transform_discard_timeout_ << std::endl;
+
 		// hack to fix tf::waitForTransform throwing error that transforms do not exist when now() == 0 at startup
 		ROS_INFO("Waiting for TF listener to initialize...");
 		const double start_time = time_utilities::getSystemTimeSec();
@@ -132,21 +144,21 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 			std::string last_parent_branch_frame = uncertainties_list[i+2];
 			std::string last_child_branch_frame = uncertainties_list[i+3];
 
-			bool success = transform_listener_.waitForTransform(parent, child, ros::Time(0), ros::Duration(0.5));
+			bool success = transform_listener_.waitForTransform(parent, child, ros::Time(0), ros::Duration(1.0));
 			if ( !success )
 			{
 				ROS_ERROR("Transform from parent frame %s to child frame %s does not exist, skipping.", parent.c_str(), child.c_str());
 				continue;
 			}
 
-			success = transform_listener_.waitForTransform(parent, last_parent_branch_frame, ros::Time(0), ros::Duration(0.5));
+			success = transform_listener_.waitForTransform(parent, last_parent_branch_frame, ros::Time(0), ros::Duration(1.0));
 			if ( !success )
 			{
 				ROS_ERROR("Transform from parent frame %s to last parent-branch frame %s does not exist, skipping.", parent.c_str(), last_parent_branch_frame.c_str());
 				continue;
 			}
 
-			success = transform_listener_.waitForTransform(child, last_child_branch_frame, ros::Time(0), ros::Duration(0.5));
+			success = transform_listener_.waitForTransform(child, last_child_branch_frame, ros::Time(0), ros::Duration(1.0));
 			if ( !success )
 			{
 				ROS_ERROR("Transform from child frame %s to last child-branch frame %s does not exist, skipping.", child.c_str(), last_child_branch_frame.c_str());
@@ -339,16 +351,6 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 	}
 	std::cout << std::endl;
-
-	node_handle_.param("optimization_iterations", optimization_iterations_, 1000);
-
-	if ( optimization_iterations_ <= 0 )
-	{
-		std::cout << "Invalid optimization_iterations value: " << optimization_iterations_ << " -> Setting value to 1000." << std::endl;
-		optimization_iterations_ = 1000;
-	}
-
-	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
 }
 
 RobotCalibration::~RobotCalibration()
@@ -658,11 +660,10 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 {
 	// populate parent branch trafos
 	snapshot.valid_ = false;
-	const double timeout = 1.0;
 	for ( int i=0; i<setup.parent_branch_.size()-1; ++i )
 	{
 		cv::Mat trafo;
-		if ( transform_utilities::getTransform(transform_listener_, setup.parent_branch_[i], setup.parent_branch_[i+1], trafo, timeout, true) )
+		if ( transform_utilities::getTransform(transform_listener_, setup.parent_branch_[i], setup.parent_branch_[i+1], trafo, transform_discard_timeout_, true) )
 		{
 			TFInfo info;
 			info.parent_ = setup.parent_branch_[i];
@@ -681,7 +682,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 	for ( int i=0; i<setup.child_branch_.size()-1; ++i )
 	{
 		cv::Mat trafo;
-		if ( transform_utilities::getTransform(transform_listener_, setup.child_branch_[i], setup.child_branch_[i+1], trafo, timeout, true) )
+		if ( transform_utilities::getTransform(transform_listener_, setup.child_branch_[i], setup.child_branch_[i+1], trafo, transform_discard_timeout_, true) )
 		{
 			TFInfo info;
 			info.parent_ = setup.child_branch_[i];
@@ -721,7 +722,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 		{
 			cv::Mat trafo;
 			TFInfo info;
-			if ( transform_utilities::getTransform(transform_listener_, last_otherbranch_frame, parent_marker, trafo, timeout, false) )
+			if ( transform_utilities::getTransform(transform_listener_, last_otherbranch_frame, parent_marker, trafo, transform_discard_timeout_, false) )
 			{
 				info.parent_ = last_otherbranch_frame;
 				info.child_ = parent_marker;
@@ -737,7 +738,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 		{
 			cv::Mat trafo;
 			TFInfo info;
-			if ( transform_utilities::getTransform(transform_listener_, last_branch_frame, child_marker, trafo, timeout, false) )
+			if ( transform_utilities::getTransform(transform_listener_, last_branch_frame, child_marker, trafo, transform_discard_timeout_, false) )
 			{
 				info.parent_ = last_branch_frame;
 				info.child_ = child_marker;

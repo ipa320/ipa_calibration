@@ -109,6 +109,7 @@ protected:
     int optimization_iterations_;	// number of iterations for optimization
     bool calibrated_;  // calibration has successfully been finished
     bool load_data_from_disk_;
+    double transform_discard_timeout_;  // timeout after which a TF transform won't be used for calibration anymore
     tf::TransformListener transform_listener_;
     ros::NodeHandle node_handle_;
     std::string calibration_storage_path_;  // path to data
