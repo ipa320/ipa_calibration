@@ -106,6 +106,10 @@ uncertainties_list: ["base_linkz","base_neck_link", "landmark_reference_front", 
 # int
 optimization_iterations: 10000
 
+# timeout after which a TF transform won't be used for calibration anymore
+# double
+transform_discard_timeout: 2.0
+
 # storage folder that holds the calibration output
 # string
 calibration_storage_path: "robotino_calibration/camera_pitag_calibration"

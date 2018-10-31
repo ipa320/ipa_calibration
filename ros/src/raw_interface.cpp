@@ -51,44 +51,46 @@
 #include <calibration_interface/raw_interface.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <trajectory_msgs/JointTrajectory.h>
-#include <control_msgs/FollowJointTrajectoryAction.h>
-#include <control_msgs/FollowJointTrajectoryGoal.h>
-#include <actionlib/client/simple_action_client.h>
+//#include <control_msgs/FollowJointTrajectoryGoal.h>
 
 
 RAWInterface::RAWInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data) :
-				IPAInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data), arm_state_current_(0)
+				IPAInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data), arm_state_current_(0), arm_action_client_("/arm/joint_trajectory_controller/follow_joint_trajectory", true)
 {
 	std::cout << "\n========== RAWInterface Parameters ==========\n";
 
+	const std::string node_path = "/camera_arm_calibration/camera_arm_calibration/";//"/camera_laserscanner_calibration/camera_laserscanner_calibration/"
+
 	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
-	node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/camera_joint_controller_command", camera_joint_controller_command_, "");
+	node_handle_.param<std::string>((node_path+"camera_joint_controller_command"), camera_joint_controller_command_, "");
 	std::cout << "camera_joint_controller_command: " << camera_joint_controller_command_ << std::endl;
 	camera_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray/*trajectory_msgs::JointTrajectory*/>(camera_joint_controller_command_, 1, false);
 
-	node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/camera_joint_state_topic", camera_joint_state_topic_, "");
+	node_handle_.param<std::string>((node_path+"camera_joint_state_topic"), camera_joint_state_topic_, "");
 	std::cout << "camera_joint_state_topic: " << camera_joint_state_topic_ << std::endl;
 	camera_state_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &RAWInterface::cameraStateCallback, this);
 
 	camera_state_current_.resize(2);
 
-	if ( arm_calibration_ )
-	{
-		node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/arm_joint_controller_command", arm_joint_controller_command_, "");
+	//if ( arm_calibration_ )
+	//{
+		node_handle_.param<std::string>((node_path+"arm_joint_controller_command"), arm_joint_controller_command_, "");
 		std::cout << "arm_joint_controller_command: " << arm_joint_controller_command_ << std::endl;
 		arm_joint_controller_ = node_handle_.advertise<trajectory_msgs::JointTrajectory>(arm_joint_controller_command_, 1, false);
 
-		node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/arm_state_topic", arm_state_topic_, "");
+		node_handle_.param<std::string>((node_path+"arm_state_topic"), arm_state_topic_, "");
 		std::cout << "arm_state_topic: " << arm_state_topic_ << std::endl;
 		arm_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_state_topic_, 0, &RAWInterface::armStateCallback, this);
-	}
-	else
-	{
-		node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/base_controller_topic_name", base_controller_topic_name_, "");
+	//}
+	//else
+	//{
+		node_handle_.param<std::string>((node_path+"base_controller_topic_name"), base_controller_topic_name_, "");
 		std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
 		base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
-	}
+	//}
 
+
+	arm_action_client_.waitForServer();
 	ROS_INFO("RAWInterface initialized.");
 }
 
@@ -123,29 +125,45 @@ void RAWInterface::assignNewRobotVelocity(geometry_msgs::Twist new_velocity) // 
 
 void RAWInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_angles)
 {
-	// Adjust here: Assign new camera tilt angle here
-	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
-	trajectory_msgs::JointTrajectory jointTraj;
+	if ( camera_name.compare("realsense_sr300") == 0 )
+	{
+		assignNewArmJoints(camera_name, new_angles);
+	}
+	else if ( camera_name.compare("ids_ueye") )
+	{
+		// Adjust here: Assign new camera tilt angle here
+		trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
+		trajectory_msgs::JointTrajectory jointTraj;
 
-	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("/torso/joint_trajectory_controller/follow_joint_trajectory", true);
-	control_msgs::FollowJointTrajectoryGoal camGoal;
+		actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("/torso/joint_trajectory_controller/follow_joint_trajectory", true);
+		control_msgs::FollowJointTrajectoryGoal camGoal;
 
-	ac.waitForServer();
-	jointTraj.joint_names = {"torso_bottom_joint", "torso_side_joint"};
-	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), new_angles.data.begin(), new_angles.data.end());
-	jointTrajPoint.time_from_start = ros::Duration(2);
-	jointTrajPoint.velocities = {0,0}; //Initialize velocities to zero, does not work with empty list
-	jointTrajPoint.accelerations = {0,0};
-	jointTraj.points.push_back(jointTrajPoint);
-	jointTraj.header.stamp = ros::Time::now();
+		ac.waitForServer();
+		jointTraj.joint_names = {"torso_bottom_joint", "torso_side_joint"};
+		jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), new_angles.data.begin(), new_angles.data.end());
+		jointTrajPoint.time_from_start = ros::Duration(2);
+		jointTrajPoint.velocities = {0,0}; //Initialize velocities to zero, does not work with empty list
+		jointTrajPoint.accelerations = {0,0};
+		jointTraj.points.push_back(jointTrajPoint);
+		jointTraj.header.stamp = ros::Time::now();
 
-	camGoal.trajectory = jointTraj;
-	ac.sendGoal(camGoal);
+		camGoal.trajectory = jointTraj;
+		ac.sendGoal(camGoal);
+	}
+	else
+		ROS_ERROR("Invalid camera name %s, cannot move anything!", camera_name.c_str());
 }
 
 std::vector<double>* RAWInterface::getCurrentCameraState(const std::string &camera_name)
 {
-	return &camera_state_current_;
+	if ( camera_name.compare("realsense_sr300") == 0 )
+		return getCurrentArmState(camera_name);
+	else if ( camera_name.compare("ids_ueye") )
+		return &camera_state_current_;
+	else
+	{
+		ROS_ERROR("Invalid camera name %s, cannot move anything!", camera_name.c_str());
+	}
 }
 // END CALIBRATION INTERFACE
 
@@ -154,26 +172,26 @@ std::vector<double>* RAWInterface::getCurrentCameraState(const std::string &came
 void RAWInterface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_joint_config)
 {
 	// Adjust here: Assign new joints to your robot arm
-	trajectory_msgs::JointTrajectoryPoint jointTrajPoint, currentPoint;
+	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;// currentPoint;
 	trajectory_msgs::JointTrajectory jointTraj;
-	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("/arm/joint_trajectory_controller/follow_joint_trajectory", true);
+	//actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("/arm/joint_trajectory_controller/follow_joint_trajectory", true);
 	control_msgs::FollowJointTrajectoryGoal armGoal;
-	ac.waitForServer();
+	//ac.waitForServer();
 	jointTraj.joint_names = {"arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_joint", "arm_wrist_1_joint", "arm_wrist_2_joint",
 							 "arm_wrist_3_joint"};
 	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), new_joint_config.data.begin(), new_joint_config.data.end());
 	jointTrajPoint.time_from_start = ros::Duration(2); // Quick and dirty, should actually be calculated by max angular speed and travel distance
-	currentPoint.positions.insert(currentPoint.positions.end(), arm_state_current_->position.begin(), arm_state_current_->position.end());
-	currentPoint.velocities = {0,0,0,0,0,0};
-	currentPoint.accelerations = {0,0,0,0,0,0};
-	jointTraj.points.push_back(currentPoint);
+	//currentPoint.positions.insert(currentPoint.positions.end(), arm_state_current_->position.begin(), arm_state_current_->position.end());
+	//currentPoint.velocities = {0,0,0,0,0,0};
+	//currentPoint.accelerations = {0,0,0,0,0,0};
+	//jointTraj.points.push_back(currentPoint);
 	jointTrajPoint.velocities = {0,0,0,0,0,0};
 	jointTrajPoint.accelerations = {0,0,0,0,0,0};
 	jointTraj.points.push_back(jointTrajPoint);
 	jointTraj.header.stamp = ros::Time::now();
 	armGoal.trajectory = jointTraj;
 
-	ac.sendGoal(armGoal);
+	arm_action_client_.sendGoal(armGoal);
 }
 
 std::vector<double>* RAWInterface::getCurrentArmState(const std::string &arm_name)

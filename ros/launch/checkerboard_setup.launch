@@ -2,15 +2,12 @@
 
 <launch>
 
-	<arg name="robot" default="robotino"/>		<!-- robotino, cob or RAW -->
-
 	<!-- Start markers based on reference frame -->
 	<include file="$(find calibration_interface)/ros/launch/checkerboard_marker.launch"/>
 
 	<!-- Detect and publish real marker frame using camera -->
 	<node ns="checkerboard_detection" name="checkerboard_detection" pkg="calibration_interface" type="checkerboard_detection" output="screen">
 		<rosparam command="load" file="$(find calibration_interface)/ros/launch/detection_settings/checkerboard_detection_settings.yaml"/>
-		<rosparam command="load" file="$(find calibration_interface)/ros/launch/robot_settings/$(arg robot)_settings.yaml"/>
 	</node>
 
 </launch>

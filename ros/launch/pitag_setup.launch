@@ -2,8 +2,6 @@
 
 <launch>
 
-	<arg name="robot" default="robotino"/>		<!-- robotino, cob or RAW -->
-
 	<!-- Start markers based on reference frame -->
 	<include file="$(find calibration_interface)/ros/launch/pitag_markers.launch"/>
 

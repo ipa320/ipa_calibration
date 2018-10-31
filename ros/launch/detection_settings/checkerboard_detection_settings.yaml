@@ -14,13 +14,17 @@ checkerboard_frame: "checkerboard_detected"
 # string
 camera_frame: "ids_ueye_frame"
 
-# image topic
+# image topic, raw format (not rectified)
 # string
-camera_image_topic: "/ueye_camera/rgb/image_rect"
+camera_image_raw_topic: "/ueye_camera/rgb/image_raw"
 
 # topic to retrieve the intrinsic parameters from
 # string
 camera_info_topic: "/ueye_camera/rgb/camera_info"
+
+# number of distortion parameters of the camera model, min: 0
+# int
+number_distortion_parameters: 5
 
 # update frequency (has to be positive) at which the detection will be tried to loop at [in Hz]
 # double
@@ -28,4 +32,4 @@ update_frequency: 10
 
 # defines how much (in percent) of the freshly detected transform will be used to update the tf checkerboard transform. range: [0.1, 1.0]
 # double
-update_percentage: 0.6
+update_percentage: 1.0

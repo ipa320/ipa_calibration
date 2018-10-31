@@ -139,7 +139,7 @@ int IPAInterface::getConfigurationCount()
 
 void IPAInterface::preSnapshot(int current_index)
 {
-	ros::Duration(5).sleep();  // wait some more to mitigate shaking effects as our robots' kinematics are not that stiff
+	ros::Duration(calibration_marker_->getWaitTime()).sleep();  // wait for markers being detected properly
 }
 
 // we are not making use of marker_frame, as we do either use pitags or checkerboards throughout the whole calibration, so we do not mix markers

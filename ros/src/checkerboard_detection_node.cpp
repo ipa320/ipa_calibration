@@ -71,6 +71,7 @@ ros::Time latest_image_time;
 cv::Mat cam_matrix;// = cv::Mat::eye(3, 3, CV_64F);
 cv::Mat distortion;// = cv::Mat::zeros(8, 1, CV_64F);
 bool initialized = false;
+int num_distortion_params = 0;
 
 
 bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_bridge::CvImageConstPtr& image_ptr, cv::Mat& image)
@@ -98,9 +99,17 @@ void infoCallback(const sensor_msgs::CameraInfoConstPtr& camera_info_msg)
 					camera_info_msg->K[3], camera_info_msg->K[4], camera_info_msg->K[5],
 					camera_info_msg->K[6], camera_info_msg->K[7], camera_info_msg->K[8]);
 
-		// forcing plumb-bob model here
-		distortion = (cv::Mat_<double>(5,1) << camera_info_msg->D[0], camera_info_msg->D[1], camera_info_msg->D[2],
-				camera_info_msg->D[3], camera_info_msg->D[4]);
+		if ( num_distortion_params > 0 )
+		{
+			distortion = cv::Mat::zeros(num_distortion_params, 1, CV_64F);
+			for ( int i=0; i<num_distortion_params; ++i )
+				distortion.at<double>(i) = camera_info_msg->D[i];
+		}
+		else // fallback
+		{
+			ROS_WARN("Zero distortion parameters, using plumb_bob model with all entries set to zero.");
+			distortion = cv::Mat::zeros(5, 1, CV_64F);
+		}
 
 		if ( !cam_matrix.empty() && !distortion.empty() )
 			initialized = true;
@@ -147,8 +156,16 @@ int main(int argc, char** argv)
 	std::cout << "checkerboard_frame: " << checkerboard_frame << std::endl;
 
 	std::string camera_image_topic;
-	node_handle.param<std::string>("camera_image_topic", camera_image_topic, "");
-	std::cout << "camera_image_topic: " << camera_image_topic << std::endl;
+	node_handle.param<std::string>("camera_image_raw_topic", camera_image_topic, "");
+	std::cout << "camera_image_raw_topic: " << camera_image_topic << std::endl;
+
+	std::string camera_info;
+	node_handle.param<std::string>("camera_info_topic", camera_info, "");
+	std::cout << "camera_info_topic: " << camera_info << std::endl;
+
+	node_handle.param("number_distortion_parameters", num_distortion_params, 0);
+	num_distortion_params = std::max(num_distortion_params, 0);  // min: 0
+	std::cout << "number_distortion_parameters: " << num_distortion_params << std::endl;
 
 	double checkerboard_cell_size;
 	node_handle.param("checkerboard_cell_size", checkerboard_cell_size, 0.05);
@@ -170,15 +187,9 @@ int main(int argc, char** argv)
 	update_pct = fmin( fmax(update_pct, 0.1), 1.0 );  // between [0.1, 1]
 	std::cout << "update_percentage: " << update_pct << std::endl;
 
-	std::string camera_info;
-	node_handle.param<std::string>("camera_info_topic", camera_info, "");
-	std::cout << "camera_info_topic: " << camera_info << std::endl;
-	ros::Subscriber info_sub = node_handle.subscribe<sensor_msgs::CameraInfo>(camera_info, 0, infoCallback);
-	//message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub;
-	//info_sub.subscribe(node_handle, camera_info, 1);
-	//info_sub.registerCallback(boost::bind(&infoCallback, _1));
-
 	// Set up callback
+	ros::Subscriber info_sub = node_handle.subscribe<sensor_msgs::CameraInfo>(camera_info, 0, infoCallback);
+
 	image_transport::ImageTransport it(node_handle);
 	image_transport::SubscriberFilter color_image_sub;
 	color_image_sub.subscribe(it, camera_image_topic, 1);
@@ -191,7 +202,7 @@ int main(int argc, char** argv)
 		ros::Duration(0.25).sleep();
 	}
 
-	std::cout << "Intrinsic parameters initialized" << std::endl;
+	std::cout << "Intrinsic parameters loaded" << std::endl;
 
 	// Cyclically detect checkerboard and publish resulting frame to tf
 	tf::Vector3 avg_translation;
@@ -235,15 +246,8 @@ int main(int argc, char** argv)
 					CheckerboardMarker::getPatternPoints3D(pattern_points_3d, checkerboard_pattern_size, checkerboard_cell_size);
 
 					// get rotation and translation vectors
-					//cv::Mat cam_matrix = cv::Mat::eye(3, 3, CV_64F);
-					//cv::Mat distortion = cv::Mat::zeros(8, 1, CV_64F);
-
-					std::vector<std::vector< cv::Point3f> > pattern_points_3d_arr(1, pattern_points_3d);
-					std::vector<std::vector< cv::Point2f> > checkerboard_points_2d_arr(1, checkerboard_points_2d);
 					cv::Mat rvec, tvec;
-
 					cv::solvePnPRansac(pattern_points_3d, checkerboard_points_2d, cam_matrix, distortion, rvec, tvec);
-					//cv::calibrateCamera(pattern_points_3d_arr, checkerboard_points_2d_arr, cv::Size(image_width, image_height), cam_matrix, distortion, rvec, tvec);
 
 					if ( rvec.empty() || rvec.size() != tvec.size() )  // check for valid size, we should have a size of one for both vectors
 						continue;
@@ -251,8 +255,6 @@ int main(int argc, char** argv)
 					cv::Mat R;
 					cv::Rodrigues(rvec, R);
 					tf::Vector3 translation(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2));
-					/*ROS_WARN("VALUES");
-					std::cout << R << std::endl << translation.x() << "," << translation.y() << "," << translation.z() << std::endl;*/
 					cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(R);
 					tf::Quaternion orientation;
 					orientation.setRPY(ypr.val[2], ypr.val[1], ypr.val[0]);

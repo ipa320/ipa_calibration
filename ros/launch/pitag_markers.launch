@@ -7,8 +7,13 @@
 		landmark_reference: similar definition as tag_x, but located at the height of the laser scanner on the left edge of the box in front of the wall or in the corner of two walls
 		transform between them: no rotation, just an x, y, and z offset (ATTENTION: height (y or z) offset depends on mounting height of the laser scanner) -->
 
+	<!-- realsense offest -->
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_realsense_link" output="screen" args="0 0 0.05 0 0 0  gripper_frame realsense_link 100"/>
+
+<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_realsense_frame" output="screen" args="0 0 0.05 0 0 0  realsense_link realsense_frame 100"/>
+
 	<!-- settings at IPA lab -->
-	<!-- <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_73" output="screen" args="0 1.533 0.617 -1.57079632679 0 1.57079632679  landmark_reference_nav tag_73 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_73" output="screen" args="0 1.533 0.617 -1.57079632679 0 1.57079632679  landmark_reference_nav tag_73 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_79" output="screen" args="-0.142 0.875 0.03 -1.57079632679 0 0  landmark_reference_nav tag_79 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_69" output="screen" args="0 0.683 1.783 -1.57079632679 0 1.57079632679  landmark_reference_nav tag_69 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_25" output="screen" args="-0.572 0 0.522 3.14159265359 0 1.57079632679  landmark_reference_nav tag_25 100"/>
@@ -16,10 +21,10 @@
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_38" output="screen" args="0 1.533 1.458 -1.57079632679 0 1.57079632679  landmark_reference_nav tag_38 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_36" output="screen" args="-0.264 0 0.774 3.14159265359 0 1.57079632679  landmark_reference_nav tag_36 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_64" output="screen" args="-0.138 1.165 0.03 -1.57079632679 0 0  landmark_reference_nav tag_64 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_48" output="screen" args="0 0.683 1.018 -1.57079632679 0 1.57079632679  landmark_reference_nav tag_48 100"/> -->
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_48" output="screen" args="0 0.683 1.018 -1.57079632679 0 1.57079632679  landmark_reference_nav tag_48 100"/>
 
 	<!-- settings in simulation -->
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_25" output="screen" args="0.8 0.75 0.01 0 0 0  landmark_reference_front tag_25 100"/>
+	<!-- <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_25" output="screen" args="0.8 0.75 0.01 0 0 0  landmark_reference_front tag_25 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_36" output="screen" args="0.8 0.55 0.01 0 0 0  landmark_reference_front tag_36 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_38" output="screen" args="1.0 0.65 0.01 0 0 0  landmark_reference_front tag_38 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_front" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 1.57079632679  landmark_reference_nav landmark_reference_front 100"/>
@@ -30,7 +35,7 @@
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_69" output="screen" args="0.4 -0.2 0.01 0 0 0  landmark_reference_ground tag_69 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_73" output="screen" args="0.7 -0.2 0.01 0 0 0  landmark_reference_ground tag_73 100"/>
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_79" output="screen" args="1.0 -0.2 0.01 0 0 0  landmark_reference_ground tag_79 100"/>
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_ground" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 0  landmark_reference_nav landmark_reference_ground 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_marker_nav_ground" output="screen" args="0.0 0.0 0.0 -1.57079632679 0 0  landmark_reference_nav landmark_reference_ground 100"/> -->
 
 	<!-- settings at ALU-FR -->
 	<!-- <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_25" output="screen" args="0.646 0.901 0.0 0 0 0  landmark_reference_front tag_25 100"/>

@@ -54,6 +54,9 @@
 #include <calibration_interface/ipa_interface.h>
 #include <sensor_msgs/JointState.h>
 #include <boost/thread/mutex.hpp>
+#include <actionlib/client/simple_action_client.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
+
 
 class RAWInterface : public IPAInterface
 {
@@ -78,6 +81,8 @@ protected:
 	ros::Subscriber arm_state_;
 	sensor_msgs::JointState* arm_state_current_;
 	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
+
+	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> arm_action_client_;
 
 
 public:

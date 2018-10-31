@@ -79,3 +79,8 @@ std::string PitagMarker::getString()
 {
 	return "pitag";
 }
+
+double PitagMarker::getWaitTime()
+{
+	return 7.f;
+}

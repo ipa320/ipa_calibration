@@ -86,7 +86,7 @@ protected:
 	virtual bool moveCameras(int config_index) = 0;  // determines when and how cameras will be moved, the actual movement however is done in moveCamera(). Has to be implemented in child classes
 	unsigned short moveCamera(const camera_description &camera, const std::vector<double> &cam_configuration);
 	bool generateConfigs(const std::vector< std::vector<double> > &param_vector, std::vector< std::vector<double> > &configs);
-	bool checkForMaxDeltaAngle(const std::vector<double> &state, const std::vector<double> &target, const double max_angle, int &bad_idx);
+	bool passesMaxDeltaAngleCheck(const std::vector<double> &state, const std::vector<double> &target, const double max_angle, int &bad_idx);
 
 
 	ros::NodeHandle node_handle_;

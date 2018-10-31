@@ -71,6 +71,7 @@ public:
 
 	void initialize(ros::NodeHandle nh);
 	void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d);
+	double getWaitTime();
 
 	static void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d, const cv::Size pattern_size, const double cell_size);  // static version, so we don't need an object
 

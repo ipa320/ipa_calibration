@@ -276,7 +276,7 @@ unsigned short CameraArmType::moveArm(const arm_description &arm, const std::vec
 		return MOV_ERR_FATAL;
 	}
 
-	if ( cur_state.size() != arm_configuration.size() )
+	if ( (int)cur_state.size() != (int)arm_configuration.size() )
 	{
 		ROS_ERROR("Size of target arm configuration and count of arm joints do not match! Please adjust the yaml file.");
 		return MOV_ERR_FATAL;
@@ -287,7 +287,7 @@ unsigned short CameraArmType::moveArm(const arm_description &arm, const std::vec
 	if ( max_delta_angle > 0.f )
 	{
 		int bad_index = -1;
-		if ( checkForMaxDeltaAngle(cur_state, arm_configuration, max_delta_angle, bad_index) )
+		if ( !passesMaxDeltaAngleCheck(cur_state, arm_configuration, max_delta_angle, bad_index) )
 		{
 			if ( bad_index == -1 )
 			{

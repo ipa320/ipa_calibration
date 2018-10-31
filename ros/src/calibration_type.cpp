@@ -269,7 +269,7 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 	if ( max_delta_angle > 0.f )
 	{
 		int bad_index = -1;
-		if ( checkForMaxDeltaAngle(cur_state, cam_configuration, max_delta_angle, bad_index) )
+		if ( !passesMaxDeltaAngleCheck(cur_state, cam_configuration, max_delta_angle, bad_index) )
 		{
 			if ( bad_index == -1 )
 			{
@@ -310,7 +310,7 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 		}
 		norm = std::sqrt(norm);  // take root
 
-		if ( norm < 0.02 ) //Close enough to goal configuration
+		if ( norm < 0.025 ) //Close enough to goal configuration
 		{
 			std::cout << camera_name << " configuration reached, deviation: " << norm << std::endl;
 			break;
@@ -396,9 +396,9 @@ bool CalibrationType::generateConfigs(const std::vector< std::vector<double> > &
 	return true;
 }
 
-bool CalibrationType::checkForMaxDeltaAngle(const std::vector<double> &state, const std::vector<double> &target, const double max_angle, int &bad_idx)
+bool CalibrationType::passesMaxDeltaAngleCheck(const std::vector<double> &state, const std::vector<double> &target, const double max_angle, int &bad_idx)
 {
-	if ( state.size() != target.size() )  // should never happen, but just to make this safer
+	if ( (int)state.size() != (int)target.size() )  // should never happen, but just to make this safer
 		return false;
 
 	for ( int i=0; i<state.size(); ++i )
