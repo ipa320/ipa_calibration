@@ -74,7 +74,7 @@ protected:
 	ros::Publisher camera_joint_controller_;
 
 public:
-	CobInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
+	CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
 	~CobInterface();
 
 	std::string getRobotName();

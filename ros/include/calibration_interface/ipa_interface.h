@@ -75,7 +75,6 @@ class IPAInterface : public CalibrationInterface
 
 protected:
 
-	ros::NodeHandle node_handle_;
 	CalibrationType* calibration_type_;
 	CalibrationMarker* calibration_marker_;
 	bool arm_calibration_;
@@ -85,10 +84,10 @@ protected:
 public:
 
 	IPAInterface();
-	IPAInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
+	IPAInterface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
 	virtual ~IPAInterface();
 
-	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data); //Create corresponding robot interface by a user-defined ID.
+	static CalibrationInterface* createInterfaceByID(int ID, ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data); //Create corresponding robot interface by a user-defined ID.
 
 	bool moveRobot(int config_index);
 	int getConfigurationCount();

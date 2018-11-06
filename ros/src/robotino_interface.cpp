@@ -51,24 +51,24 @@
 #include <calibration_interface/robotino_interface.h>
 
 
-RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data) :
+RobotinoInterface::RobotinoInterface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data) :
 				IPAInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data), camera_state_current_(2, 0.), arm_state_current_(0)
 {
 	std::cout << "\n========== RobotinoInterface Parameters ==========\n";
 
 	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
-	node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/pan_controller_command", pan_controller_command_, "");
+	node_handle_.param<std::string>("pan_controller_command", pan_controller_command_, "");
 	std::cout << "pan_controller_command: " << pan_controller_command_ << std::endl;
-	node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/tilt_controller_command", tilt_controller_command_, "");
+	node_handle_.param<std::string>("tilt_controller_command", tilt_controller_command_, "");
 	std::cout << "tilt_controller_command: " << tilt_controller_command_ << std::endl;
 	pan_controller_ = node_handle_.advertise<std_msgs::Float64>(pan_controller_command_, 1, false);
 	tilt_controller_ = node_handle_.advertise<std_msgs::Float64>(tilt_controller_command_, 1, false);
 
-	node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/camera_joint_state_topic", camera_joint_state_topic_, "");
+	node_handle_.param<std::string>("camera_joint_state_topic", camera_joint_state_topic_, "");
 	std::cout << "camera_joint_state_topic: " << camera_joint_state_topic_ << std::endl;
-	node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/pan_joint_name", pan_joint_name_, "");
+	node_handle_.param<std::string>("pan_joint_name", pan_joint_name_, "");
 	std::cout << "pan_joint_name: " << pan_joint_name_ << std::endl;
-	node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/tilt_joint_name", tilt_joint_name_, "");
+	node_handle_.param<std::string>("tilt_joint_name", tilt_joint_name_, "");
 	std::cout << "tilt_joint_name: " << tilt_joint_name_ << std::endl;
 
 	camera_joint_state_sub_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &RobotinoInterface::cameraJointStateCallback, this);
@@ -85,7 +85,7 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle nh, CalibrationType* calib_
 	}
 	else
 	{
-		node_handle_.param<std::string>("/camera_laserscanner_calibration/camera_laserscanner_calibration/base_controller_topic_name", base_controller_topic_name_, "");
+		node_handle_.param<std::string>("base_controller_topic_name", base_controller_topic_name_, "");
 		std::cout << "base_controller_topic_name: " << base_controller_topic_name_ << std::endl;
 		base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
 	}
@@ -103,7 +103,7 @@ RobotinoInterface::~RobotinoInterface()
 //Callbacks - User defined
 void RobotinoInterface::cameraJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-	boost::mutex::scoped_lock lock(camera_joint_state_data_mutex_);
+	boost::mutex::scoped_lock lock(camera_state_data_mutex_);
 	if (camera_state_current_.size() >= 2)
 	{
 		for (size_t i=0; i<msg->name.size(); ++i)
@@ -143,7 +143,7 @@ void RobotinoInterface::assignNewCameraAngles(const std::string &camera_name, st
 
 std::vector<double>* RobotinoInterface::getCurrentCameraState(const std::string &camera_name)
 {
-	boost::mutex::scoped_lock lock(camera_joint_state_data_mutex_);
+	boost::mutex::scoped_lock lock(camera_state_data_mutex_);
 	return &camera_state_current_;
 }
 // END CALIBRATION INTERFACE

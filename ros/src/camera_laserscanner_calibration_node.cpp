@@ -65,7 +65,7 @@
 int main(int argc, char** argv)
 {
 	// Initialize ROS, specify name of node
-	ros::init(argc, argv, "camera_base_calibration");
+	ros::init(argc, argv, "camera_laserscanner_calibration");
 
 	// Create a handle for this node, initialize node
 	ros::NodeHandle nh("~");
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	interface = IPAInterface::createInterfaceByID(calibration_ID, nh, calibration_type, marker, arm_calibration, load_data);
+	interface = IPAInterface::createInterfaceByID(calibration_ID, &nh, calibration_type, marker, arm_calibration, load_data);
 
 	if ( interface != 0 )
 	{

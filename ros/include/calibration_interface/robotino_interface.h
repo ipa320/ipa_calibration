@@ -70,17 +70,17 @@ protected:
 	ros::Subscriber camera_joint_state_sub_;
 	std::string camera_joint_state_topic_;			// topic name of the topic which contains current camera joint states
 	std::vector<double> camera_state_current_;
-	boost::mutex camera_joint_state_data_mutex_;	// secures read operations on camera joint state data
+	boost::mutex camera_state_data_mutex_;	// secures read operations on camera joint state data
 	std::string pan_joint_name_;			// name of the pan joint in array of tilt_joint_states_topic_ topic
 	std::string tilt_joint_name_;			// name of the tilt joint in array of tilt_joint_states_topic_ topic
 
 	ros::Subscriber arm_state_;
 	std::string arm_state_topic_;
 	sensor_msgs::JointState* arm_state_current_;
-	boost::mutex arm_state_data_mutex_;	// secures read operations on pan tilt joint state data
+	boost::mutex arm_state_data_mutex_;	// secures read operations on arm joint state data
 
 public:
-	RobotinoInterface(ros::NodeHandle nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
+	RobotinoInterface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
 	~RobotinoInterface();
 
 	std::string getRobotName();

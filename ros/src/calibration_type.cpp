@@ -64,7 +64,6 @@ CalibrationType::CalibrationType() :
 void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface)
 {
 	node_handle_ = nh;
-	//transform_listener_ = nh;
 	calibration_interface_ = calib_interface;
 
 	std::cout << "\n========== CalibrationType Parameters ==========\n";
