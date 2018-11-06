@@ -59,16 +59,9 @@
 #include <robotino_calibration/time_utilities.h>
 
 
-// ToDo: Implement calibration order mechanics! [Already possible]
-// ToDo: Implement snapshot save/load system [done]
-// ToDo: Move calibration_utilities to calibration_interface package and merge with interface header [done]
 // ToDo: Create custom exception classes for exception handling
-// ToDo: Create snapshot folder as well [done]
-// ToDo: Use std::chrono for timing #include <chrono> [done]
-// ToDo: Add a way here so that user can define order more easily?
 // ToDo: Save snapshots one by one instead of just once at the end -> ability to restore current routine after crash
 // ToDo: Rename package to libextrinsic_calibration, also in CMakeList (but without lib tag there)
-// ToDo: Loading data from disk fails for more complex calibrations, check why [Done]
 
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface, const bool load_data_from_disk) :
@@ -288,7 +281,6 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 	std::cout << "calibration setups generated: " << calibration_setups_.size() << std::endl;
 
-	// ToDo: Cout calibration setups here
 	for ( int i=0; i<calibration_setups_.size(); ++i )
 	{
 		std::cout << std::endl << "Calibration Setup " << (i+1) << ":" << std::endl;
@@ -912,42 +904,34 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 
 		// build marker points for extrinsic calibration of uncertainty parent
 		cv::Mat up_to_last_otherbranch_frame = up_to_origin * origin_to_last_otherbranch_frame;
-		//std::cout << "UP TO LAST: " << up_to_last_otherbranch_frame << std::endl;
 		for ( int j=0; j<otherbranch_last_to_parent_markers.size(); ++j )
 		{
 			std::string parent_marker_frame = otherbranch_last_to_parent_markers[j].child_;
 			std::vector<cv::Point3f> pattern_points_3d;
 			calibration_interface_->getPatternPoints3D(parent_marker_frame, pattern_points_3d);  // get pattern points of current marker
 			cv::Mat uncertainty_parent_to_marker = up_to_last_otherbranch_frame * otherbranch_last_to_parent_markers[j].transform_;
-			//std::cout << "UP LAST TO MARKER: " << otherbranch_last_to_parent_markers[j].transform_ <<std::endl;
-			//std::cout << "UP TO MARKER: " << uncertainty_parent_to_marker << std::endl;
 
 			for ( int k=0; k<pattern_points_3d.size(); ++k )
 			{
 				cv::Mat marker_point = cv::Mat(cv::Vec4d(pattern_points_3d[k].x, pattern_points_3d[k].y, pattern_points_3d[k].z, 1.0));
 				cv::Mat point_parent = uncertainty_parent_to_marker * marker_point;
 				points_3d_uncertainty_parent.push_back( cv::Point3d(point_parent.at<double>(0), point_parent.at<double>(1), point_parent.at<double>(2)) );
-				//std::cout << current_uncertainty.parent_ << " TO " << parent_marker_frame << ": " << point_parent.at<double>(0) << "," << point_parent.at<double>(1) << "," << point_parent.at<double>(2) << std::endl;
 			}
 		}
 
 		// build marker points for extrinsic calibration of uncertainty child
-		//std::cout << "UC TO LAST: " << uc_to_last_branch_frame << std::endl;
 		for ( int j=0; j<branch_last_to_child_markers.size(); ++j )
 		{
 			std::string child_marker_frame = branch_last_to_child_markers[j].child_;
 			std::vector<cv::Point3f> pattern_points_3d;
 			calibration_interface_->getPatternPoints3D(child_marker_frame, pattern_points_3d);  // get pattern points of current marker
 			cv::Mat uncertainty_child_to_marker = uc_to_last_branch_frame * branch_last_to_child_markers[j].transform_;
-			//std::cout << "UC LAST TO MARKER: " << branch_last_to_child_markers[j].transform_ << std::endl;
-			//std::cout << "UC TO MARKER: " << uncertainty_child_to_marker << std::endl;
 
 			for ( int k=0; k<pattern_points_3d.size(); ++k )
 			{
 				cv::Mat marker_point = cv::Mat(cv::Vec4d(pattern_points_3d[k].x, pattern_points_3d[k].y, pattern_points_3d[k].z, 1.0));
 				cv::Mat point_child = uncertainty_child_to_marker * marker_point;
 				points_3d_uncertainty_child.push_back( cv::Point3d(point_child.at<double>(0), point_child.at<double>(1), point_child.at<double>(2)) );
-				//std::cout << current_uncertainty.child_ << " TO " << child_marker_frame << ": " << point_child.at<double>(0) << "," << point_child.at<double>(1) << "," << point_child.at<double>(2) << std::endl;
 			}
 		}
 	}
@@ -1074,12 +1058,12 @@ bool RobotCalibration::retrieveTransform(const std::string parent, const std::st
 			if ( uncertainty.calibrated_ )
 			{
 				if ( uncertainty.child_.compare(child) == 0 && uncertainty.parent_.compare(parent) == 0 )
-				{//std::cout << "RETRIEVE CALIB FWD: " << parent << " to " << child << std::endl;
+				{
 					trafo = calibration_setups_[i].uncertainties_list_[j].current_trafo_.clone();
 					return true;
 				}
 				else if ( uncertainty.child_.compare(parent) == 0 && uncertainty.parent_.compare(child) == 0 )  // return inverse
-				{//std::cout << "RETRIEVE CALIB INV: " << parent << " to " << child << std::endl;
+				{
 					trafo = calibration_setups_[i].uncertainties_list_[j].current_trafo_.inv();
 					return true;
 				}
@@ -1091,12 +1075,12 @@ bool RobotCalibration::retrieveTransform(const std::string parent, const std::st
 	for ( int i=0; i<branch.size(); ++i )
 	{
 		if ( branch[i].child_.compare(child) == 0 && branch[i].parent_.compare(parent) == 0 )  // in right order
-		{//std::cout << "RETRIEVE TF FWD: " << parent << " to " << child << std::endl;
+		{
 			trafo = branch[i].transform_.clone();
 			return true;
 		}
 		else if ( branch[i].child_.compare(parent) == 0 && branch[i].parent_.compare(child) == 0 )  // order swapped -> inverse
-		{//std::cout << "RETRIEVE TF INV: " << parent << " to " << child << std::endl;
+		{
 			trafo = branch[i].transform_.inv();
 			return true;
 		}

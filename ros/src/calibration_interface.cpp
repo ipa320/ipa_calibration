@@ -59,8 +59,7 @@ CalibrationInterface::CalibrationInterface()
 {
 }
 
-CalibrationInterface::CalibrationInterface(ros::NodeHandle nh) :
-				node_handle_(nh)
+CalibrationInterface::CalibrationInterface(ros::NodeHandle* nh) : node_handle_(*nh)
 {
 }
 

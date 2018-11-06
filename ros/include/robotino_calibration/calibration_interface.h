@@ -69,7 +69,7 @@ protected:
 public:
 
 	CalibrationInterface();
-	CalibrationInterface(ros::NodeHandle nh);
+	CalibrationInterface(ros::NodeHandle* nh);
 	virtual ~CalibrationInterface();
 
 	// apply new configuration to robot
