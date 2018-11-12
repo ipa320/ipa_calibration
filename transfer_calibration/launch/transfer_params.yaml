@@ -1,0 +1,15 @@
+# string
+calibration_path: "/home/rmb/Desktop"
+
+# string
+calibration_file: "result.xml"
+
+# string
+target_path: "/home/rmb/Desktop"
+
+# string
+target_file: "target.xml"
+
+# vector<string>
+parameters: ["arm_base_x"]
+
