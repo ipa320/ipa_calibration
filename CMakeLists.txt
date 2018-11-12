@@ -74,7 +74,6 @@ include_directories(
 	ros/include
 	${catkin_INCLUDE_DIRS} 		# same name as find_package
 	${Boost_INCLUDE_DIRS}
-	${robotino_calibration_INCLUDE_DIRS}
 )
 
 # calibration software
@@ -94,7 +93,6 @@ add_executable(camera_laserscanner_calibration	ros/src/camera_laserscanner_calib
 target_link_libraries(camera_laserscanner_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
-	${robotino_calibration_LIBRARIES}
 )
 
 add_dependencies(camera_laserscanner_calibration	${catkin_EXPORTED_TARGETS})
@@ -113,7 +111,6 @@ add_executable(camera_arm_calibration	ros/src/camera_arm_calibration_node.cpp
 target_link_libraries(camera_arm_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
-	${robotino_calibration_LIBRARIES}
 )
 
 add_dependencies(camera_arm_calibration		${catkin_EXPORTED_TARGETS})
@@ -124,7 +121,6 @@ add_executable(checkerboard_detection	ros/src/checkerboard_detection_node.cpp
 )
 target_link_libraries(checkerboard_detection
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
-	${robotino_calibration_LIBRARIES}
 )
 add_dependencies(checkerboard_detection		${catkin_EXPORTED_TARGETS})
 
