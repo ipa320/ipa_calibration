@@ -69,7 +69,7 @@ CornerLocalization::CornerLocalization(ros::NodeHandle& nh)
 	const int num_points = temp.size()/2;
 	if (temp.size()%2 != 0 || temp.size() < 3*2)
 	{
-		ROS_ERROR("The side_wall_polygon vector should contain at least 3 points with 2 values (x,y) each.");
+		ROS_ERROR("CornerLocalization::CornerLocalization - The side_wall_polygon vector should contain at least 3 points with 2 values (x,y) each.");
 		return;
 	}
 	std::cout << "Side wall polygon points:\n";
@@ -79,7 +79,7 @@ CornerLocalization::CornerLocalization(ros::NodeHandle& nh)
 		std::cout << temp[2*i] << "\t" << temp[2*i+1] << std::endl;
 	}
 
-	ROS_INFO("CornerLocalization: Initialized.");
+	ROS_INFO("CornerLocalization::CornerLocalization - Initialized.");
 	initialized_ = true;
 }
 
@@ -105,7 +105,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	bool received_transform = RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, laser_scan_msg->header.frame_id, T);
 	if (received_transform==false)
  	{
-		ROS_WARN("CornerLocalization::callback: Could not determine transform T between laser scanner and base.");
+		ROS_WARN("CornerLocalization::callback - Could not determine transform T between laser scanner and base.");
 		return;
 	}
 
@@ -138,7 +138,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	bool found_front_line = estimateFrontWall(scan_front, line_front, 0.1, 0.99999, inlier_distance, 10);
 	if (found_front_line == false)
 	{
-		ROS_WARN("CornerLocalization::callback: front wall could not be estimated.");
+		ROS_WARN("CornerLocalization::callback - Front wall could not be estimated.");
 		return;
 	}
 	const double px_f = line_front.val[0];	// coordinates of a point on front the wall
@@ -165,17 +165,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	{
 		if (scan_side.size() < 2)
 		{
-			ROS_WARN("CornerLocalization::callback: no points left for estimating side wall.");
-
-			// experimental code to deactivate child frame when it cannot be detected reliably anymore -> move it 10 m under robot
-			/*tf::Vector3 translation(0, 0, -10);
-			tf::Quaternion orientation(tf::Vector3(0,0,1), 0);
-			tf::StampedTransform transform_table_reference;
-			transform_table_reference.setOrigin(translation);
-			transform_table_reference.setRotation(orientation);
-			tf::StampedTransform tf_msg(transform_table_reference, laser_scan_msg->header.stamp, base_frame_, child_frame_name_);
-			transform_broadcaster_.sendTransform(tf_msg);*/
-
+			ROS_WARN("CornerLocalization::callback - No points left for estimating side wall.");
 			return;
 		}
 
@@ -183,7 +173,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 		bool result = RelativeLocalizationUtilities::fitLine(scan_side, line_side, 0.1, 0.99999, inlier_distance, false);
 		if (!result || line_side.val[0] != line_side.val[0] || line_side.val[1] != line_side.val[1] || line_side.val[2] != line_side.val[2] || line_side.val[3] != line_side.val[3])
 		{
-			ROS_WARN("CornerLocalization::callback: side wall could not be estimated in trial %i. Trying next.", i);
+			ROS_WARN("CornerLocalization::callback - Side wall could not be estimated in trial %i. Trying next.", i);
 			continue;
 		}
 
@@ -207,7 +197,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	}
 	if (found_side_line == false)
 	{
-		ROS_WARN("CornerLocalization::callback: side wall could not be estimated.");
+		ROS_WARN("CornerLocalization::callback - Side wall could not be estimated.");
 		return;
 	}
 
