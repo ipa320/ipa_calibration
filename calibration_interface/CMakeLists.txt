@@ -58,7 +58,6 @@ LIBRARIES
 CATKIN_DEPENDS
 	${catkin_RUN_PACKAGES}
 DEPENDS
-	CalibrationTools
 	Boost
 	OpenCV
 )
