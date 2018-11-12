@@ -12,8 +12,11 @@
 
 
   <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>calibration_interface</run_depend>
+  <run_depend>jointstate_saver</run_depend>
   <run_depend>relative_localization</run_depend>
   <run_depend>robotino_calibration</run_depend>
+  <run_depend>transfer_calibration</run_depend>
 
   <export>
     <metapackage/>
