@@ -31,7 +31,6 @@ set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is 
 
 set(catkin_BUILD_PACKAGES 
 	${catkin_RUN_PACKAGES}
-	cmake_modules
 )
 
 ## Find catkin macros and libraries
