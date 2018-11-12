@@ -65,7 +65,7 @@ namespace transform_utilities
 	// 1. rotation = yaw around z
 	// 2. rotation = pitch around y'
 	// 3. rotation = roll around x''
-	cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
+	/*cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
 	{
 		double sy = sin(yaw);
 		double cy = cos(yaw);
@@ -79,7 +79,7 @@ namespace transform_utilities
 				sr*sy - cr*cy*sp,		cy*sr + cr*sp*sy,		cp*cr);
 
 		return rotation;
-	}
+	}*/
 
 	// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
 	cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot)
@@ -91,13 +91,6 @@ namespace transform_utilities
 		double yaw, pitch, roll;
 		r_mat.getEulerYPR(yaw, pitch, roll, 1);
 		return cv::Vec3d(yaw, pitch, roll);
-
-		/*Eigen::Matrix3f rot_eigen;
-		for (int i=0; i<3; ++i)
-			for (int j=0; j<3; ++j)
-				rot_eigen(i,j) = rot.at<double>(i,j);
-		Eigen::Vector3f euler_angles = rot_eigen.eulerAngles(2,1,0);
-		return cv::Vec3d(euler_angles(0), euler_angles(1), euler_angles(2));*/
 	}
 
 	cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t)
@@ -132,7 +125,7 @@ namespace transform_utilities
 		}
 		else
 		{
-			ROS_WARN("String does not contain amount of values for a transformation (exactly 6 needed).");
+			ROS_WARN("transform_utilities::stringToTransform - String does not contain amount of values for a transformation (exactly 6 needed).");
 
 			trafo = ( cv::Mat_<double>(4,4) <<
 							0., 0., 0., 0.,
@@ -158,7 +151,7 @@ namespace transform_utilities
 				const double current_time = ros::Time::now().toSec();
 
 				if ( !Ts.stamp_.isValid() || current_time - Ts.stamp_.toSec() > timeout )
-					throw tf::TransformException("getTransform: Transform from "+target_frame+" to "+source_frame+" timed out.");
+					throw tf::TransformException("transform_utilities::getTransform - Transform from "+target_frame+" to "+source_frame+" timed out.");
 			}
 
 			const tf::Matrix3x3& rot = Ts.getBasis();
@@ -179,7 +172,7 @@ namespace transform_utilities
 		catch (tf::TransformException& ex)
 		{
 			if ( report_error )
-				ROS_WARN("%s",ex.what());
+				ROS_WARN("transform_utilities::getTransform - %s",ex.what());
 
 			return false;
 		}

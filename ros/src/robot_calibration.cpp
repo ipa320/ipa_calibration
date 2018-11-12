@@ -72,7 +72,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 	if (calibration_interface_ == 0) // Throw exception, as we need an calibration interface in order to function properly!
 	{
-		ROS_FATAL("Could not create a calibration interface.");
+		ROS_FATAL("RobotCalibration::RobotCalibration - Calibration interface has not been created.");
 		throw std::exception();
 	}
 
@@ -105,7 +105,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		std::cout << "transform_discard_timeout: " << transform_discard_timeout_ << std::endl;
 
 		// hack to fix tf::waitForTransform throwing error that transforms do not exist when now() == 0 at startup
-		ROS_INFO("Waiting for TF listener to initialize...");
+		ROS_INFO("RobotCalibration::RobotCalibration - Waiting for TF listener to initialize...");
 		const double start_time = time_utilities::getSystemTimeSec();
 		while ( time_utilities::getTimeElapsedSec(start_time) < 10.f )
 		{
@@ -114,7 +114,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 			ros::Duration(0.2f).sleep();
 		}
-		ROS_INFO("End waiting for TF to initialize.");
+		ROS_INFO("RobotCalibration::RobotCalibration - End waiting for TF to initialize.");
 
 		// load gaps including its initial values
 		std::vector<std::string> uncertainties_list;
@@ -122,12 +122,12 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 		if ( uncertainties_list.empty() )
 		{
-			ROS_WARN("Uncertainties list is empty... nothing to do.");
+			ROS_WARN("RobotCalibration::RobotCalibration - Uncertainties list is empty... nothing to do.");
 			return;
 		}
 
 		if ( uncertainties_list.size() % 6 != 0 )
-			ROS_WARN("Size of uncertainsties_list is not a factor of 6: [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]");
+			ROS_WARN("RobotCalibration::RobotCalibration - Size of uncertainsties_list is not a factor of 6: [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]");
 
 		// create calibration setups, check for errors
 		for ( int i=0; i<uncertainties_list.size(); i+=6 )
@@ -140,21 +140,21 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 			bool success = transform_listener_.waitForTransform(parent, child, ros::Time(0), ros::Duration(1.0));
 			if ( !success )
 			{
-				ROS_ERROR("Transform from parent frame %s to child frame %s does not exist, skipping.", parent.c_str(), child.c_str());
+				ROS_ERROR("RobotCalibration::RobotCalibration - Transform from parent frame %s to child frame %s does not exist, skipping.", parent.c_str(), child.c_str());
 				continue;
 			}
 
 			success = transform_listener_.waitForTransform(parent, last_parent_branch_frame, ros::Time(0), ros::Duration(1.0));
 			if ( !success )
 			{
-				ROS_ERROR("Transform from parent frame %s to last parent-branch frame %s does not exist, skipping.", parent.c_str(), last_parent_branch_frame.c_str());
+				ROS_ERROR("RobotCalibration::RobotCalibration - Transform from parent frame %s to last parent-branch frame %s does not exist, skipping.", parent.c_str(), last_parent_branch_frame.c_str());
 				continue;
 			}
 
 			success = transform_listener_.waitForTransform(child, last_child_branch_frame, ros::Time(0), ros::Duration(1.0));
 			if ( !success )
 			{
-				ROS_ERROR("Transform from child frame %s to last child-branch frame %s does not exist, skipping.", child.c_str(), last_child_branch_frame.c_str());
+				ROS_ERROR("RobotCalibration::RobotCalibration - Transform from child frame %s to last child-branch frame %s does not exist, skipping.", child.c_str(), last_child_branch_frame.c_str());
 				continue;
 			}
 
@@ -192,7 +192,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 						if ( !success )
 						{
-							ROS_ERROR("Could not build parent- or child-branch, skipping uncertainty from %s to %s.", parent.c_str(), child.c_str());
+							ROS_ERROR("RobotCalibration::RobotCalibration - Could not build parent- or child-branch, skipping uncertainty from %s to %s.", parent.c_str(), child.c_str());
 							continue;
 						}
 
@@ -202,17 +202,17 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 						getForwardChain(child_branch_reversed, setup.child_branch_);
 
 						if ( setup.parent_branch_.size() == 0 || setup.child_branch_.size() == 0 )
-							ROS_WARN("Parent- or child-branch is empty. Proceeding...");
+							ROS_WARN("RobotCalibration::RobotCalibration - Parent- or child-branch is empty. Proceeding...");
 
 						feedCalibrationSetup(setup, parent, child, parent_marker, child_marker);
 						calibration_setups_.push_back(setup);
 					}
 				}
 				else
-					ROS_WARN("No mutual origin found, skipping uncertainty from %s to %s.", parent.c_str(), child.c_str());
+					ROS_WARN("RobotCalibration::RobotCalibration - No mutual origin found, skipping uncertainty from %s to %s.", parent.c_str(), child.c_str());
 			}
 			else
-				ROS_WARN("Given parent frame does not match actual parent (%s) in tf tree. Given parent: %s, given child: %s", actual_parent.c_str(), uncertainties_list[i].c_str(), child.c_str());
+				ROS_WARN("RobotCalibration::RobotCalibration - Given parent frame does not match actual parent (%s) in tf tree. Given parent: %s, given child: %s", actual_parent.c_str(), uncertainties_list[i].c_str(), child.c_str());
 		}
 
 		// remove all corrupted entries in calibration setups vector
@@ -220,7 +220,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		{
 			if ( calibration_setups_[i].uncertainties_list_.size() == 0 )  // remove corrupted setups
 			{
-				ROS_WARN("No transform to calibrate found in calibration setup -> removing setup.");
+				ROS_WARN("RobotCalibration::RobotCalibration - No transform to calibrate found in calibration setup -> removing setup.");
 				calibration_setups_.erase(calibration_setups_.begin()+i);
 				--i;
 				continue;
@@ -231,7 +231,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 				if ( calibration_setups_[i].uncertainties_list_[j].parent_markers_.size() == 0 ||
 						calibration_setups_[i].uncertainties_list_[j].child_markers_.size() == 0 )
 				{
-					ROS_WARN("Empty parent or child_markers for %s to %s -> removing transform", calibration_setups_[i].uncertainties_list_[j].parent_.c_str(), calibration_setups_[i].uncertainties_list_[j].child_.c_str());
+					ROS_WARN("RobotCalibration::RobotCalibration - Empty parent or child_markers for %s to %s -> removing transform", calibration_setups_[i].uncertainties_list_[j].parent_.c_str(), calibration_setups_[i].uncertainties_list_[j].child_.c_str());
 					calibration_setups_[i].uncertainties_list_.erase(calibration_setups_[i].uncertainties_list_.begin()+j);
 					--j;
 				}
@@ -239,7 +239,7 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 			if ( calibration_setups_[i].uncertainties_list_.size() == 0 )  // check again
 			{
-				ROS_WARN("No transform to calibrate found in calibration setup -> removing setup.");
+				ROS_WARN("RobotCalibration::RobotCalibration - No transform to calibrate found in calibration setup -> removing setup.");
 				calibration_setups_.erase(calibration_setups_.begin()+i);
 				--i;
 			}
@@ -268,14 +268,14 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		bool result = file_utilities::loadCalibrationSetups(calibration_setups_, (calibration_storage_path_+calib_data_folder_), calib_data_file_name_);
 		if ( !result )
 		{
-			ROS_ERROR("Can't load calibration setups from disk: Exiting.");
+			ROS_ERROR("RobotCalibration::RobotCalibration - Can't load calibration setups from disk: Exiting.");
 			throw std::exception();
 		}
 	}
 
 	if ( calibration_setups_.size() == 0 )
 	{
-		ROS_WARN("No calibration setup entry found: Exiting.");
+		ROS_WARN("RobotCalibration::RobotCalibration - No calibration setup entry found: Exiting.");
 		throw std::exception();
 	}
 
@@ -355,7 +355,7 @@ bool RobotCalibration::getOrigin(const std::string last_parent_branch_frame, con
 {
 	if ( last_parent_branch_frame.empty() || last_child_branch_frame.empty() )
 	{
-		ROS_ERROR("Invalid last parent-branch frame or last child-branch frame!");
+		ROS_ERROR("RobotCalibration::getOrigin - Invalid last parent-branch frame or last child-branch frame!");
 		return false;
 	}
 
@@ -383,7 +383,7 @@ bool RobotCalibration::getOrigin(const std::string last_parent_branch_frame, con
 	}
 	while ( transform_listener_.getParent(frame, ros::Time(0), frame) );  // go back from last_child_branch_frame on and see where it meets with parent_frames
 
-	ROS_WARN("No mutual origin found between %s and %s.", last_parent_branch_frame.c_str(), last_child_branch_frame.c_str());
+	ROS_WARN("RobotCalibration::getOrigin - No mutual origin found between %s and %s.", last_parent_branch_frame.c_str(), last_child_branch_frame.c_str());
 	return false;
 }
 
@@ -425,7 +425,7 @@ void RobotCalibration::feedCalibrationSetup(CalibrationSetup &setup, const std::
 				if ( setup.uncertainties_list_[i].parent_markers_[j].compare(parent_marker) == 0 &&
 						setup.uncertainties_list_[i].child_markers_[j].compare(child_marker) == 0 )  // marker frames already exist -> nothing to do here anymore
 				{
-					ROS_WARN("There are redundant entries within your uncertainties list." );
+					ROS_WARN("RobotCalibration::feedCalibrationSetup - There are redundant entries within the uncertainties list." );
 					return;
 				}
 			}
@@ -451,7 +451,7 @@ void RobotCalibration::feedCalibrationSetup(CalibrationSetup &setup, const std::
 		setup.uncertainties_list_.push_back(info);
 	}
 	else
-		ROS_WARN("Unable to get transform from %s to %s, skipping uncertainty.", parent.c_str(), child.c_str());
+		ROS_WARN("RobotCalibration::feedCalibrationSetup - Unable to get transform from %s to %s, skipping uncertainty.", parent.c_str(), child.c_str());
 }
 
 bool RobotCalibration::getBackChain(const std::string frame_start, const std::string frame_end, std::vector<std::string> &backchain)
@@ -466,7 +466,7 @@ bool RobotCalibration::getBackChain(const std::string frame_start, const std::st
 
 			if ( !transform_listener_.getParent(frame, ros::Time(0), frame) )
 			{
-				ROS_WARN("Could not create back chain for frame %s, no parent frame for %s!", frame_start.c_str(), frame.c_str());
+				ROS_WARN("RobotCalibration::getBackChain - Could not create back chain for frame %s, no parent frame for %s!", frame_start.c_str(), frame.c_str());
 				backchain.clear();
 				return false;
 			}
@@ -540,7 +540,7 @@ bool RobotCalibration::startCalibration()
 {
 	if ( calibration_interface_ == 0 ) // Throw exception, as we need an calibration interface in order to function properly!
 	{
-		ROS_FATAL("Calibration interface has not been set up!");
+		ROS_FATAL("RobotCalibration::startCalibration - Calibration interface has not been created!");
 		throw std::exception();
 	}
 
@@ -567,7 +567,7 @@ bool RobotCalibration::startCalibration()
 			{
 				if ( !ros::ok() || !extrinsicCalibration(l, j) )
 				{
-					ROS_ERROR("Calibration failed!");
+					ROS_ERROR("RobotCalibration::startCalibration - Calibration has failed!");
 					return false;
 				}
 			}
@@ -665,7 +665,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 		}
 		else
 		{
-			ROS_ERROR("Could not build parent branch, skipping to snapshot current configuration!");
+			ROS_ERROR("RobotCalibration::populateTFSnapshot - Could not build parent branch, skipping to snapshot current configuration!");
 			return;
 		}
 	}
@@ -684,7 +684,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 		}
 		else
 		{
-			ROS_ERROR("Could not build parent branch, skipping to snapshot current configuration!");
+			ROS_ERROR("RobotCalibration::populateTFSnapshot - Could not build parent branch, skipping to snapshot current configuration!");
 			return;
 		}
 	}
@@ -743,7 +743,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 
 		if ( to_parent_markers.size() != to_child_markers.size() )
 		{
-			ROS_ERROR("to_parent_markers vector has not same size as to_child_markers vector, skipping to snapshot current configuration!");
+			ROS_ERROR("RobotCalibration::populateTFSnapshot - to_parent_markers vector has not same size as to_child_markers vector, skipping to snapshot current configuration!");
 			return;
 		}
 
@@ -765,7 +765,7 @@ void RobotCalibration::populateTFSnapshot(const CalibrationSetup &setup, TFSnaps
 		}
 		else
 		{
-			ROS_WARN("Snapshot: No relevant markers found during current configuration.");  // return here, don't check other uncertainties (even tho we might get detections), so we avoid empty entries in our snapshot vector
+			ROS_WARN("No relevant markers have been found during current configuration.");  // return here, don't check other uncertainties (even tho we might get detections), so we avoid empty entries in our snapshot vector
 			return;
 		}
 	}
@@ -811,7 +811,7 @@ void RobotCalibration::displayAndSaveCalibrationResult()
 	if ( ros::ok() )  // if program has been killed, do not save results
 		file_utilities::saveCalibrationResult((calibration_storage_path_+"/"+output_file_name), output.str());  // save results to disk
 	else
-		ROS_WARN("Not saving calibration results.");
+		ROS_WARN("RobotCalibration::displayAndSaveCalibrationResult - Not saving calibration results.");
 }
 
 bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const int current_uncertainty_idx)
@@ -853,7 +853,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 
 		if ( branch_last_to_child_markers_tmp == 0 || otherbranch_last_to_parent_markers_tmp == 0 )
 		{
-			ROS_WARN("Child or parent markers vector cannot be found in current snapshot %d, skipping", i);
+			ROS_WARN("RobotCalibration::extrinsicCalibration - Child or parent markers vector cannot be found in current snapshot %d, skipping", i);
 			continue;
 		}
 
@@ -862,13 +862,13 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 
 		if ( branch_last_to_child_markers.size() == 0 || otherbranch_last_to_parent_markers.size() == 0 )
 		{
-			ROS_WARN("Child or parent markers vector is empty in snapshot %d, skipping.", i);
+			ROS_WARN("RobotCalibration::extrinsicCalibration - Child or parent markers vector is empty in snapshot %d, skipping.", i);
 			continue;
 		}
 
 		if ( branch_last_to_child_markers.size() != otherbranch_last_to_parent_markers.size() )
 		{
-			ROS_WARN("branch_to_child_markers vector and otherbranch_to_parent_markers vector do not have the same size in snapshot %d, skipping.", i);
+			ROS_WARN("RobotCalibration::extrinsicCalibration - branch_to_child_markers vector and otherbranch_to_parent_markers vector do not have the same size in snapshot %d, skipping.", i);
 			continue;
 		}
 
@@ -898,7 +898,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 
 		if ( !success )
 		{
-			ROS_ERROR("Failed to build one or more necessary transforms, skipping snapshot %d.", i);
+			ROS_ERROR("RobotCalibration::extrinsicCalibration - Failed to build one or more necessary transforms, skipping snapshot %d.", i);
 			continue;
 		}
 
@@ -938,7 +938,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 
 	if ( points_3d_uncertainty_parent.size() == 0 || points_3d_uncertainty_child.size() == 0 )
 	{
-		ROS_ERROR("One uncertainty points vector is empty, transform from %s to %s not calibrated, skipping uncertainty!", current_uncertainty.parent_.c_str(), current_uncertainty.child_.c_str());
+		ROS_ERROR("RobotCalibration::extrinsicCalibration - One uncertainty points vector is empty, transform from %s to %s not calibrated, skipping uncertainty!", current_uncertainty.parent_.c_str(), current_uncertainty.child_.c_str());
 		return false;
 	}
 
@@ -951,7 +951,7 @@ bool RobotCalibration::extrinsicCalibration(const int current_setup_idx, const i
 	}
 	else
 	{
-		ROS_ERROR("Uncertainty points vectors do not have same size, transform from %s to %s not calibrated, skipping uncertainty!", current_uncertainty.parent_.c_str(), current_uncertainty.child_.c_str());
+		ROS_ERROR("RobotCalibration::extrinsicCalibration - Uncertainty points vectors do not have same size, transform from %s to %s not calibrated, skipping uncertainty!", current_uncertainty.parent_.c_str(), current_uncertainty.child_.c_str());
 	}
 
 	return false;
@@ -1001,7 +1001,7 @@ bool RobotCalibration::buildTransformChain(const std::string start, const std::s
 
 	if ( start_idx < 0 || end_idx < 0 )  // invalid index
 	{
-		ROS_WARN("Could not build transform chain from %s to %s in current snapshot", start.c_str(), end.c_str());
+		ROS_ERROR("RobotCalibration::buildTransformChain - Could not build transform chain from %s to %s in current snapshot", start.c_str(), end.c_str());
 		return false;
 	}
 	else if ( start_idx < end_idx )  // normal forward transform
@@ -1086,7 +1086,7 @@ bool RobotCalibration::retrieveTransform(const std::string parent, const std::st
 		}
 	}
 
-	ROS_WARN("Could not retrieve transform from %s to %s in current snapshot", parent.c_str(), child.c_str());
+	ROS_ERROR("RobotCalibration::retrieveTransform - Could not retrieve transform from %s to %s in current snapshot", parent.c_str(), child.c_str());
 	return false;
 }
 

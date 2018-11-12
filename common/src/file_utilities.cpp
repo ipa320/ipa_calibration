@@ -67,7 +67,7 @@ namespace file_utilities
 		{
 			if (boost::filesystem::create_directories(storage_path) == false && boost::filesystem::exists(storage_path) == false)
 			{
-				ROS_ERROR("RobotCalibration: Could not create directory %s ", storage_path.c_str());
+				ROS_ERROR("file_utilities::createStorageFolder - Could not create directory %s ", storage_path.c_str());
 				return;
 			}
 		}
@@ -80,7 +80,7 @@ namespace file_utilities
 		if (file_output.is_open())
 			file_output << content;
 		else
-			ROS_WARN("Failed to open %s, can't save calibration results!", file_path.c_str());
+			ROS_WARN("file_utilities::saveCalibrationResult - Failed to open %s, can't save calibration results!", file_path.c_str());
 		file_output.close();
 	}
 
@@ -107,7 +107,7 @@ namespace file_utilities
 		if (file_output.is_open())
 			file_output << stream.str();
 		else
-			ROS_WARN("Failed to open %s, can't save snapshot data!", file_path.c_str());
+			ROS_WARN("file_utilities::saveSnapshots - Failed to open %s, can't save snapshot data!", file_path.c_str());
 		file_output.close();
 	}
 
@@ -132,7 +132,7 @@ namespace file_utilities
 
 			if ( trafo.compare("") == 0 )
 			{
-				ROS_WARN("Bad transformation, skipping to save entry.");
+				ROS_WARN("file_utilities::formatTFInfos - Bad transformation, skipping to save entry.");
 				return;
 			}
 
@@ -226,7 +226,7 @@ namespace file_utilities
 		}
 		else
 		{
-			ROS_WARN("Failed to open %s, can't load snapshot data!", file_path.c_str());
+			ROS_WARN("file_utilities::loadSnapshots - Failed to open %s, can't load snapshot data!", file_path.c_str());
 			result = false;
 		}
 
@@ -284,7 +284,7 @@ namespace file_utilities
 		}
 		else
 		{
-			ROS_WARN("String does not contain amount of values for a transformation (exactly 16 values needed).");
+			ROS_WARN("file_utilities::stringToTrafo - String does not contain amount of values for a transformation (exactly 16 values needed).");
 
 			trafo = ( cv::Mat_<double>(4,4) <<
 							1., 0., 0., 0.,
@@ -325,7 +325,7 @@ namespace file_utilities
 		if (file_output.is_open())
 			file_output << "Created at: " << time_utilities::getCurrentTimeStamp() << std::endl << stream.str();
 		else
-			ROS_WARN("Failed to open %s, can't save calibration setups!", file_path.c_str());
+			ROS_WARN("file_utilities::saveCalibrationSetups - Failed to open %s, can't save calibration setups!", file_path.c_str());
 		file_output.close();
 	}
 
@@ -397,7 +397,7 @@ namespace file_utilities
 		}
 		else
 		{
-			ROS_WARN("Failed to open %s, can't load calibration setups!", file_path.c_str());
+			ROS_WARN("file_utilities::loadCalibrationSetups - Failed to open %s, can't load calibration setups!", file_path.c_str());
 			result = false;
 		}
 
