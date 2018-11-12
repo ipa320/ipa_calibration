@@ -89,12 +89,10 @@ add_executable(camera_laserscanner_calibration	ros/src/camera_laserscanner_calib
 												ros/src/pitag_marker.cpp
 												common/src/pose_definition.cpp
 )
-
 target_link_libraries(camera_laserscanner_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
 )
-
 add_dependencies(camera_laserscanner_calibration	${catkin_EXPORTED_TARGETS})
 
 add_executable(camera_arm_calibration	ros/src/camera_arm_calibration_node.cpp
@@ -107,12 +105,10 @@ add_executable(camera_arm_calibration	ros/src/camera_arm_calibration_node.cpp
 										ros/src/calibration_marker.cpp
 										ros/src/checkerboard_marker.cpp
 )
-
 target_link_libraries(camera_arm_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
 )
-
 add_dependencies(camera_arm_calibration		${catkin_EXPORTED_TARGETS})
 
 add_executable(checkerboard_detection	ros/src/checkerboard_detection_node.cpp
@@ -153,7 +149,14 @@ install(TARGETS camera_laserscanner_calibration camera_arm_calibration checkerbo
 
 
 # Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY common/include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
+
+# Mark cpp header files for installation
+install(DIRECTORY ros/include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
