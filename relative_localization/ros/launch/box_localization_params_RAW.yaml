@@ -1,0 +1,37 @@
+# Defines how fast new measurements are averaged into the transformation estimate (new_value = (1-update_rate)*old_value + update_rate*measurement). [0,1]
+# double
+update_rate: 0.75
+
+# The name of the computed reference frame.
+# string
+reference_frame: "/landmark_reference_nav"
+
+# height above ground of base frame
+# double
+base_height: 0.0
+
+# base link of robot
+# string
+base_frame: "base_link"
+
+# laser scanner topic
+# string
+laser_scanner_topic_in: "/base_laser_front/scan"
+
+# Polygon points that define the area which is used to find the front wall inside.
+# Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points.
+# vector<Point2f>
+front_wall_polygon: [0.3, 0.75,
+                     3, 0.75,
+                     3, -0.75,
+                     0.3, -0.75,
+                     0.3, 0.75]
+
+# Polygon points that define the area which is used to find the box inside.
+# Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points.
+# vector<Point2f>
+box_search_polygon: [0.3, 0.5,
+                     1.5, 0.5,
+                     1.5, -0.5,
+                     0.3, -0.5,
+                     0.3, 0.5]
