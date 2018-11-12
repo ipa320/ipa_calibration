@@ -1,0 +1,47 @@
+### commands needed to move the robot and camera
+## topic names for commanding the pan tilt unit
+# string
+# pan controller
+pan_controller_command: "/shell_controller/neck_pan_controller/command"
+
+# tilt controller
+tilt_controller_command: "/shell_controller/neck_tilt_controller/command"
+
+## topic names for reading the joint state of the pan tilt unit
+# joint states topic for camera unit
+# string
+camera_joint_state_topic: "/shell_controller/joint_states"
+
+# name of the pan joint in camera_joint_state_topic
+# string
+pan_joint_name: "neck_pan_joint"
+
+# name of the pan joint in camera_joint_state_topic
+# string
+tilt_joint_name: "neck_tilt_joint"
+
+# Topic to retrieve the current arm state
+# string
+arm_state_topic: "/arm_controller/joint_states"
+
+# topic to control the arm joints
+# string
+arm_joint_controller_command: "/arm_controller/joint_trajectory_controller/command"
+
+## topic names for commanding the robot base
+# topic name for the base controller
+# string
+base_controller_topic_name: "/cmd_vel"
+
+# Image topic
+# string
+camera_image_topic: "/kinect/rgb/image_raw"
+
+# name of camera frame (on which the image is based on)
+# string
+camera_frame: "kinect_depth_optical_frame"
+
+# calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW, 2 - COB
+# int
+calibration_ID: 0
+

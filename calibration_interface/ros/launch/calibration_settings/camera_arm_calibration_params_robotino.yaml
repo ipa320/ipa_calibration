@@ -1,0 +1,58 @@
+### checkerboard parameters
+# side length of the chessboard squares
+# double
+chessboard_cell_size: 0.03
+
+# Degrees of freedom of arm
+# int
+arm_dof: 6
+
+# Degrees of freedom of camera
+# int
+camera_dof: 2
+
+# number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
+chessboard_pattern_size: [10,6]
+
+### checkerboard observation positions for capturing calibration images
+# List of robot configurations (arm and camera angles in [rad]) for observing the checkerboard attached to robot's end effector
+# Includes <arm_dof>,<camera_dof> parameters per entry. One entry is defined by one line.
+# Each entry consists of the arm angles first and then the camera angles in the end.
+robot_configurations: []
+
+# the transformations between base_frame and the first entry of the uncertainties list and the last entry and camera_optical_frame has to be be available from TF
+# the list contains couples from parent to child. Each couple defines an uncertainty in the kinematic chain which will be calibrated by the program
+# the list must be in order, i.e. uncertainties earlier in the list must also be earlier in the kinematic chain
+# take into account that the transformations between the uncertainties have to be available from TF as well
+uncertainties_list: ["base_linkz","arm_base_link"]
+
+# defines the order in which the uncertainties will be calibrated
+# each couple or uncertainty in the uncertainties_list increases the calibration_order list
+# the value represents the index of an uncertainty in the uncertainties_list and the position of the index in the calibration_order list defines the actual order
+# i.e. the first element in the calibration_order will be calibrated first, then comes the second element and so on...
+# the more uncertain a transform is the earlier should its index be placed in the calibration_order list
+# so the index of the most uncertain transform should be the first element here
+calibration_order: [1]
+
+# checkerboard frame attached to arm (2nd upper left corner) [the transformation between armbase and checkerboard_frame should be available from tf]
+# this transformation is created in the arm_base_calibration.launch file.
+# string
+checkerboard_frame: "checkerboard_frame"
+
+# this is the camera coordinate system which refers to the color image sensor [the transformations between base_frame and camera_optical_frame should be available from tf]
+# string
+camera_optical_frame: "kinect_rgb_optical_frame"
+
+
+### program sequence
+# loads snapshotted data from disk if set to true, for offline calibration
+# bool
+#load_data: true
+
+# max allowed deviation a target angle is allowed to have in terms of the current joint angle [rad]
+# double
+max_angle_deviation: 3
+
+# storage folder that holds the calibration output
+# string
+calibration_storage_path: "robotino_calibration/arm_calibration"

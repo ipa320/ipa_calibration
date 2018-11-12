@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<arg name="robot" default="robotino"/>		<!-- robotino, cob or RAW -->
+	<arg name="load_data" default="false"/>		<!-- whether data that has been stored previously will be loaded, for offline calibration -->
+
+	<!-- Execute follwing group if data won't be loaded from disk -->
+	<group unless="$(arg load_data)">
+
+		<!-- Start markers and setup detection -->
+		<include file="$(find calibration_interface)/ros/launch/checkerboard_setup.launch"/>
+			<arg name="robot" value="$(arg robot)" />
+		</include>
+
+	</group>
+
+	<!-- Start camera-arm calibration method -->
+	<node ns="camera_arm_calibration" name="camera_arm_calibration" pkg="calibration_interface" type="camera_arm_calibration" output="screen">
+		<rosparam command="load" file="$(find calibration_interface)/ros/launch/robot_settings/$(arg robot)_settings.yaml"/>
+		<rosparam command="load" file="$(find calibration_interface)/ros/launch/calibration_settings/camera_arm_calibration_params_$(arg robot).yaml"/>
+		<param name="marker_type" value="checkerboard"/>
+		<param name="load_data" value="$(arg load_data)"/>
+	</node>
+</launch>

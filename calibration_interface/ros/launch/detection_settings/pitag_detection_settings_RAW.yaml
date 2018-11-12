@@ -1,0 +1,7 @@
+# fiducials topic
+# string
+get_fiducials_topic: "/fiducials/get_fiducials"
+
+# update frequency (has to be positive) at which the detection will be tried to loop at [in Hz]
+# double
+update_frequency: 10

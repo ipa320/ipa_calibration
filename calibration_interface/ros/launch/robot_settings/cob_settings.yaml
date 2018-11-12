@@ -1,0 +1,36 @@
+### commands needed to move the robot and camera
+# Topic to control camera postion
+camera_joint_controller_command: ""
+
+# joint states topic for camera unit
+# string
+camera_joint_state_topic: ""
+
+## topic names for commanding the robot base
+# topic name for the base controller
+# string
+base_controller_topic_name: "/base/twist_controller/command
+
+# Topic to control the joints of right arm.
+# string
+arm_right_command: "/arm_right/joint_trajectory_controller/command"
+
+# Topic to retrieve the current state of right arm
+# string
+arm_right_state: "/arm_right/joint_states"
+
+# Topic to control the joints of left arm.
+# string
+arm_left_command: "/arm_left/joint_trajectory_controller/command"
+
+# Topic to retrieve the current state of left arm
+# string
+arm_left_state: "/arm_left/joint_states"
+
+# Image topic
+# string
+camera_image_topic: ""
+
+# calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW3-1, 2 - COB
+# int
+calibration_ID: 2

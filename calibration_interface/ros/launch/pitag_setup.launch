@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<!-- Start markers based on reference frame -->
+	<include file="$(find calibration_interface)/ros/launch/pitag_markers.launch"/>
+
+	<!-- Setup pitag detection -->
+	<include file="$(find calibration_interface)/ros/launch/pi_tag/fiducials.launch"/>
+
+	<!-- Detect and publish real marker frame using camera -->
+	<node ns="pitag_detection" name="pitag_detection" pkg="calibration_interface" type="pitag_detection" output="screen">
+		<rosparam command="load" file="$(find calibration_interface)/ros/launch/detection_settings/pitag_detection_settings_$(arg robot).yaml"/>
+	</node>
+
+</launch>
