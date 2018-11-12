@@ -91,18 +91,16 @@ int main(int argc, char** argv)
 
 	if (marker_type.compare("checkerboard") == 0)
 	{
-		marker = new CheckerboardMarker();
+		marker = new CheckerboardMarker(&nh);
 	}
 	else if (marker_type.compare("pitag") == 0)
 	{
-		marker = new PitagMarker();
+		marker = new PitagMarker(&nh);
 	}
 
-	if ( marker != 0 )
-		marker->initialize(nh);
-	else
+	if ( marker == 0 )
 	{
-		ROS_WARN("Marker object has not been created!");
+		ROS_FATAL("camera_laserscanner_calibration_node - Marker object has not been created!");
 		return -1;
 	}
 
@@ -122,7 +120,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		ROS_WARN("Interface object has not been created!");
+		ROS_FATAL("camera_laserscanner_calibration_node - Interface object has not been created!");
 		return -1;
 	}
 

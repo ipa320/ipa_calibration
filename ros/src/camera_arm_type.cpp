@@ -64,7 +64,7 @@ CameraArmType::~CameraArmType()
 {
 }
 
-void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface)
+void CameraArmType::initialize(ros::NodeHandle* nh, IPAInterface* calib_interface)
 {
 	CalibrationType::initialize(nh, calib_interface);  // call parent
 
@@ -83,7 +83,7 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 
 		if ( arm_desc.dof_count_ < 1 )
 		{
-			ROS_WARN("Invalid DoF count %d for arm %s, skipping arm.", arm_desc.dof_count_, arm_desc.arm_name_.c_str());
+			ROS_WARN("CameraArmType::initialize - Invalid DoF count %d for arm %s, skipping arm.", arm_desc.dof_count_, arm_desc.arm_name_.c_str());
 			continue;
 		}
 
@@ -93,7 +93,7 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 
 	if ( arms_.empty() )
 	{
-		ROS_ERROR("Arms list empty, check yaml file");
+		ROS_ERROR("CameraArmType::initialize - Arms list empty, check yaml file");
 		return;
 	}
 
@@ -108,7 +108,7 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 		{
 			if ( arm_dof == 0 || arm_data.size() % arm_dof != 0 )
 			{
-				ROS_ERROR("%s_configs vector has wrong size, arm DoF %d", arms_[i].arm_name_.c_str(), arm_dof);
+				ROS_ERROR("CameraArmType::initialize - %s_configs vector has wrong size, arm DoF %d", arms_[i].arm_name_.c_str(), arm_dof);
 				return;
 			}
 
@@ -124,7 +124,7 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 		}
 		else  // remove entry
 		{
-			ROS_WARN("No configurations has been generated for arm %s, removing arm.", arms_[i].arm_name_.c_str());
+			ROS_WARN("CameraArmType::initialize - No configuration has been generated for arm %s, removing arm.", arms_[i].arm_name_.c_str());
 			arms_.erase(arms_.begin()+i);
 			--i;
 		}
@@ -165,7 +165,7 @@ void CameraArmType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface
 
 	if ( total_arms_configs <= 0 )
 	{
-		ROS_WARN("Invalid total configuration count for arms: %d", total_arms_configs);
+		ROS_WARN("CameraArmType::initialize - Invalid total configuration count for arms: %d", total_arms_configs);
 		return;
 	}
 
@@ -198,18 +198,18 @@ bool CameraArmType::moveRobot(int config_index)
 				}
 				else if ( error_code == MOV_ERR_SOFT ) // Retry last failed move
 				{
-					ROS_WARN("CameraArmType::moveRobot: Could not execute moveRobot, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
+					ROS_WARN("CameraArmType::moveRobot - Could not execute moveRobot, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
 					if ( i<NUM_MOVE_TRIES-1 )
 					{
-						ROS_INFO("CameraArmType::moveRobot: Trying again in 2 sec.");
+						ROS_INFO("CameraArmType::moveRobot - Trying again in 2 sec.");
 						ros::Duration(2.f).sleep();
 					}
 					else
-						ROS_WARN("CameraArmType::moveRobot: Skipping arm configuration %d of %s.", config_index, arms_[i].arm_name_.c_str());
+						ROS_WARN("CameraArmType::moveRobot - Skipping arm configuration %d of %s.", config_index, arms_[i].arm_name_.c_str());
 				}
 				else
 				{
-					ROS_FATAL("CameraArmType::moveRobot: Exiting calibration.");
+					ROS_FATAL("CameraArmType::moveRobot - Exiting calibration.");
 					throw std::exception();
 				}
 			}
@@ -236,18 +236,18 @@ bool CameraArmType::moveCameras(int config_index)
 			}
 			else if ( error_code == MOV_ERR_SOFT ) // Retry last failed move
 			{
-				ROS_WARN("CalibrationType::moveRobot: Could not execute moveCamera, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
+				ROS_WARN("CalibrationType::moveCameras - Could not execute moveCamera, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
 				if ( i<NUM_MOVE_TRIES-1 )
 				{
-					ROS_INFO("CalibrationType::moveRobot: Trying again in 2 sec.");
+					ROS_INFO("CalibrationType::moveCameras - Trying again in 2 sec.");
 					ros::Duration(2.f).sleep();
 				}
 				else
-					ROS_WARN("CalibrationType::moveRobot: Skipping camera configuration %d of %s.", config_index, cameras_[i].camera_name_.c_str());
+					ROS_WARN("CalibrationType::moveCameras - Skipping camera configuration %d of %s.", config_index, cameras_[i].camera_name_.c_str());
 			}
 			else
 			{
-				ROS_FATAL("CalibrationType::moveRobot: Exiting calibration.");
+				ROS_FATAL("CalibrationType::moveCameras - Exiting calibration.");
 				throw std::exception();
 			}
 		}
@@ -272,13 +272,13 @@ unsigned short CameraArmType::moveArm(const arm_description &arm, const std::vec
 
 	if ( cur_state.empty() )
 	{
-		ROS_ERROR("Can't retrieve state of current arm %s.", arm_name.c_str());
+		ROS_ERROR("CameraArmType::moveArm - Can't retrieve state of current arm %s.", arm_name.c_str());
 		return MOV_ERR_FATAL;
 	}
 
 	if ( (int)cur_state.size() != (int)arm_configuration.size() )
 	{
-		ROS_ERROR("Size of target arm configuration and count of arm joints do not match! Please adjust the yaml file.");
+		ROS_ERROR("CameraArmType::moveArm - Size of target arm configuration and count of arm joints do not match! Please adjust the yaml file.");
 		return MOV_ERR_FATAL;
 	}
 
@@ -291,12 +291,12 @@ unsigned short CameraArmType::moveArm(const arm_description &arm, const std::vec
 		{
 			if ( bad_index == -1 )
 			{
-				ROS_ERROR("Size of target arm configuration and count of arm joints do not match! Please adjust the yaml file.");
+				ROS_ERROR("CameraArmType::moveArm - Size of target arm configuration and count of arm joints do not match! Please adjust the yaml file.");
 				return MOV_ERR_FATAL;
 			}
 			else
 			{
-				ROS_WARN("Angle number %d in target configuration of arm %s exceeds max allowed deviation %f!\n"
+				ROS_WARN("CameraArmType::moveArm - Angle number %d in target configuration of arm %s exceeds max allowed deviation %f!\n"
 						 "Please move the arm manually closer to the target position to avoid collision issues.", bad_index, arm_name.c_str(), max_delta_angle);
 				std::cout << "Current arm state: ";
 				for ( size_t j=0; j<cur_state.size(); ++j )
@@ -337,7 +337,7 @@ unsigned short CameraArmType::moveArm(const arm_description &arm, const std::vec
 
 	if ( time_utilities::getTimeElapsedSec(start_time) >= 10.f )
 	{
-		ROS_WARN("Could not reach following arm configuration in time:");
+		ROS_WARN("CameraArmType::moveArm - Could not reach following arm configuration in time:");
 		for (int i = 0; i<arm_configuration.size(); ++i)
 			std::cout << arm_configuration[i] << "\t";
 		std::cout << std::endl;

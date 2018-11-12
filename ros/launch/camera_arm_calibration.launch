@@ -10,6 +10,8 @@
 
 		<!-- Start markers and setup detection -->
 		<include file="$(find calibration_interface)/ros/launch/checkerboard_setup.launch"/>
+			<arg name="robot" value="$(arg robot)" />
+		</include>
 
 	</group>
 

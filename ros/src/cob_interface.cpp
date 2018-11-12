@@ -97,7 +97,7 @@ CobInterface::CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 	// /arm_right/joint_group_position_controller/command
 	// /base/velocity_smoother/command
 
-	ROS_INFO("CobInterface initialized.");
+	ROS_INFO("CobInterface::CobInterface - CobInterface initialized.");
 }
 
 CobInterface::~CobInterface()

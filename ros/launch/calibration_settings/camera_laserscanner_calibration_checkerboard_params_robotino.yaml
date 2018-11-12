@@ -79,8 +79,10 @@ reference_frame: "/landmark_reference_nav"
 max_ref_frame_distance: 2.5
 
 # collection of uncertainties. each uncertainty consists of 5 parameters:
-# [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]
+# [parent frame, child frame, last parent-branch frame (directly connected to parent marker), last child-branch frame (directly connected to child marker), parent marker, child marker]
 # the uncertainties will be calibrated in the same order they appear in the uncertainties_list
+# last parent-branch frame and last child-branch frame have to be available from TF from the very beginning, so that the routine can build the kinematic chains
+# only transforms prior to last parent-branch frame and last child-branch frame can be used as uncertainties
 uncertainties_list: ["base_linkz","base_neck_link", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_25", "marker_25",
                      "base_linkz","base_neck_link", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_36", "marker_36",
                      "base_linkz","base_neck_link", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_38", "marker_38",
@@ -89,17 +91,7 @@ uncertainties_list: ["base_linkz","base_neck_link", "landmark_reference_nav", "k
                      "base_linkz","base_neck_link", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_64", "marker_64",
                      "base_linkz","base_neck_link", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_69", "marker_69",
                      "base_linkz","base_neck_link", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_73", "marker_73",
-                     "base_linkz","base_neck_link", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_79", "marker_79",
-
-                     "kinect_link","kinect_depth_frame", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_25", "marker_25",
-                     "kinect_link","kinect_depth_frame", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_36", "marker_36",
-                     "kinect_link","kinect_depth_frame", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_38", "marker_38",
-                     "kinect_link","kinect_depth_frame", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_48", "marker_48",
-                     "kinect_link","kinect_depth_frame", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_55", "marker_55",
-                     "kinect_link","kinect_depth_frame", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_64", "marker_64",
-                     "kinect_link","kinect_depth_frame", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_69", "marker_69",
-                     "kinect_link","kinect_depth_frame", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_73", "marker_73",
-                     "kinect_link","kinect_depth_frame", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_79", "marker_79"]
+                     "base_linkz","base_neck_link", "landmark_reference_nav", "kinect_depth_optical_frame", "tag_79", "marker_79"]
 
 
 # number of optimization iterations

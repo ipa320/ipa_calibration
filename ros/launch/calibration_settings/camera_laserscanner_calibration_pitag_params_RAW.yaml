@@ -47,6 +47,8 @@ max_ref_frame_distance: 4.0
 # collection of uncertainties. each uncertainty consists of 5 parameters:
 # [parent frame, child frame, last parent-branch frame (directly connected to parent marker), last child-branch frame (directly connected to child marker), parent marker, child marker]
 # the uncertainties will be calibrated in the same order they appear in the uncertainties_list
+# last parent-branch frame and last child-branch frame have to be available from TF from the very beginning, so that the routine can build the kinematic chains
+# only transforms prior to last parent-branch frame and last child-branch frame can be used as uncertainties
 uncertainties_list: ["base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_25", "marker_25",
                      "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_36", "marker_36",
                      "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_38", "marker_38",

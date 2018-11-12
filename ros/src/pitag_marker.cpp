@@ -52,15 +52,9 @@
 #include <calibration_interface/pitag_marker.h>
 
 
-PitagMarker::PitagMarker()
+PitagMarker::PitagMarker(ros::NodeHandle* nh) :
+					CalibrationMarker(nh)
 {
-
-}
-
-// nothing special to do here
-void PitagMarker::initialize(ros::NodeHandle nh)
-{
-	CalibrationMarker::initialize(nh);
 }
 
 PitagMarker::~PitagMarker()

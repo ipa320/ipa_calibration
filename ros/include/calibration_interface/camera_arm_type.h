@@ -77,7 +77,7 @@ public:
 
 protected:
 
-	void initialize(ros::NodeHandle nh, IPAInterface* calib_interface);
+	void initialize(ros::NodeHandle* nh, IPAInterface* calib_interface);
 
 	bool moveCameras(int config_index);
 	unsigned short moveArm(const arm_description &arm, const std::vector<double>& arm_configuration);

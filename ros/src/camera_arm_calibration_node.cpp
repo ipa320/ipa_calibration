@@ -80,14 +80,12 @@ int main(int argc, char** argv)
 
 	// setting up objects needed for calibration
 	CalibrationType* calibration_type = new CameraArmType();
-	CalibrationMarker* marker = new CheckerboardMarker();
+	CalibrationMarker* marker = new CheckerboardMarker(&nh);
 	CalibrationInterface* interface = 0;
 
-	if ( marker != 0 )
-		marker->initialize(nh);
-	else
+	if ( marker == 0 )
 	{
-		ROS_WARN("Marker object has not been created!");
+		ROS_FATAL("camera_arm_calibration_node - Marker object has not been created!");
 		return -1;
 	}
 
@@ -107,7 +105,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		ROS_WARN("Interface object has not been created!");
+		ROS_FATAL("camera_arm_calibration_node - Interface object has not been created!");
 		return -1;
 	}
 

@@ -90,7 +90,7 @@ RobotinoInterface::RobotinoInterface(ros::NodeHandle* nh, CalibrationType* calib
 		base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
 	}
 
-	ROS_INFO("RobotinoInterface initialized.");
+	ROS_INFO("RobotinoInterface::RobotinoInterface - RobotinoInterface initialized.");
 }
 
 RobotinoInterface::~RobotinoInterface()

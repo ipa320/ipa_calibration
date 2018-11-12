@@ -172,7 +172,7 @@ ids_ueye_configs: [-1.68, 0.1,
 #1.89637, 0.299957]
 
 # collection of uncertainties. each uncertainty consists of 5 parameters:
-# [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]
+# [parent frame, child frame, last parent-branch frame (directly connected to parent marker), last child-branch frame (directly connected to child marker), parent marker, child marker]
 # the uncertainties will be calibrated in the same order they appear in the uncertainties_list
 # last parent-branch frame and last child-branch frame have to be available from TF from the very beginning, so that the routine can build the kinematic chains
 # only transforms prior to last parent-branch frame and last child-branch frame can be used as uncertainties

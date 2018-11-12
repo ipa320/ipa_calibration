@@ -52,23 +52,17 @@
 #include <calibration_interface/checkerboard_marker.h>
 
 
-CheckerboardMarker::CheckerboardMarker()
+CheckerboardMarker::CheckerboardMarker(ros::NodeHandle* nh) :
+					CalibrationMarker(nh), checkerboard_cell_size_(0.0)
 {
-
-}
-
-void CheckerboardMarker::initialize(ros::NodeHandle nh)
-{
-	CalibrationMarker::initialize(nh);
-
 	node_handle_.param("/checkerboard_detection/checkerboard_detection/checkerboard_cell_size", checkerboard_cell_size_, 0.0);
-	//std::cout << "checkerboard_cell_size: " << checkerboard_cell_size_ << std::endl;
 	checkerboard_pattern_size_ = cv::Size(6,4);
 	std::vector<double> temp;
 	node_handle_.getParam("/checkerboard_detection/checkerboard_detection/checkerboard_pattern_size", temp);
 	if (temp.size() == 2)
 		checkerboard_pattern_size_ = cv::Size(temp[0], temp[1]);
-	//std::cout << "pattern: " << checkerboard_pattern_size_ << std::endl;
+	else
+		ROS_WARN("CheckerboardMarker::CheckerboardMarker - Checkerboard parameters have not been loaded correctly or are corrupted.");
 }
 
 CheckerboardMarker::~CheckerboardMarker()

@@ -61,9 +61,9 @@ CalibrationType::CalibrationType() :
 
 }
 
-void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface)
+void CalibrationType::initialize(ros::NodeHandle* nh, IPAInterface* calib_interface)
 {
-	node_handle_ = nh;
+	node_handle_ = *nh;
 	calibration_interface_ = calib_interface;
 
 	std::cout << "\n========== CalibrationType Parameters ==========\n";
@@ -81,7 +81,7 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 
 		if ( cam_desc.dof_count_ < 1 )
 		{
-			ROS_WARN("Invalid DoF count %d for camera %s, skipping camera.", cam_desc.dof_count_, cam_desc.camera_name_.c_str());
+			ROS_WARN("CalibrationType::initialize - Invalid DoF count %d for camera %s, skipping camera.", cam_desc.dof_count_, cam_desc.camera_name_.c_str());
 			continue;
 		}
 
@@ -91,7 +91,7 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 
 	if ( cameras_.empty() )
 	{
-		ROS_ERROR("Cameras list empty, check yaml file");
+		ROS_ERROR("CalibrationType::initialize - Cameras list empty, check yaml file");
 		return;
 	}
 
@@ -106,7 +106,7 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 		{
 			if ( camera_dof == 0 || cam_data.size() % camera_dof != 0 )
 			{
-				ROS_ERROR("%s_configs vector has wrong size, camera DoF %d", cameras_[i].camera_name_.c_str(), camera_dof);
+				ROS_ERROR("CalibrationType::initialize - %s_configs vector has wrong size, camera DoF %d", cameras_[i].camera_name_.c_str(), camera_dof);
 				return;
 			}
 
@@ -126,7 +126,7 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 
 			if ( cam_data.empty() )
 			{
-				ROS_WARN("Neither configs nor ranges data has found for camera %s, removing camera.", cameras_[i].camera_name_.c_str());
+				ROS_WARN("CalibrationType::initialize - Neither configs nor ranges data has found for camera %s, removing camera.", cameras_[i].camera_name_.c_str());
 				cameras_.erase(cameras_.begin()+i);
 				--i;
 				continue;
@@ -134,7 +134,7 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 
 			if ( cam_data.size() % 3 != 0 || cam_data.size() != 3*camera_dof )
 			{
-				ROS_ERROR("%s_ranges vector has the wrong size, each DoF needs three entries (start,step,stop), camera DoF: %d", cameras_[i].camera_name_.c_str(), cameras_[i].dof_count_);
+				ROS_ERROR("CalibrationType::initialize - %s_ranges vector has the wrong size, each DoF needs three entries (start,step,stop), camera DoF: %d", cameras_[i].camera_name_.c_str(), cameras_[i].dof_count_);
 				std::cout << "size: " << cam_data.size() << ", needed: " << (3*camera_dof) << std::endl;
 				return;
 			}
@@ -173,7 +173,7 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 
 			if ( cameras_[i].configurations_.empty() )
 			{
-				ROS_WARN("No configurations has been generated for camera %s, removing camera.", cameras_[i].camera_name_.c_str());
+				ROS_WARN("CalibrationType::initialize - No configuration has been generated for camera %s, removing camera.", cameras_[i].camera_name_.c_str());
 				cameras_.erase(cameras_.begin()+i);
 				--i;
 			}
@@ -199,7 +199,7 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 
 	if ( total_cameras_configs <= 0 )
 	{
-		ROS_WARN("Invalid total configuration count for cameras: %d", total_cameras_configs);
+		ROS_WARN("CalibrationType::initialize - Invalid total configuration count for cameras: %d", total_cameras_configs);
 		return;
 	}
 
@@ -207,12 +207,12 @@ void CalibrationType::initialize(ros::NodeHandle nh, IPAInterface* calib_interfa
 
 	if ( uncertainties_list_.empty() )
 	{
-		ROS_WARN("Uncertainties list is empty... returning uninitialized.");
+		ROS_WARN("CalibrationType::initialize - Uncertainties list is empty... returning uninitialized.");
 		return;
 	}
 
 	if ( uncertainties_list_.size() % 6 != 0 )
-		ROS_WARN("Size of uncertainsties_list is not a factor of 6: [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]");
+		ROS_WARN("CalibrationType::initialize - Size of uncertainsties_list is not a factor of 6: [parent frame, child frame, last parent-branch frame, last child-branch frame, parent marker, child marker]");
 
 	std::cout << "uncertainties list: " << std::endl;
 	for ( int i=0; i<uncertainties_list_.size(); i+=6 )
@@ -253,13 +253,13 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 
 	if ( cur_state.empty() )
 	{
-		ROS_ERROR("Can't retrieve state of current camera %s.", camera_name.c_str());
+		ROS_ERROR("CalibrationType::moveCamera - Can't retrieve state of current camera %s.", camera_name.c_str());
 		return MOV_ERR_FATAL;
 	}
 
 	if ( cur_state.size() != cam_configuration.size() )
 	{
-		ROS_ERROR("Size of target camera configuration and count of camera joints do not match! Please adjust the yaml file.");
+		ROS_ERROR("CalibrationType::moveCamera - Size of target camera configuration and count of camera joints do not match! Please adjust the yaml file.");
 		return MOV_ERR_FATAL;
 	}
 
@@ -272,12 +272,12 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 		{
 			if ( bad_index == -1 )
 			{
-				ROS_ERROR("Size of target camera configuration and count of camera joints do not match! Please adjust the yaml file.");
+				ROS_ERROR("CalibrationType::moveCamera - Size of target camera configuration and count of camera joints do not match! Please adjust the yaml file.");
 				return MOV_ERR_FATAL;
 			}
 			else
 			{
-				ROS_WARN("Angle number %d in target configuration of camera %s exceeds max allowed deviation %f!\n"
+				ROS_WARN("CalibrationType::moveCamera - Angle number %d in target configuration of camera %s exceeds max allowed deviation %f!\n"
 						 "Please move the camera manually closer to the target position to avoid collision issues.", bad_index, camera_name.c_str(), max_delta_angle);
 				std::cout << "Current camera state: ";
 				for ( size_t j=0; j<cur_state.size(); ++j )
@@ -318,7 +318,7 @@ unsigned short CalibrationType::moveCamera(const camera_description &camera, con
 
 	if ( time_utilities::getTimeElapsedSec(start_time) >= 10.f )
 	{
-		ROS_WARN("Could not reach following camera configuration in time:");
+		ROS_WARN("CalibrationType::moveCamera - Could not reach following camera configuration in time:");
 		for (int i = 0; i<cam_configuration.size(); ++i)
 			std::cout << cam_configuration[i] << "\t";
 		std::cout << std::endl;
@@ -363,7 +363,7 @@ bool CalibrationType::generateConfigs(const std::vector< std::vector<double> > &
 
 	if ( num_configs == 0 || num_params == 0 )
 	{
-		ROS_ERROR("No configuration can be generated! Num. configs: %d, num. params per config: %d", num_configs, num_params);
+		ROS_ERROR("CalibrationType::generateConfigs - No configuration can be generated! Num. configs: %d, num. params per config: %d", num_configs, num_params);
 		return false;
 	}
 

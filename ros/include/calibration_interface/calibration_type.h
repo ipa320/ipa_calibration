@@ -104,7 +104,7 @@ protected:
 public:
 
 	CalibrationType();
-	virtual void initialize(ros::NodeHandle nh, IPAInterface* calib_interface);
+	virtual void initialize(ros::NodeHandle* nh, IPAInterface* calib_interface);
 	virtual ~CalibrationType();
 
 	virtual bool moveRobot(int config_index);

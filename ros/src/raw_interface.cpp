@@ -75,7 +75,7 @@ RAWInterface::RAWInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 	}
 	else
 	{
-		ROS_ERROR("Could not create current camera state storage!");
+		ROS_ERROR("RAWInterface::RAWInterface - Could not create current camera state storage!");
 		return;
 	}
 
@@ -95,7 +95,7 @@ RAWInterface::RAWInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 		}
 		else
 		{
-			ROS_ERROR("Could not create current arm state storage!");
+			ROS_ERROR("RAWInterface::RAWInterface - Could not create current arm state storage!");
 			return;
 		}
 	}
@@ -106,7 +106,7 @@ RAWInterface::RAWInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 		base_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_controller_topic_name_, 1, false);
 	}
 
-	ROS_INFO("RAWInterface initialized.");
+	ROS_INFO("RAWInterface::RAWInterface - RAWInterface initialized.");
 }
 
 RAWInterface::~RAWInterface()
@@ -155,7 +155,7 @@ void RAWInterface::assignNewCameraAngles(const std::string &camera_name, std_msg
 		jointTraj.joint_names = {"torso_bottom_joint", "torso_side_joint"};
 	else
 	{
-		ROS_ERROR("Invalid camera name %s, cannot move anything!", camera_name.c_str());
+		ROS_ERROR("RAWInterface::assignNewCameraAngles - Invalid camera name %s, cannot move anything!", camera_name.c_str());
 		return;
 	}
 

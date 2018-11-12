@@ -63,15 +63,14 @@ class CalibrationMarker
 protected:
 
 	ros::NodeHandle node_handle_;
-	bool initialized_;
 
 
 public:
 
 	CalibrationMarker();
+	CalibrationMarker(ros::NodeHandle* nh);
 	virtual ~CalibrationMarker();
 
-	virtual void initialize(ros::NodeHandle nh);
 	virtual void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d) = 0;
 	virtual std::string getString() = 0;
 	virtual double getWaitTime() = 0;

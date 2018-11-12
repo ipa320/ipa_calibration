@@ -67,7 +67,7 @@ public:
 
 	CameraLaserscannerType();
 	~CameraLaserscannerType();
-	void initialize(ros::NodeHandle nh, IPAInterface* calib_interface);
+	void initialize(ros::NodeHandle* nh, IPAInterface* calib_interface);
 
 	bool moveRobot(int config_index);
 	std::string getString();

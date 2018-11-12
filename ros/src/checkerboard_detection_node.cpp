@@ -82,7 +82,7 @@ bool convertImageMessageToMat(const sensor_msgs::Image::ConstPtr& image_msg, cv_
 	}
 	catch (cv_bridge::Exception& e)
 	{
-		ROS_ERROR("ImageFlip::convertColorImageMessageToMat: cv_bridge exception: %s", e.what());
+		ROS_ERROR("checkerboard_detection_node::convertImageMessageToMat - cv_bridge exception: %s", e.what());
 		return false;
 	}
 	image = image_ptr->image.clone();
@@ -107,7 +107,7 @@ void infoCallback(const sensor_msgs::CameraInfoConstPtr& camera_info_msg)
 		}
 		else // fallback
 		{
-			ROS_WARN("Zero distortion parameters, using plumb_bob model with all entries set to zero.");
+			ROS_WARN("checkerboard_detection_node::infoCallback - Zero distortion parameters, using plumb_bob model with all entries set to zero.");
 			distortion = cv::Mat::zeros(5, 1, CV_64F);
 		}
 
@@ -202,7 +202,7 @@ int main(int argc, char** argv)
 		ros::Duration(0.25).sleep();
 	}
 
-	std::cout << "Intrinsic parameters loaded" << std::endl;
+	std::cout << "checkerboard_detection_node - Intrinsic parameters loaded" << std::endl;
 
 	// Cyclically detect checkerboard and publish resulting frame to tf
 	tf::Vector3 avg_translation;

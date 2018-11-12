@@ -67,10 +67,10 @@ IPAInterface::IPAInterface()
 IPAInterface::IPAInterface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data) :
 				CalibrationInterface(nh), calibration_type_(calib_type), calibration_marker_(calib_marker), arm_calibration_(do_arm_calibration), load_data_(load_data)
 {
-	if ( !load_data_ )  // calibration_type holds code for moving the robot which is in case of offline calibration not needed
+	if ( !load_data_ )  // calibration_type holds code for moving the robot which is not needed in case of offline calibration
 	{
 		if ( calibration_type_ != 0 )
-			calibration_type_->initialize(node_handle_, this);
+			calibration_type_->initialize(&node_handle_, this);
 		else
 		{
 			ROS_FATAL("IPAInterface::IPAInterface - Calibration type has not been created!");
@@ -78,9 +78,7 @@ IPAInterface::IPAInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 		}
 	}
 
-	if ( calibration_marker_ != 0 )
-		calibration_marker_->initialize(node_handle_);
-	else
+	if ( calibration_marker_ == 0 )
 	{
 		ROS_FATAL("IPAInterface::IPAInterface - Calibration marker has not been created!");
 		throw std::exception();

@@ -60,10 +60,9 @@ class PitagMarker : public CalibrationMarker
 
 public:
 
-	PitagMarker();
+	PitagMarker(ros::NodeHandle* nh);
 	~PitagMarker();
 
-	void initialize(ros::NodeHandle nh);
 	void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d);
 	double getWaitTime();
 

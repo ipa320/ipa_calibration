@@ -17,10 +17,9 @@
 	<node pkg="cob_fiducials" ns="fiducials" type="fiducials" name="fiducials" output="log">
 		<!--launch-prefix="/usr/bin/gdb"-->
 		<!--<remap from="image_color" to="$(arg rgb_topic)/image_rect_color"/>-->
-		<!-- <remap from="image_color" to="$(arg rgb_topic)/image_raw"/> --> <!-- Robotino -->
-		<remap from="image_color" to="$(arg rgb_topic)/image_raw"/> <!-- RAW3-1 -->
-		<!-- <remap from="camera_info" to="$(arg rgb_topic)/camera_info"/> Robotino -->
-		<remap from="camera_info" to="$(arg rgb_topic)/camera_info"/> <!-- RAW3-1 -->
+		<remap from="image_color" to="$(arg rgb_topic)/image_raw"/> <!-- Robotino -->
+		<!-- <remap from="image_color" to="$(arg rgb_topic)/image_rect"/> --> <!-- RAW3-1 -->
+		<remap from="camera_info" to="$(arg rgb_topic)/camera_info"/> <!-- Robotino, RAW3-1 -->
         
 		<remap from="detect_fiducials" to="/fiducials/detect_fiducials"/>
 		<remap from="fiducial_markers" to="/fiducials/fiducial_markers"/>

@@ -68,7 +68,7 @@ CameraLaserscannerType::~CameraLaserscannerType()
 
 }
 
-void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_interface)
+void CameraLaserscannerType::initialize(ros::NodeHandle* nh, IPAInterface* calib_interface)
 {
 	CalibrationType::initialize(nh, calib_interface);  // call parent
 
@@ -95,7 +95,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 		const int num_configs = base_data.size()/num_params;
 		if (base_data.size() % num_params != 0 || base_data.size() < 3*num_params)
 		{
-			ROS_ERROR("The base_configs vector should contain at least 3 configurations with %d values each.", num_params);
+			ROS_ERROR("CameraLaserscannerType::initialize - The base_configs vector should contain at least 3 configurations with %d values each.", num_params);
 			return;
 		}
 
@@ -121,7 +121,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 
 		if ( x_range.size()!=3 || y_range.size()!=3 || phi_range.size()!=3 )
 		{
-			ROS_ERROR("One of the position range vectors has wrong size.");
+			ROS_ERROR("CameraLaserscannerType::initialize - One of the position range vectors has wrong size.");
 			return;
 		}
 
@@ -170,7 +170,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 
 	if ( base_configurations_.empty() )
 	{
-		ROS_ERROR("No base configurations available. Please check your yaml file.");
+		ROS_ERROR("CameraLaserscannerType::initialize - No base configurations available. Please check your yaml file.");
 		return;
 	}
 
@@ -204,7 +204,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 		}
 		catch (tf::TransformException& ex)
 		{
-			ROS_WARN("%s", ex.what());
+			ROS_WARN("CameraLaserscannerType::initialize - %s", ex.what());
 			// Continue with loop and try again
 		}
 
@@ -214,7 +214,7 @@ void CameraLaserscannerType::initialize(ros::NodeHandle nh, IPAInterface* calib_
 	// Failed to set up child frame, exit
 	if ( !result )
 	{
-		ROS_FATAL("CameraBaseCalibrationMarker::CameraBaseCalibrationMarker: Reference frame has not been set up for 10 seconds.");
+		ROS_FATAL("CameraLaserscannerType::initialize - Reference frame has not been set up for 10 seconds.");
 		throw std::exception();
 	}
 
@@ -242,18 +242,18 @@ bool CameraLaserscannerType::moveRobot(int config_index)
 			}
 			else if ( error_code == MOV_ERR_SOFT ) // Retry last failed move
 			{
-				ROS_WARN("CameraLaserscannerType::moveRobot: Could not execute moveBase, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
+				ROS_WARN("CameraLaserscannerType::moveRobot - Could not execute moveBase, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
 				if ( i<NUM_MOVE_TRIES-1 )
 				{
-					ROS_INFO("CameraLaserscannerType::moveRobot: Trying again in 2 sec.");
+					ROS_INFO("CameraLaserscannerType::moveRobot - Trying again in 2 sec.");
 					ros::Duration(2.f).sleep();
 				}
 				else
-					ROS_WARN("CameraLaserscannerType::moveRobot: Skipping base configuration %d.", mapped_base_index_);
+					ROS_WARN("CameraLaserscannerType::moveRobot - Skipping base configuration %d.", mapped_base_index_);
 			}
 			else
 			{
-				ROS_FATAL("CameraLaserscannerType::moveRobot: Exiting calibration, to avoid potential damage.");
+				ROS_FATAL("CameraLaserscannerType::moveRobot - Exiting calibration, to avoid potential damage.");
 				throw std::exception();
 			}
 		}
@@ -288,18 +288,18 @@ bool CameraLaserscannerType::moveCameras(int config_index)
 		}
 		else if ( error_code == MOV_ERR_SOFT ) // Retry last failed move
 		{
-			ROS_WARN("CalibrationType::moveRobot: Could not execute moveCamera, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
+			ROS_WARN("CalibrationType::moveCameras - Could not execute moveCamera, (%d/%d) tries.", i+1, NUM_MOVE_TRIES);
 			if ( i<NUM_MOVE_TRIES-1 )
 			{
-				ROS_INFO("CalibrationType::moveRobot: Trying again in 2 sec.");
+				ROS_INFO("CalibrationType::moveCameras - Trying again in 2 sec.");
 				ros::Duration(2.f).sleep();
 			}
 			else
-				ROS_WARN("CalibrationType::moveRobot: Skipping camera configuration %d of %s.", mapped_camera_index_, cameras_[current_camera_counter_].camera_name_.c_str());
+				ROS_WARN("CalibrationType::moveCameras - Skipping camera configuration %d of %s.", mapped_camera_index_, cameras_[current_camera_counter_].camera_name_.c_str());
 		}
 		else
 		{
-			ROS_FATAL("CalibrationType::moveRobot: Exiting calibration.");
+			ROS_FATAL("CalibrationType::moveCameras - Exiting calibration.");
 			throw std::exception();
 		}
 	}
@@ -455,7 +455,7 @@ bool CameraLaserscannerType::isReferenceFrameValid(cv::Mat &T, unsigned short& e
 	ros::spinOnce();  // get newest messages
 	if (!transform_utilities::getTransform(transform_listener_, reference_frame_, base_frame_, T, true)) // from reference frame to base frame, swapped order is correct here!
 	{
-		ROS_WARN("CameraBaseCalibrationMarker::isReferenceFrameValid: Can't retrieve transform between base of robot and reference frame.");
+		ROS_WARN("CameraLaserscannerType::isReferenceFrameValid - Can't retrieve transform between base of robot and reference frame.");
 		error_code = MOV_ERR_SOFT;
 		return false;
 	}
@@ -465,7 +465,7 @@ bool CameraLaserscannerType::isReferenceFrameValid(cv::Mat &T, unsigned short& e
 	// Avoid robot movement if reference frame is too far away
 	if ( max_ref_frame_distance_ > 0.0 && currentSqNorm > max_ref_frame_distance_*max_ref_frame_distance_ )
 	{
-		 ROS_ERROR("CameraBaseCalibrationMarker::isReferenceFrameValid: Reference frame is too far away from current position of the robot.");
+		 ROS_ERROR("CameraLaserscannerType::isReferenceFrameValid - Reference frame is too far away from current position of the robot.");
 		 error_code = MOV_ERR_FATAL;
 		 return false;
 	}
@@ -478,7 +478,7 @@ bool CameraLaserscannerType::isReferenceFrameValid(cv::Mat &T, unsigned short& e
 
 	if ( average <= 0.0001 || fabs(1.0 - (currentSqNorm/average)) > 0.15  ) // Up to 15% deviation from average is allowed.
 	{
-		ROS_WARN("CameraBaseCalibrationMarker::isReferenceFrameValid: Reference frame can't be detected reliably. It's current deviation from the average is to too great.");
+		ROS_WARN("CameraLaserscannerType::isReferenceFrameValid - Reference frame can't be detected reliably. It's current deviation from the average is to too great.");
 		error_code = MOV_ERR_SOFT;
 		return false;
 	}
@@ -513,7 +513,7 @@ bool CameraLaserscannerType::divergenceDetectedRotation(double error_phi, bool s
 		start_error_phi_ = error_phi;
 	else if ( error_phi > (start_error_phi_ + 0.1) ) // ~5° deviation allowed
 	{
-		ROS_ERROR("Divergence in robot angle detected, robot diverges from rotation setpoint.");
+		ROS_ERROR("CameraLaserscannerType::divergenceDetectedRotation - Divergence in robot angle detected, robot diverges from rotation setpoint.");
 		return true;
 	}
 
@@ -533,7 +533,7 @@ bool CameraLaserscannerType::divergenceDetectedLocation(double error_x, double e
 	}
 	else if ( error_x > (start_error_x_+ 0.1) || error_y > (start_error_y_+ 0.1) ) // 0.1 m deviation allowed
 	{
-		ROS_ERROR("Divergence in x- or y-component detected, robot diverges from position setpoint.");
+		ROS_ERROR("CameraLaserscannerType::divergenceDetectedLocation - Divergence in x- or y-component detected, robot diverges from position setpoint.");
 		return true;
 	}
 

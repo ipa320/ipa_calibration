@@ -52,16 +52,10 @@
 #include <calibration_interface/calibration_marker.h>
 
 
-CalibrationMarker::CalibrationMarker() :
-					initialized_(false)
+CalibrationMarker::CalibrationMarker(ros::NodeHandle* nh) :
+					node_handle_(*nh)
 {
 
-}
-
-void CalibrationMarker::initialize(ros::NodeHandle nh)
-{
-	node_handle_ = nh;
-	initialized_ = true;
 }
 
 CalibrationMarker::~CalibrationMarker()
