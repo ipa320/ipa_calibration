@@ -17,24 +17,24 @@ endif()
 ## End C++11
 
 set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is system dependency --> sudo apt-get install)
+	actionlib
+	cob_fiducials
+	cob_object_detection_msgs
 	control_msgs
+	cv_bridge
 	geometry_msgs
+	image_transport
+	robotino_calibration
 	roscpp
 	roslib
 	sensor_msgs
 	std_msgs
-	trajectory_msgs
-	actionlib
 	tf
-	cob_fiducials
-	cob_object_detection_msgs
-	cv_bridge
-	image_transport
+	trajectory_msgs
 )
 
 set(catkin_BUILD_PACKAGES 
 	${catkin_RUN_PACKAGES}
-	cmake_modules
 )
 
 ## Find catkin macros and libraries
@@ -44,12 +44,8 @@ find_package(catkin REQUIRED
 	${catkin_BUILD_PACKAGES}		# this makes ${catkin_LIBRARIES} include all libraries of ${catkin_BUILD_PACKAGES}
 )
 
-find_package(robotino_calibration REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV REQUIRED)	# name identical to FindOpenCV.cmake in cmake_modules
-
-## System dependencies are found with CMake's conventions
-#find_package(Boost REQUIRED COMPONENTS system)
 
 ###################################
 ## catkin specific configuration ##
