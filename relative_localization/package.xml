@@ -13,7 +13,6 @@
 	<buildtool_depend>catkin</buildtool_depend>
 
 	<depend>boost</depend>
-	<depend>cmake_modules</depend>
 	<depend>dynamic_reconfigure</depend>
 	<depend>geometry_msgs</depend>
 	<depend>libopencv-dev</depend>
