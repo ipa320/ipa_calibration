@@ -1,0 +1,8 @@
+- git:
+    uri: 'https://github.com/ipa320/cob_object_perception.git'
+    local-name: cob_object_perception
+    version: indigo_dev
+- git:
+    uri: 'https://github.com/ipa320/cob_environment_perception.git'
+    local-name: cob_environment_perception
+    version: indigo_dev
