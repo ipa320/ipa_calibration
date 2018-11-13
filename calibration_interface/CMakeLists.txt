@@ -53,12 +53,12 @@ find_package(OpenCV REQUIRED)	# name identical to FindOpenCV.cmake in cmake_modu
 
 catkin_package(
 INCLUDE_DIRS
+	common/include
 	ros/include
 LIBRARIES
 CATKIN_DEPENDS
 	${catkin_RUN_PACKAGES}
 DEPENDS
-	CalibrationTools
 	Boost
 	OpenCV
 )
@@ -89,12 +89,10 @@ add_executable(camera_laserscanner_calibration	ros/src/camera_laserscanner_calib
 												ros/src/pitag_marker.cpp
 												common/src/pose_definition.cpp
 )
-
 target_link_libraries(camera_laserscanner_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
 )
-
 add_dependencies(camera_laserscanner_calibration	${catkin_EXPORTED_TARGETS})
 
 add_executable(camera_arm_calibration	ros/src/camera_arm_calibration_node.cpp
@@ -107,12 +105,10 @@ add_executable(camera_arm_calibration	ros/src/camera_arm_calibration_node.cpp
 										ros/src/calibration_marker.cpp
 										ros/src/checkerboard_marker.cpp
 )
-
 target_link_libraries(camera_arm_calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
 )
-
 add_dependencies(camera_arm_calibration		${catkin_EXPORTED_TARGETS})
 
 add_executable(checkerboard_detection	ros/src/checkerboard_detection_node.cpp
@@ -145,36 +141,26 @@ add_dependencies(pitag_detection		${catkin_EXPORTED_TARGETS})
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS camera_laserscanner_calibration
+install(TARGETS camera_laserscanner_calibration camera_arm_calibration checkerboard_detection pitag_detection
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(TARGETS camera_arm_calibration
-	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+
+# Mark cpp header files for installation
+install(DIRECTORY common/include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
 )
 
-install(TARGETS checkerboard_detection
-	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# Mark cpp header files for installation
+install(DIRECTORY ros/include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
 )
-
-install(TARGETS pitag_detection
-	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
