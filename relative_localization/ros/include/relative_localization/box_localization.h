@@ -10,7 +10,7 @@
  *****************************************************************
  *
 * \note
-* Repository name: squirrel_calibration
+* Repository name: ipa_calibration
 * \note
 * ROS package name: relative_localization
  *
@@ -71,7 +71,6 @@ public:
 protected:
 
 	void callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg);
-	void dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig& config, uint32_t level);
 
 	//double box_search_width_;		// the maximum +/-y coordinate in laser scan to search for the localization box, in[m]
 	std::vector<cv::Point2f> box_search_polygon_;
