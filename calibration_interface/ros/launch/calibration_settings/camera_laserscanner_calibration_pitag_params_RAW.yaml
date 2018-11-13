@@ -1,0 +1,103 @@
+# List of cameras invloved in calibration
+# vector<string>
+# format: [camera1_name, camera1_dof, camera1_max_delta_angle
+#          camera2_name, camera2_dof, camera2_max_delta_angle]
+# cameraX_name can be any name to distinguish different cameras inside the interface
+# max_delta_angle is a security measure to avoid movement when target angles and current angles of a camera are not too far away from one another.
+# This can lead to collision issues for some cameras (e.g. when attached to an arm). Setting it to 0 turns it off (only recommended for pan/tilt cameras)
+cameras_list: ["realsense_sr300", "6", "0"] #["ids_ueye", "2", "0"]
+
+# ranges for the degrees of freedom of the robot
+# each parameter is set as [min_value, step, max_value]
+# vector<double>
+x_range: [-2.2, 0.2, -1.6]       # in [m]
+y_range: [1.0, 0.4, 1.4]         # in [m], fixed y-coordinate
+phi_range: [0, 1.0, 0]           # in [rad], fixed phi-angle
+ids_ueye_ranges: [-2.4, 0.4, -1.6,
+                   0.4, 0.2, 0.8]   # first pan then tilt in [rad]
+#<camera2_name>_ranges: []  # further cameras possible
+
+# manually input of configurations for corresponding camera in camera_list
+# the configs list will be used over the ranges list
+# vector<double>
+#ids_ueye_configs: []
+
+# further cameras possible
+#<camera2_name>_configs: []
+
+realsense_sr300_configs: [-0.816926, -0.518052, -2.47831, -1.72319, -1.68554, -0.10491,
+-0.616926, -0.518052, -2.47831, -1.7232, -1.68554, -0.104886]
+
+# list of robot's base configurations used in calibration for observing the pitags measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link
+# each base configuration will go through every camera's configuration
+# vector<double>
+base_configs: []
+
+# the robot base frame, needed for security measure (it's the reference frame to check the child_frame against before moving the robot)
+base_frame: "base_link"
+
+# The name of the reference frame. Has to match the entry found in the relative_localization yaml files.
+# string
+reference_frame: "/landmark_reference_nav"
+
+# max distance (radius) the referenece_frame is allowed to be away in terms of the robot's base_frame
+# double
+max_ref_frame_distance: 4.0
+
+# collection of uncertainties. each uncertainty consists of 5 parameters:
+# [parent frame, child frame, last parent-branch frame (directly connected to parent marker), last child-branch frame (directly connected to child marker), parent marker, child marker]
+# the uncertainties will be calibrated in the same order they appear in the uncertainties_list
+# last parent-branch frame and last child-branch frame have to be available from TF from the very beginning, so that the routine can build the kinematic chains
+# only transforms prior to last parent-branch frame and last child-branch frame can be used as uncertainties
+uncertainties_list: ["base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_25", "marker_25",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_36", "marker_36",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_38", "marker_38",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_48", "marker_48",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_55", "marker_55",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_64", "marker_64",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_69", "marker_69",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_73", "marker_73",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_79", "marker_79",
+
+                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_25", "marker_25",
+                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_36", "marker_36",
+                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_38", "marker_38",
+                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_48", "marker_48",
+                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_55", "marker_55",
+                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_64", "marker_64",
+                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_69", "marker_69",
+                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_73", "marker_73",
+                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_79", "marker_79"]
+
+#["base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_25", "marker_25",
+#                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_36", "marker_36",
+#                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_38", "marker_38",
+#                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_48", "marker_48",
+#                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_55", "marker_55",
+#                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_64", "marker_64",
+#                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_69", "marker_69",
+#                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_73", "marker_73",
+#                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_79", "marker_79",
+
+#                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_25", "marker_25",
+#                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_36", "marker_36",
+#                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_38", "marker_38",
+#                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_48", "marker_48",
+#                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_55", "marker_55",
+#                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_64", "marker_64",
+#                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_69", "marker_69",
+#                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_73", "marker_73",
+#                     "torso_tilt_link","ids_ueye_link", "landmark_reference_nav", "ids_ueye_frame", "tag_79", "marker_79"]
+
+
+# number of optimization iterations
+# int
+optimization_iterations: 10000
+
+# timeout after which a TF transform won't be used for calibration anymore
+# double
+transform_discard_timeout: 3.0
+
+# storage folder that holds the calibration output
+# string
+calibration_storage_path: "raw_calibration/realsense_pitag_calibration"

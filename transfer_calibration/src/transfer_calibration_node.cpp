@@ -1,19 +1,19 @@
 /****************************************************************
  *
- * Copyright (c) 2017
+ * Copyright (c) 2015
  *
  * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Project name: ipa_calibration
- * ROS stack name: ipa_calibration
- * ROS package name: transfer_calibration
+ * Project name: squirrel
+ * ROS stack name: squirrel_calibration
+ * ROS package name: robotino_calibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Marc Riedlinger, email: m.riedlinger@live.de
+ * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
  *
  * Date of creation: September 2017
  *

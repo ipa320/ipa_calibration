@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+	<name>robotino_calibration</name>
+	<version>0.0.0</version>
+	<description>The robotino_calibration package. Contains methods for camera base calibration via calibration checkerboards or via detecting specialized markers.</description>
+
+	<license>LGPL</license>
+	<url type="website">http://wiki.ros.org/robotino_calibration</url>
+
+	<maintainer email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</maintainer>
+	<author email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</author>
+
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<depend>boost</depend>
+	<depend>libopencv-dev</depend>
+	<depend>roscpp</depend>
+	<depend>roslib</depend>
+	<depend>tf</depend>
+
+</package>

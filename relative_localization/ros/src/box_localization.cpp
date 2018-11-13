@@ -10,7 +10,7 @@
  *****************************************************************
  *
 * \note
-* Repository name: ipa_calibration
+* Repository name: squirrel_calibration
 * \note
 * ROS package name: relative_localization
  *
@@ -306,3 +306,9 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 //	}
 //}
 
+void BoxLocalization::dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig &config, uint32_t level)
+{
+	ReferenceLocalization::dynamicReconfigureCallback(config, level); // call to base class
+	//box_search_width_ = config.box_search_width;
+	//std::cout << "box_search_width=" << box_search_width_ << "\n";
+}

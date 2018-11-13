@@ -10,7 +10,7 @@
  *****************************************************************
  *
 * \note
-* Repository name: ipa_calibration
+* Repository name: squirrel_calibration
 * \note
 * ROS package name: relative_localization
  *
@@ -62,7 +62,7 @@
 #include <vector>
 
 // ROS
-#include <ros/ros.h>
+#include "ros/ros.h"
 
 // messages
 #include <sensor_msgs/LaserScan.h>
@@ -92,7 +92,7 @@ public:
 protected:
 
 	virtual void callback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg) = 0;
-	virtual void dynamicReconfigureCallback(relative_localization::RelativeLocalizationConfig& config, uint32_t level);
+	virtual void dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig& config, uint32_t level);
 
 	// search for front wall until a suitable estimate is found, i.e. when scalar product of line normal and robot's x-axis do not differ by more than 45deg angle
 	// scan_front the laser scan which contains all relevant points of the front wall (and possibly more points), this vector will be modified within the function
@@ -114,7 +114,7 @@ protected:
 	tf::TransformBroadcaster transform_broadcaster_;
 	tf::TransformListener transform_listener_;
 
-	dynamic_reconfigure::Server<relative_localization::RelativeLocalizationConfig> dynamic_reconfigure_server_;
+	dynamic_reconfigure::Server<robotino_calibration::RelativeLocalizationConfig> dynamic_reconfigure_server_;
 	tf::Vector3 avg_translation_;
 	tf::Quaternion avg_orientation_;
 	double base_height_;

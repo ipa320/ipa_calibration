@@ -10,7 +10,7 @@
  *****************************************************************
  *
 * \note
-* Repository name: ipa_calibration
+* Repository name: squirrel_calibration
 * \note
 * ROS package name: relative_localization
  *
@@ -109,7 +109,7 @@ ReferenceLocalization::~ReferenceLocalization()
 {
 }
 
-void ReferenceLocalization::dynamicReconfigureCallback(relative_localization::RelativeLocalizationConfig &config, uint32_t level)
+void ReferenceLocalization::dynamicReconfigureCallback(robotino_calibration::RelativeLocalizationConfig &config, uint32_t level)
 {
 	update_rate_ = config.update_rate;
 	reference_frame_ = config.reference_frame;
