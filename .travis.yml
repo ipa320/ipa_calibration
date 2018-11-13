@@ -8,6 +8,7 @@ notifications:
 env:
   global:
     - ROS_REPO=ros
+    - ROS_PARALLEL_JOBS=-j4
   matrix:
     - ROS_DISTRO=indigo UPSTREAM_WORKSPACE=file
     - ROS_DISTRO=indigo UPSTREAM_WORKSPACE=debian
