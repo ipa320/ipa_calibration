@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="2">
+	<name>ipa_calibration_interface</name>
+	<version>0.0.0</version>
+	<description>The ipa_calibration_interface package implements interfaces for ipa related robots which are needed to execute a calibration upon each robot using the libcalibration package.
+	Additionally, there are detection methods in order to detect pitags or checkerboards in the environment using the robot's cameras.</description>
+
+	<maintainer email="marc.riedlinger@ipa.fraunhofer.de">Marc Riedlinger</maintainer>
+	<license>LGPL</license>
+
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<depend>actionlib</depend>
+	<depend>boost</depend>
+	<depend>cob_fiducials</depend>
+	<depend>cob_object_detection_msgs</depend>
+	<depend>control_msgs</depend>
+	<depend>cv_bridge</depend>
+	<depend>geometry_msgs</depend>
+	<depend>image_transport</depend>
+	<depend>libcalibration</depend>
+	<depend>roscpp</depend>
+	<depend>roslib</depend>
+	<depend>sensor_msgs</depend>
+	<depend>std_msgs</depend>
+	<depend>tf</depend>
+	<depend>trajectory_msgs</depend>
+
+</package>

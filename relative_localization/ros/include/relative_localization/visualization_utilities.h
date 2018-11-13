@@ -10,7 +10,7 @@
  *****************************************************************
  *
 * \note
-* Repository name: squirrel_calibration
+* Repository name: ipa_calibration
 * \note
 * ROS package name: relative_localization
  *

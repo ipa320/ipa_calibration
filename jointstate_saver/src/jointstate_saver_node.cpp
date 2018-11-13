@@ -1,19 +1,19 @@
 /****************************************************************
  *
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *
  * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Project name: squirrel
- * ROS stack name: squirrel_calibration
- * ROS package name: robotino_calibration
+ * Project name: ipa_calibration
+ * ROS stack name: ipa_calibration
+ * ROS package name: jointstate_saver
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
+ * Author: Marc Riedlinger, email: m.riedlinger@live.de
  *
  * Date of creation: June 2017
  *
@@ -47,8 +47,8 @@
  * If not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
-#include "ros/ros.h"
-#include "sensor_msgs/JointState.h"
+#include <ros/ros.h>
+#include <sensor_msgs/JointState.h>
 
 #include <iostream>
 #include <sstream>
