@@ -1,19 +1,19 @@
 /****************************************************************
  *
- * Copyright (c) 2015
+ * Copyright (c) 2016
  *
  * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Project name: squirrel
- * ROS stack name: squirrel_calibration
- * ROS package name: robotino_calibration
+ * Project name: ipa_calibration
+ * ROS stack name: ipa_calibration
+ * ROS package name: libcalibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
+ * Author: Marc Riedlinger, email: m.riedlinger@live.de
  *
  * Date of creation: October 2016
  *
@@ -56,11 +56,11 @@
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 
-#include <robotino_calibration/calibration_interface.h>
+#include <libcalibration/calibration_interface.h>
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-#include <robotino_calibration/file_utilities.h>
+#include <libcalibration/file_utilities.h>
 
 
 class RobotCalibration

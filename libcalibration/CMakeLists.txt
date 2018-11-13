@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(robotino_calibration)
+project(libcalibration)
 
 ## C++11
 include(CheckCXXCompilerFlag)
@@ -46,7 +46,7 @@ INCLUDE_DIRS
 	common/include
 	ros/include
 LIBRARIES
-	CalibrationTools
+	calibration
 CATKIN_DEPENDS
 	${catkin_RUN_PACKAGES}
 DEPENDS
@@ -69,7 +69,7 @@ include_directories(
 )
 
 # calibration library
-add_library(CalibrationTools
+add_library(calibration
 					ros/src/robot_calibration.cpp
 					ros/src/calibration_interface.cpp
 					common/src/transformation_utilities.cpp
@@ -77,7 +77,7 @@ add_library(CalibrationTools
 					common/src/time_utilities.cpp
 )
 
-target_link_libraries(CalibrationTools
+target_link_libraries(calibration
 	${catkin_LIBRARIES} # automatically links all catkin_BUILD_PACKAGES
 	${Boost_LIBRARIES}
 	${OpenCV_LIBRARIES}
@@ -86,7 +86,7 @@ target_link_libraries(CalibrationTools
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(CalibrationTools ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(calibration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 #############
@@ -104,7 +104,7 @@ add_dependencies(CalibrationTools ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_E
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS CalibrationTools
+install(TARGETS calibration
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

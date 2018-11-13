@@ -7,13 +7,13 @@
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Project name: squirrel
- * ROS stack name: squirrel_robotino
- * ROS package name: robotino_calibration
+ * Project name: ipa_calibration
+ * ROS stack name: ipa_calibration
+ * ROS package name: libcalibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Richard Bormann, email:richard.bormann@ipa.fhg.de
+ * Author: Richard Bormann, email: richard.bormann@ipa.fhg.de
  *
  * Date of creation: December 2015
  *
@@ -49,7 +49,7 @@
  ****************************************************************/
 
 
-#include <robotino_calibration/transformation_utilities.h>
+#include <libcalibration/transformation_utilities.h>
 
 
 #include <tf/exceptions.h>
@@ -65,7 +65,7 @@ namespace transform_utilities
 	// 1. rotation = yaw around z
 	// 2. rotation = pitch around y'
 	// 3. rotation = roll around x''
-	/*cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
+	cv::Mat rotationMatrixFromYPR(double yaw, double pitch, double roll)
 	{
 		double sy = sin(yaw);
 		double cy = cos(yaw);
@@ -79,7 +79,7 @@ namespace transform_utilities
 				sr*sy - cr*cy*sp,		cy*sr + cr*sp*sy,		cp*cr);
 
 		return rotation;
-	}*/
+	}
 
 	// computes yaw, pitch, roll angles from rotation matrix rot (can also be a 4x4 transformation matrix with rotation matrix at upper left corner)
 	cv::Vec3d YPRFromRotationMatrix(const cv::Mat& rot)
@@ -104,7 +104,7 @@ namespace transform_utilities
 	}
 
 	// Takes a string like "1,1,1,1,1,1" and creates a 4x4 transformation matrix out of it.
-	/*bool stringToTransform(const std::string values, cv::Mat& trafo)
+	bool stringToTransform(const std::string values, cv::Mat& trafo)
 	{
 		const std::string delimiter = ",";
 		size_t npos = 0, opos = 0;
@@ -135,7 +135,7 @@ namespace transform_utilities
 
 			return false;
 		}
-	}*/
+	}
 
 	// computes the transform from source_frame to target_frame (i.e. transform arrow is pointing from source_frame to target_frame)
 	bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T, const double timeout, const bool report_error)

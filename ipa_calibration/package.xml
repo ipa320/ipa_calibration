@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
 <package>
-  <name>squirrel_calibration</name>
-  <version>0.0.0</version>
-  <description>This repository holds packages for calibrate the robot components</description>
+  <name>ipa_calibration</name>
+  <version>0.0.1</version>
+  <description>This repository holds packages for calibrating uncertain extrinsic transforms in kinematic chains of a robot.</description>
 
   <license>LGPL</license>
 
   <maintainer email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</maintainer>
-  <author email="nhg@ipa.fhg.de">Nadia Hammoudeh Garcia</author>
+  <author email="marc.riedlinger@ipa.fraunhofer.de">Marc Riedlinger</author>
   <author email="richard.bormann@ipa.fraunhofer.de">Richard Bormann</author>
 
 
   <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>calibration_interface</run_depend>
+  <run_depend>ipa_calibration_interface</run_depend>
   <run_depend>jointstate_saver</run_depend>
+  <run_depend>libcalibration</run_depend>
   <run_depend>relative_localization</run_depend>
-  <run_depend>robotino_calibration</run_depend>
   <run_depend>transfer_calibration</run_depend>
 
   <export>

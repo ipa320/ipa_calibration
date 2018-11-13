@@ -1,19 +1,19 @@
 /****************************************************************
  *
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *
  * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Project name: squirrel
- * ROS stack name: squirrel_calibration
- * ROS package name: robotino_calibration
+ * Project name: ipa_calibration
+ * ROS stack name: ipa_calibration
+ * ROS package name: libcalibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
+ * Author: Marc Riedlinger, email: m.riedlinger@live.de
  *
  * Date of creation: January 2017
  *
@@ -52,7 +52,7 @@
  * Adjust the interface functions in a subclass so that the calibration code will work correctly with your robot environment.
 */
 
-#include <robotino_calibration/calibration_interface.h>
+#include <libcalibration/calibration_interface.h>
 
 
 CalibrationInterface::CalibrationInterface()

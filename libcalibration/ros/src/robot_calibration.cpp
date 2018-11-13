@@ -1,19 +1,19 @@
 /****************************************************************
  *
- * Copyright (c) 2015
+ * Copyright (c) 2016
  *
  * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Project name: squirrel
- * ROS stack name: squirrel_calibration
- * ROS package name: robotino_calibration
+ * Project name: ipa_calibration
+ * ROS stack name: ipa_calibration
+ * ROS package name: libcalibration
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
+ * Author: Marc Riedlinger, email: m.riedlinger@live.de
  *
  * Date of creation: October 2016
  *
@@ -49,19 +49,18 @@
  ****************************************************************/
 
 
-#include <robotino_calibration/robot_calibration.h>
-#include <robotino_calibration/transformation_utilities.h>
+#include <libcalibration/robot_calibration.h>
+#include <libcalibration/transformation_utilities.h>
 
 //Exception
 #include <exception>
 
 #include <sstream>
-#include <robotino_calibration/time_utilities.h>
+#include <libcalibration/time_utilities.h>
 
 
 // ToDo: Create custom exception classes for exception handling
 // ToDo: Save snapshots one by one instead of just once at the end -> ability to restore current routine after crash
-// ToDo: Rename package to libextrinsic_calibration, also in CMakeList (but without lib tag there)
 
 
 RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface, const bool load_data_from_disk) :

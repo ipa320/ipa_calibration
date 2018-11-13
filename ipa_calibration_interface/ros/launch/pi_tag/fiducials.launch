@@ -10,8 +10,8 @@
 	<arg name="yaml_file" default="fiducials_0.yaml" />
   
 	<!-- send parameters to parameter server -->
-	<rosparam command="load" ns="fiducials" file="$(find calibration_interface)/ros/launch/pi_tag/$(arg yaml_file)"/>
-	<param name="fiducials/model_directory" value="$(find calibration_interface)/ros/launch/pi_tag/"/>
+	<rosparam command="load" ns="fiducials" file="$(find ipa_calibration_interface)/ros/launch/pi_tag/$(arg yaml_file)"/>
+	<param name="fiducials/model_directory" value="$(find ipa_calibration_interface)/ros/launch/pi_tag/"/>
 
 	<!-- start left camera -->
 	<node pkg="cob_fiducials" ns="fiducials" type="fiducials" name="fiducials" output="log">

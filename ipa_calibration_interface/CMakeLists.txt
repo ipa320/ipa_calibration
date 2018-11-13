@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(calibration_interface)
+project(ipa_calibration_interface)
 
 ## C++11
 include(CheckCXXCompilerFlag)
@@ -24,7 +24,7 @@ set(catkin_RUN_PACKAGES			# all ROS packages from package.xml (libopencv-dev is 
 	cv_bridge
 	geometry_msgs
 	image_transport
-	robotino_calibration
+	libcalibration
 	roscpp
 	roslib
 	sensor_msgs

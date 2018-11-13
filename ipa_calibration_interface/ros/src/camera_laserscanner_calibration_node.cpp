@@ -7,13 +7,13 @@
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Project name: squirrel
- * ROS stack name: squirrel_calibration
- * ROS package name: robotino_calibration
+ * Project name: ipa_calibration
+ * ROS stack name: ipa_calibration
+ * ROS package name: ipa_calibration_interface
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Richard Bormann, email:richard.bormann@ipa.fhg.de
+ * Author: Richard Bormann, email: richard.bormann@ipa.fhg.de
  *
  * Date of creation: December 2015
  *
@@ -50,14 +50,14 @@
 
 
 #include <ros/ros.h>
-#include <robotino_calibration/robot_calibration.h>
-#include <robotino_calibration/calibration_interface.h>
-#include <calibration_interface/ipa_interface.h>
-#include <calibration_interface/calibration_marker.h>
-#include <calibration_interface/pitag_marker.h>
-#include <calibration_interface/checkerboard_marker.h>
-#include <calibration_interface/calibration_type.h>
-#include <calibration_interface/camera_laserscanner_type.h>
+#include <libcalibration/robot_calibration.h>
+#include <libcalibration/calibration_interface.h>
+#include <ipa_calibration_interface/ipa_interface.h>
+#include <ipa_calibration_interface/calibration_marker.h>
+#include <ipa_calibration_interface/pitag_marker.h>
+#include <ipa_calibration_interface/checkerboard_marker.h>
+#include <ipa_calibration_interface/calibration_type.h>
+#include <ipa_calibration_interface/camera_laserscanner_type.h>
 
 
 //#######################

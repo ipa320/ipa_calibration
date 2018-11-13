@@ -1,19 +1,19 @@
 /****************************************************************
  *
- * Copyright (c) 2015
+ * Copyright (c) 2018
  *
  * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Project name: squirrel
- * ROS stack name: squirrel_calibration
- * ROS package name: robotino_calibration
+ * Project name: ipa_calibration
+ * ROS stack name: ipa_calibration
+ * ROS package name: ipa_calibration_interface
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
+ * Author: Marc Riedlinger, email: m.riedlinger@live.de
  *
  * Date of creation: January 2018
  *
@@ -52,9 +52,9 @@
 #define CUSTOM_INTERFACE_H_
 
 
-#include <robotino_calibration/calibration_interface.h>
-#include <calibration_interface/calibration_type.h>
-#include <calibration_interface/calibration_marker.h>
+#include <libcalibration/calibration_interface.h>
+#include <ipa_calibration_interface/calibration_type.h>
+#include <ipa_calibration_interface/calibration_marker.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Twist.h>

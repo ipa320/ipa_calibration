@@ -1,19 +1,19 @@
 /****************************************************************
  *
- * Copyright (c) 2015
+ * Copyright (c) 2016
  *
  * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Project name: squirrel
- * ROS stack name: squirrel_calibration
- * ROS package name: robotino_calibration
+ * Project name: ipa_calibration
+ * ROS stack name: ipa_calibration
+ * ROS package name: ipa_calibration_interface
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
- * Author: Marc Riedlinger, email:marc.riedlinger@ipa.fraunhofer.de
+ * Author: Marc Riedlinger, email: m.riedlinger@live.de
  *
  * Date of creation: October 2016
  *
@@ -49,13 +49,13 @@
  ****************************************************************/
 
 #include <ros/ros.h>
-#include <robotino_calibration/robot_calibration.h>
-#include <robotino_calibration/calibration_interface.h>
-#include <calibration_interface/ipa_interface.h>
-#include <calibration_interface/calibration_marker.h>
-#include <calibration_interface/checkerboard_marker.h>
-#include <calibration_interface/calibration_type.h>
-#include <calibration_interface/camera_arm_type.h>
+#include <libcalibration/robot_calibration.h>
+#include <libcalibration/calibration_interface.h>
+#include <ipa_calibration_interface/ipa_interface.h>
+#include <ipa_calibration_interface/calibration_marker.h>
+#include <ipa_calibration_interface/checkerboard_marker.h>
+#include <ipa_calibration_interface/calibration_type.h>
+#include <ipa_calibration_interface/camera_arm_type.h>
 
 //#######################
 //#### main programm ####

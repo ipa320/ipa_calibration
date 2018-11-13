@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-	<name>robotino_calibration</name>
+	<name>libcalibration</name>
 	<version>0.0.0</version>
-	<description>The robotino_calibration package. Contains methods for camera base calibration via calibration checkerboards or via detecting specialized markers.</description>
+	<description>The libcalibration package contains methods for optimizing extrinsic transforms within a kinematic chain utilizing TF.</description>
 
 	<license>LGPL</license>
 	<url type="website">http://wiki.ros.org/robotino_calibration</url>
