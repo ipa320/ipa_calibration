@@ -84,8 +84,12 @@ public:
 	// get the pattern points (in 3 dimensions) for each marker in local marker's frame. markers can have different patterns, hence one can mix pitags, checkerboards, etc...
 	virtual void getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d) = 0;
 
-	// returns the uncertainties list which has to be set up like this: [parent frame, child frame, parent marker frame, child marker frame]
-	virtual void getUncertainties(std::vector<std::string> &uncertainties_list) = 0;
+	// get the settings needed for the calibration routine:
+	//  uncertainties list which has to be set up like this: [parent frame, child frame, parent marker frame, child marker frame]
+	//  optimization_iterations: Iterations of the optimization loop
+	//  transform_discard_timeout: Time after which a transform (of detected markers) in TF will be considered outdated and won't be used in the calibration process anymore
+	//  calibration_storage_path: Path where results will be stored to
+	virtual void getCalibrationSettings(std::vector<std::string> &uncertainties_list, int &optimization_iterations, double &transform_discard_timeout, std::string &calibration_storage_path) = 0;
 
 	// returns the file name (including file extension) in which the calibration results will be stored to
 	virtual std::string getFileName(const std::string &appendix, const bool file_extension) = 0;

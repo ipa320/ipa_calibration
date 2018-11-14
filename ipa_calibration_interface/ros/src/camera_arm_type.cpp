@@ -174,11 +174,9 @@ void CameraArmType::initialize(ros::NodeHandle* nh, IPAInterface* calib_interfac
 
 bool CameraArmType::moveRobot(int config_index)
 {
-	// Cameras move only when their assigned arms have finished moving
-	// How detect when an arm has finished moving?
-	// Camera moves -> arm moves in whole field of view of camera (corners, middle, etc), after that, camera moves and arm does same procedure again
+	// Each camera will move to its next configuration and afterwards each arm will move to its next configuration
 
-	bool result = CalibrationType::moveRobot(config_index);  // call parent
+	bool result = CalibrationType::moveRobot(config_index);  // call parent -> move cameras
 
 	// Move arms
 	if ( result )

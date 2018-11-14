@@ -94,7 +94,7 @@ public:
 
 	void preSnapshot(int current_index);
 	void getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d);
-	void getUncertainties(std::vector<std::string> &uncertainties_list);
+	void getCalibrationSettings(std::vector<std::string> &uncertainties_list, int &optimization_iterations, double &transform_discard_timeout, std::string &calibration_storage_path);
 	std::string getFileName(const std::string &appendix, const bool file_extension);
 
 	virtual std::string getRobotName();

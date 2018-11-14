@@ -63,8 +63,8 @@
 // ToDo: Save snapshots one by one instead of just once at the end -> ability to restore current routine after crash
 
 
-RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface, const bool load_data_from_disk) :
-	node_handle_(nh), transform_listener_(nh), calibrated_(false), calibration_interface_(interface), load_data_from_disk_(load_data_from_disk), transform_discard_timeout_(1.0)
+RobotCalibration::RobotCalibration(ros::NodeHandle* nh, CalibrationInterface* interface, const bool load_data_from_disk) :
+					transform_listener_(*nh), calibrated_(false), calibration_interface_(interface), load_data_from_disk_(load_data_from_disk), transform_discard_timeout_(1.0)
 {
 	// load parameters
 	std::cout << std::endl << "========== RobotCalibration Parameters ==========" << std::endl;
@@ -75,15 +75,14 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 		throw std::exception();
 	}
 
-	node_handle_.param("optimization_iterations", optimization_iterations_, 1000);
+	std::vector<std::string> uncertainties_list;
+	calibration_interface_->getCalibrationSettings(uncertainties_list, optimization_iterations_, transform_discard_timeout_, calibration_storage_path_); // get parameters
 	if ( optimization_iterations_ <= 0 )
 	{
 		std::cout << "Invalid optimization_iterations value: " << optimization_iterations_ << " -> Setting value to 1000." << std::endl;
 		optimization_iterations_ = 1000;
 	}
 	std::cout << "optimization_iterations: " << optimization_iterations_ << std::endl;
-
-	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path_, "/calibration");
 	std::cout << "calibration_storage_path: " << calibration_storage_path_ << std::endl;
 
 	// setup file name for storing calibration data that can be used for offline calibration
@@ -99,7 +98,6 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 
 	if ( !load_data_from_disk_ )
 	{
-		node_handle_.param("transform_discard_timeout", transform_discard_timeout_, 1.0);
 		transform_discard_timeout_ = fmax(transform_discard_timeout_, 0.1);
 		std::cout << "transform_discard_timeout: " << transform_discard_timeout_ << std::endl;
 
@@ -114,10 +112,6 @@ RobotCalibration::RobotCalibration(ros::NodeHandle nh, CalibrationInterface* int
 			ros::Duration(0.2f).sleep();
 		}
 		ROS_INFO("RobotCalibration::RobotCalibration - End waiting for TF to initialize.");
-
-		// load gaps including its initial values
-		std::vector<std::string> uncertainties_list;
-		calibration_interface_->getUncertainties(uncertainties_list);
 
 		if ( uncertainties_list.empty() )
 		{
