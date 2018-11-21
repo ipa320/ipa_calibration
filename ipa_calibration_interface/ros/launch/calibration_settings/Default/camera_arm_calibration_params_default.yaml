@@ -1,18 +1,37 @@
-cameras_list: ["kinect_front", "2", "0"]
+# List of cameras invloved in calibration
+# format: [camera1_name, camera1_dof, camera1_max_delta_angle
+#          camera2_name, camera2_dof, camera2_max_delta_angle]
+# cameraX_name can be any name to distinguish different cameras inside the interface
+# max_delta_angle is a security measure to avoid movement when target angles and current angles of a camera are not too far away from one another.
+# This can lead to collision issues for some cameras (e.g. when attached to an arm). Setting it to 0 turns it off (only recommended for pan/tilt cameras)
+# vector<string>
+cameras_list: ["cam1", "2", "0"]
+
+# List of arms invloved in calibration
+# format: [arm1_name, arm1_dof, arm1_max_delta_angle
+#          arm2_name, arm2_dof, arm2_max_delta_angle]
+# functions similarly to cameras_list
+# vector<string>
 arms_list: ["arm1", "6", "3"]
 
 # arm configurations that are used for the calibration routine
 arm1_configs: []
 
+# further arms possible
+#<arm2_name>_configs: []
+
 # camera configurations that are used for the calibration routine
-kinect_front_configs: []
+cam1_configs: []
+
+# further cameras possible
+#<camera2_name>_configs: []
 
 # collection of uncertainties. each uncertainty consists of 5 parameters:
 # [parent frame, child frame, last parent-branch frame (directly connected to parent marker), last child-branch frame (directly connected to child marker), parent marker, child marker]
 # the uncertainties will be calibrated in the same order they appear in the uncertainties_list
 # last parent-branch frame and last child-branch frame have to be available from TF from the very beginning, so that the routine can build the kinematic chains
 # only transforms prior to last parent-branch frame and last child-branch frame can be used as uncertainties
-uncertainties_list: ["base_linkz", "arm_base_link", "kinect_depth_optical_frame", "hand_wrist_link", "checkerboard_detected", "checkerboard_frame"]
+uncertainties_list: []
 
 
 # number of optimization iterations
@@ -25,4 +44,4 @@ transform_discard_timeout: 2.0
 
 # storage folder that holds the calibration output
 # string
-calibration_storage_path: "robotino_calibration/camera_arm_calibration"
+calibration_storage_path: "calibration"
