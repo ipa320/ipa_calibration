@@ -140,11 +140,10 @@ void IPAInterface::preSnapshot(int current_index)
 	ros::Duration(calibration_marker_->getWaitTime()).sleep();  // wait for markers being detected properly
 }
 
-// we are not making use of marker_frame, as we do either use pitags or checkerboards throughout the whole calibration, so we do not mix markers
-void IPAInterface::getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d)
+void IPAInterface::getPatternPoints3D(const std::string &marker_frame, std::vector<cv::Point3f> &pattern_points_3d)
 {
 	if ( calibration_marker_ != 0 )
-		calibration_marker_->getPatternPoints3D(pattern_points_3d);
+		calibration_marker_->getPatternPoints3D(marker_frame, pattern_points_3d);
 	else
 		ROS_ERROR("IPAInterface::getPatternPoints3D - Calibration marker has not been created!");
 }

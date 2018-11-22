@@ -82,7 +82,7 @@ public:
 	virtual void preSnapshot(int current_index) = 0;
 
 	// get the pattern points (in 3 dimensions) for each marker in local marker's frame. markers can have different patterns, hence one can mix pitags, checkerboards, etc...
-	virtual void getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d) = 0;
+	virtual void getPatternPoints3D(const std::string &marker_frame, std::vector<cv::Point3f> &pattern_points_3d) = 0;
 
 	// get the settings needed for the calibration routine:
 	//  uncertainties list which has to be set up like this: [parent frame, child frame, parent marker frame, child marker frame]

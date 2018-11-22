@@ -70,7 +70,8 @@ CheckerboardMarker::~CheckerboardMarker()
 
 }
 
-void CheckerboardMarker::getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d)
+// called by ipa_interface
+void CheckerboardMarker::getPatternPoints3D(const std::string &marker_frame, std::vector<cv::Point3f> &pattern_points_3d)
 {
 	pattern_points_3d.clear();
 	pattern_points_3d.resize(checkerboard_pattern_size_.height*checkerboard_pattern_size_.width);
@@ -78,18 +79,6 @@ void CheckerboardMarker::getPatternPoints3D(std::vector<cv::Point3f> &pattern_po
 	{
 		for (int u=0; u<checkerboard_pattern_size_.width; ++u)
 			pattern_points_3d[v*checkerboard_pattern_size_.width + u] = cv::Point3f(u*checkerboard_cell_size_, v*checkerboard_cell_size_, 0.f);
-	}
-}
-
-// static version, so we don't need an object
-void CheckerboardMarker::getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d, cv::Size pattern_size, double cell_size)
-{
-	pattern_points_3d.clear();
-	pattern_points_3d.resize(pattern_size.height*pattern_size.width);
-	for (int v=0; v<pattern_size.height; ++v)
-	{
-		for (int u=0; u<pattern_size.width; ++u)
-			pattern_points_3d[v*pattern_size.width + u] = cv::Point3f(u*cell_size, v*cell_size, 0.f);
 	}
 }
 
