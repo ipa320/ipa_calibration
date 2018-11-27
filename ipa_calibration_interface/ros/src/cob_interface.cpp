@@ -60,13 +60,15 @@ CobInterface::CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 {
 	std::cout << "\n========== CobInterface Parameters ==========\n";
 
-	node_handle_.param<std::string>("camera_joint_controller_command", camera_joint_controller_command_, "");
+	/*node_handle_.param<std::string>("camera_joint_controller_command", camera_joint_controller_command_, "");
 	std::cout << "camera_joint_controller_command: " << camera_joint_controller_command_ << std::endl;
-	camera_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray/*trajectory_msgs::JointTrajectory*/>(camera_joint_controller_command_, 1, false);
+	camera_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(camera_joint_controller_command_, 1, false);
 
 	node_handle_.param<std::string>("camera_joint_state_topic", camera_joint_state_topic_, "");
 	std::cout << "camera_joint_state_topic: " << camera_joint_state_topic_ << std::endl;
-	camera_state_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &CobInterface::cameraStateCallback, this);
+	camera_state_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &CobInterface::cameraStateCallback, this);*/
+
+	sensorring_static_state_.push_back(0.f);
 
 	if ( arm_calibration_ )
 	{
@@ -133,6 +135,9 @@ void CobInterface::assignNewCameraAngles(const std::string &camera_name, std_msg
 
 std::vector<double>* CobInterface::getCurrentCameraState(const std::string &camera_name)
 {
+	if ( camera_name.compare("sensorring_dummy") == 0 )
+		return &sensorring_static_state_;
+
 	return 0;
 }
 
