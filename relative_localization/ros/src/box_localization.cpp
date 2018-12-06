@@ -92,19 +92,22 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 	if (initialized_ == false)
 		return;
 
+	if ( publish_detection_base_frame_ )  // publish detection marker frame if it has dynamically been set up
+		publishDetectionBaseFrame();
+
 	if (marker_pub_.getNumSubscribers() > 0)
 	{
-		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "front_wall_polygon", front_wall_polygon_, 0, marker_pub_);
-		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "box_polygon", box_search_polygon_, 0, marker_pub_, 1.0, 0.5, 0.0);
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, detection_base_frame_, "front_wall_polygon", front_wall_polygon_, 0, marker_pub_);
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, detection_base_frame_, "box_polygon", box_search_polygon_, 0, marker_pub_, 1.0, 0.5, 0.0);
 	}
 
 	// ---------- 1. data preparation ----------
 	// retrieve transform from laser scanner to base
 	cv::Mat T;
-	bool received_transform = RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, laser_scan_msg->header.frame_id, T);
+	bool received_transform = RelativeLocalizationUtilities::getTransform(transform_listener_, detection_base_frame_, laser_scan_msg->header.frame_id, T);
 	if (received_transform==false)
  	{
-		ROS_WARN("BoxLocalization::callback - Could not determine transform T between laser scanner and base.");
+		ROS_WARN("BoxLocalization::callback - Could not determine transform T between laser scanner and %s.", detection_base_frame_.c_str());
 		return;
 	}
 
@@ -145,7 +148,7 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 	const double n0y = line_front.val[3];
 
 	if (marker_pub_.getNumSubscribers() > 0)
-		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall_front", px, py, n0x, n0y, marker_pub_);
+		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, detection_base_frame_, "wall_front", px, py, n0x, n0y, marker_pub_);
 
 	// ---------- 3. box localization ----------
 	// find blocks in front of the wall
@@ -192,7 +195,7 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 
 	// display points of box segment
 	if (marker_pub_.getNumSubscribers() > 0)
-		VisualizationUtilities::publishPointsVisualization(laser_scan_msg->header, "box_points", segments[largest_segment], marker_pub_);
+		VisualizationUtilities::publishPointsVisualization(laser_scan_msg->header, detection_base_frame_, "box_points", segments[largest_segment], marker_pub_);
 
 #ifdef DEBUG_OUTPUT
 	std::cout << "Corner point: " << corner_point << std::endl;

@@ -93,31 +93,34 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	if (initialized_ == false)
 		return;
 
+	if ( publish_detection_base_frame_ )  // publish detection marker frame if it has dynamically been set up
+		publishDetectionBaseFrame();
+
 	if (marker_pub_.getNumSubscribers() > 0) // Display wall detection polygons
 	{
-		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "front_wall_polygon", front_wall_polygon_, 0, marker_pub_);
-		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "side_wall_polygon", side_wall_polygon_, 0, marker_pub_, 1.0, 0.5, 0.0);
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, detection_base_frame_, "front_wall_polygon", front_wall_polygon_, 0, marker_pub_);
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, detection_base_frame_, "side_wall_polygon", side_wall_polygon_, 0, marker_pub_, 1.0, 0.5, 0.0);
 	}
 
 	// ---------- 1. data preparation ----------
-	// retrieve transform from laser scanner to base
+	// retrieve transform from detection_base_frame_ to laser scanner
 	cv::Mat T;
-	bool received_transform = RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, laser_scan_msg->header.frame_id, T);
+	bool received_transform = RelativeLocalizationUtilities::getTransform(transform_listener_, detection_base_frame_, laser_scan_msg->header.frame_id, T);
 	if (received_transform==false)
  	{
-		ROS_WARN("CornerLocalization::callback - Could not determine transform T between laser scanner and base.");
+		ROS_WARN("CornerLocalization::callback - Could not determine transform T between laser scanner and %s.", detection_base_frame_.c_str());
 		return;
 	}
 
 	// retrieve points from side and front wall and put each of those in separate lists
 	std::vector<cv::Point2d> scan_front;
 	std::vector<cv::Point2d> scan_side_all;
-	for (size_t i=0; i<laser_scan_msg->ranges.size(); i++ )
+	for ( size_t i=0; i<laser_scan_msg->ranges.size(); i++ )
 	{
 		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; // [rad]
 		double dist = laser_scan_msg->ranges[i]; // [m]
 
-		// transform laser scanner points to base frame
+		// transform laser scanner points to detection_base_frame_
 		cv::Mat point_laser(cv::Vec4d(dist*cos(angle), dist*sin(angle), 0, 1.0));
 		cv::Mat point_base_mat = T*point_laser;
 		cv::Point2f point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
@@ -147,7 +150,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	const double n0y_f = line_front.val[3];
 
 	if (marker_pub_.getNumSubscribers() > 0)
-		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall_front", px_f, py_f, n0x_f, n0y_f, marker_pub_);
+		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, detection_base_frame_, "wall_front", px_f, py_f, n0x_f, n0y_f, marker_pub_);
 
 	// ---------- 3. side wall estimation ----------
 	std::vector<cv::Point2d> scan_side;
@@ -208,7 +211,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 
 	// display line
 	if (marker_pub_.getNumSubscribers() > 0)
-		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall_side", px_s, py_s, n0x_s, n0y_s, marker_pub_);
+		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, detection_base_frame_, "wall_side", px_s, py_s, n0x_s, n0y_s, marker_pub_);
 
 	// ---------- 4. publish tf ----------
 	// compute intersection of two wall segments
@@ -226,7 +229,7 @@ void CornerLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_
 	// display points of box segment
 	std::vector<cv::Point2d> corner_point_vec(1, corner_point);
 	if (marker_pub_.getNumSubscribers() > 0)
-		VisualizationUtilities::publishPointsVisualization(laser_scan_msg->header, "corner_point", corner_point_vec, marker_pub_);
+		VisualizationUtilities::publishPointsVisualization(laser_scan_msg->header, detection_base_frame_, "corner_point", corner_point_vec, marker_pub_);
 
 #ifdef DEBUG_OUTPUT
 	std::cout << "Corner point: " << corner_point << std::endl;

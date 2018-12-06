@@ -14,6 +14,17 @@ base_height: 0.0
 # string
 base_frame: "base_linkz"
 
+# frame which is used to build the whole detection (polygons, etc..) upon, it can be assigned with an existing frame or a yet unknown frame
+# existing frame: All the detection will be built upon the assigned frame (e.g. robot's base frame)
+# unknown frame: A new frame will be created relative to odom_combined_frame_ and the start position (base_frame) of the robot (facing the front wall).
+# the frame will be set up once at startup and prevents that robot rotations mess up the reference frame detection.
+# string
+detection_base_frame: "detection_frame"
+
+# name of odom_combined frame, which is only used when detection_base_frame does not exist at startup and has to be created
+# string
+odom_combined_frame: "odom"
+
 # laser scanner topic
 # string
 laser_scanner_topic_in: "/scan"

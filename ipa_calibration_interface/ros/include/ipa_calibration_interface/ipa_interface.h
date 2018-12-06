@@ -100,12 +100,12 @@ public:
 	virtual std::string getRobotName();
 
 	// camera calibration interface
-	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;
-	virtual void assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray newAngles) = 0;
+	virtual void assignNewRobotVelocity(geometry_msgs::Twist new_velocity) = 0;
+	virtual void assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_camera_config) = 0;
 	virtual std::vector<double>* getCurrentCameraState(const std::string &camera_name) = 0;
 
 	// arm calibration interface
-	virtual void assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray newJointConfig) = 0;
+	virtual void assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_arm_config) = 0;
 	virtual std::vector<double>* getCurrentArmState(const std::string &arm_name) = 0;
 };
 

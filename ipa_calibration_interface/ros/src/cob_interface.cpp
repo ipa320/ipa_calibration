@@ -123,12 +123,12 @@ void CobInterface::armRightStateCallback(const sensor_msgs::JointState::ConstPtr
 }
 // End callbacks
 
-void CobInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity)
+void CobInterface::assignNewRobotVelocity(geometry_msgs::Twist new_velocity)
 {
-	base_velocity_controller_.publish(newVelocity);
+	base_velocity_controller_.publish(new_velocity);
 }
 
-void CobInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray newAngles)
+void CobInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_camera_config)
 {
 
 }
@@ -141,7 +141,7 @@ std::vector<double>* CobInterface::getCurrentCameraState(const std::string &came
 	return 0;
 }
 
-void CobInterface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray newJointConfig)
+void CobInterface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_arm_config)
 {
 
 }

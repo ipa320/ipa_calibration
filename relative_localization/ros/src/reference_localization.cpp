@@ -61,7 +61,7 @@
 
 
 ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
-		: node_handle_(nh), transform_listener_(nh), initialized_(false)
+		: node_handle_(nh), transform_listener_(nh), initialized_(false), publish_detection_base_frame_(false)
 {
 	// load parameters
 	std::cout << "\n========== Reference Localization Parameters ==========\n";
@@ -71,10 +71,35 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	std::cout << "reference_frame: " << reference_frame_ << std::endl;
 	node_handle_.param<std::string>("laser_scanner_topic_in", laser_scanner_topic_in_, "");
 	std::cout << "laser_scanner_topic_in: " << laser_scanner_topic_in_ << std::endl;
-	node_handle_.param<std::string>("base_frame", base_frame_, "");
-	std::cout << "base_frame: " << base_frame_ << std::endl;
 	node_handle_.param("base_height", base_height_, 0.0);
 	std::cout << "base_height: " << base_height_ << std::endl;
+
+	node_handle_.param<std::string>("base_frame", base_frame_, "");
+	std::cout << "base_frame: " << base_frame_ << std::endl;
+	node_handle_.param<std::string>("detection_base_frame", detection_base_frame_, "");
+	std::cout << "detection_base_frame: " << detection_base_frame_ << std::endl;
+
+	// check if detection_base_frame_ exists. If that is not the case, spawn it using the robot
+	bool success = transform_listener_.waitForTransform(base_frame_, detection_base_frame_, ros::Time(0), ros::Duration(2.0));
+	if ( !success )
+	{
+		std::cout << detection_base_frame_ << " frame does not exist, creating one..." << std::endl;
+		node_handle_.param<std::string>("odom_combined_frame", odom_combined_frame_, "");
+		std::cout << "odom_combined_frame: " << odom_combined_frame_ << std::endl;
+		success = setupDetectionBaseFrame();
+
+		if ( !success )
+		{
+			ROS_ERROR("ReferenceLocalization::ReferenceLocalization - Could not find transform between %s and %s", odom_combined_frame_.c_str(), base_frame_.c_str());
+			return;
+		}
+		else
+		{
+			publish_detection_base_frame_ = true;
+			publishDetectionBaseFrame();
+			ros::Duration(0.5f).sleep();  // wait a bit so transform can settle
+		}
+	}
 
 	// read out user-defined polygon that defines the area of laser scanner points being taken into account for front wall detection
 	std::vector<double> temp;
@@ -165,7 +190,6 @@ bool ReferenceLocalization::estimateFrontWall(std::vector<cv::Point2d>& scan_fro
 void ReferenceLocalization::computeAndPublishChildFrame(const cv::Vec4d& line, const cv::Point2d& corner_point, const std_msgs::Header::_stamp_type& time_stamp)
 {
 	// block coordinate system is attached at the left corner of the block directly on the wall surface
-	bool publish_tf = true;
 	const double px = line.val[0];	// coordinates of a point on the wall
 	const double py = line.val[1];
 	const double n0x = line.val[2];	// normal direction on the wall (in floor plane x-y)
@@ -209,14 +233,10 @@ void ReferenceLocalization::computeAndPublishChildFrame(const cv::Vec4d& line, c
 	// transform
 	transform_table_reference.setOrigin(avg_translation_);
 	transform_table_reference.setRotation(avg_orientation_);
-	tf::StampedTransform tf_msg(transform_table_reference, time_stamp, base_frame_, reference_frame_);
+	tf::StampedTransform tf_msg(transform_table_reference, time_stamp, detection_base_frame_, reference_frame_);
 	shiftReferenceFrameToGround(tf_msg);
 
-	// publish coordinate system on tf
-	if (publish_tf == true)
-	{
-		transform_broadcaster_.sendTransform(tf_msg);
-	}
+	transform_broadcaster_.sendTransform(tf_msg);
 }
 
 // only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis
@@ -224,4 +244,25 @@ void ReferenceLocalization::shiftReferenceFrameToGround(tf::StampedTransform& re
 {
 	tf::Vector3 trans = reference_frame.getOrigin();
 	reference_frame.setOrigin(tf::Vector3(trans.x(), trans.y(), trans.z()-base_height_));
+}
+
+bool ReferenceLocalization::setupDetectionBaseFrame()
+{
+	try
+	{
+		transform_listener_.waitForTransform(odom_combined_frame_, base_frame_, ros::Time(0), ros::Duration(1.0));
+		transform_listener_.lookupTransform(odom_combined_frame_, base_frame_, ros::Time(0), odom_combined_to_base_);
+		return true;
+	}
+	catch (tf::TransformException& ex)
+	{
+		ROS_WARN("%s",ex.what());
+		return false;
+	}
+}
+
+void ReferenceLocalization::publishDetectionBaseFrame()
+{
+	tf::StampedTransform tf_msg(odom_combined_to_base_, ros::Time::now(), odom_combined_frame_, detection_base_frame_);
+	transform_broadcaster_.sendTransform(tf_msg);
 }
