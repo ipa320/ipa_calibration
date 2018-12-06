@@ -143,7 +143,7 @@ namespace transform_utilities
 		try
 		{
 			tf::StampedTransform Ts;
-			transform_listener.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(1.0));
+			transform_listener.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(timeout));
 			transform_listener.lookupTransform(target_frame, source_frame, ros::Time(0), Ts);
 
 			if ( timeout > 0.0 )

@@ -90,7 +90,7 @@ CobInterface::CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 	}
 	else
 	{
-		node_handle_.param<std::string>("base_velocity_command", base_velocity_command_, "");
+		node_handle_.param<std::string>("base_controller_topic_name", base_velocity_command_, "");
 		std::cout << "base_velocity_command: " << base_velocity_command_ << std::endl;
 		base_velocity_controller_ = node_handle_.advertise<geometry_msgs::Twist>(base_velocity_command_, 1, false);
 	}
@@ -125,7 +125,7 @@ void CobInterface::armRightStateCallback(const sensor_msgs::JointState::ConstPtr
 
 void CobInterface::assignNewRobotVelocity(geometry_msgs::Twist newVelocity)
 {
-
+	base_velocity_controller_.publish(newVelocity);
 }
 
 void CobInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray newAngles)
@@ -153,7 +153,7 @@ std::vector<double>* CobInterface::getCurrentArmState(const std::string &arm_nam
 
 std::string CobInterface::getRobotName()
 {
-	return "COB-4";
+	return "COB-4-7";
 }
 
 
