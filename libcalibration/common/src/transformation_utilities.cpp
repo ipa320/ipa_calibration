@@ -143,16 +143,15 @@ namespace transform_utilities
 		try
 		{
 			tf::StampedTransform Ts;
-			transform_listener.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(timeout));
+			transform_listener.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(1.0));  // wait for up to 1 sec for trafo to become available
 			transform_listener.lookupTransform(target_frame, source_frame, ros::Time(0), Ts);
 
 			if ( timeout > 0.0 )
 			{
 				const double current_time = ros::Time::now().toSec();
+				const double stamp_time = Ts.stamp_.toSec();  // if stamp_time == 0, then we have a static transform that always exists
 
-				std::cout << "Valid: " << Ts.stamp_.isValid() << ", ct: " << current_time << ", st: " << Ts.stamp_.toSec() << ", to: " << timeout << std::endl;
-
-				if ( !Ts.stamp_.isValid() || current_time - Ts.stamp_.toSec() > timeout )
+				if ( !Ts.stamp_.isValid() || (stamp_time > 0.f && current_time - stamp_time > timeout) )
 					throw tf::TransformException("transform_utilities::getTransform - Transform from "+target_frame+" to "+source_frame+" timed out.");
 			}
 
