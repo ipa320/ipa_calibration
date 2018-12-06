@@ -52,7 +52,7 @@ optimization_iterations: 10000
 
 # timeout after which a TF transform won't be used for calibration anymore
 # double
-transform_discard_timeout: 10.0
+transform_discard_timeout: 2.0
 
 # storage folder that holds the calibration output
 # string

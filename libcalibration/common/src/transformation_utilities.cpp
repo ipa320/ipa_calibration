@@ -150,6 +150,8 @@ namespace transform_utilities
 			{
 				const double current_time = ros::Time::now().toSec();
 
+				std::cout << "Valid: " << Ts.stamp_.isValid() << ", ct: " << current_time << ", st: " << Ts.stamp_.toSec() << ", to: " << timeout << std::endl;
+
 				if ( !Ts.stamp_.isValid() || current_time - Ts.stamp_.toSec() > timeout )
 					throw tf::TransformException("transform_utilities::getTransform - Transform from "+target_frame+" to "+source_frame+" timed out.");
 			}
