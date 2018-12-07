@@ -131,12 +131,12 @@ protected:
 
 	// frame which is used to build the whole detection upon, it can be assigned with an existing frame or a yet unknown frame
 	// Existing frame: All the detection will be built upon the assigned frame (e.g. robot's base frame)
-	// Unknown frame: A new frame will be generated relative to odom_combined_frame_ and the start position of the robot (facing the front wall).
+	// Unknown frame: A new frame will be generated relative to odom_frame_ and the start position of the robot (facing the front wall).
 	// The frame will be set up once at startup and prevents that robot rotations mess up the reference frame detection.
 	std::string detection_base_frame_;
-	std::string odom_combined_frame_;  // will be used if detection_base_frame_ does not exist (unknown frame)
+	std::string odom_frame_;  // will be used if detection_base_frame_ does not exist (unknown frame)
 	std::string base_frame_;  // needed to check whether detection_base_frame_ exists
-	tf::StampedTransform odom_combined_to_base_;  // transform between odom_combined_frame_ base_frame_ at startup
+	tf::StampedTransform odom_to_base_;  // transform between odom_frame_ to base_frame_ at startup
 	bool publish_detection_base_frame_;
 };
 

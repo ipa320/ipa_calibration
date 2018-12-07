@@ -21,9 +21,10 @@ base_frame: "base_link"
 # string
 detection_base_frame: "detection_base"
 
-# name of odom_combined frame, which is only used when detection_base_frame does not exist at startup and has to be created
+# name of odometry frame, which serves as reference frame of the robot movement since startup
+# it is only used when detection_base_frame does not exist at startup and has to be created
 # string
-odom_combined_frame: "odom_combined"
+odometry_frame: "odom_combined"
 
 # laser scanner topic
 # string

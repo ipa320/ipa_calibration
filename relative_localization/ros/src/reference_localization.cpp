@@ -84,13 +84,13 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	if ( !success )
 	{
 		std::cout << detection_base_frame_ << " frame does not exist, creating one..." << std::endl;
-		node_handle_.param<std::string>("odom_combined_frame", odom_combined_frame_, "");
-		std::cout << "odom_combined_frame: " << odom_combined_frame_ << std::endl;
+		node_handle_.param<std::string>("odometry_frame", odom_frame_, "");
+		std::cout << "odometry_frame: " << odom_frame_ << std::endl;
 		success = setupDetectionBaseFrame();
 
 		if ( !success )
 		{
-			ROS_ERROR("ReferenceLocalization::ReferenceLocalization - Could not find transform between %s and %s", odom_combined_frame_.c_str(), base_frame_.c_str());
+			ROS_ERROR("ReferenceLocalization::ReferenceLocalization - Could not find transform between %s and %s", odom_frame_.c_str(), base_frame_.c_str());
 			return;
 		}
 		else
@@ -250,8 +250,8 @@ bool ReferenceLocalization::setupDetectionBaseFrame()
 {
 	try
 	{
-		transform_listener_.waitForTransform(odom_combined_frame_, base_frame_, ros::Time(0), ros::Duration(1.0));
-		transform_listener_.lookupTransform(odom_combined_frame_, base_frame_, ros::Time(0), odom_combined_to_base_);
+		transform_listener_.waitForTransform(odom_frame_, base_frame_, ros::Time(0), ros::Duration(1.0));
+		transform_listener_.lookupTransform(odom_frame_, base_frame_, ros::Time(0), odom_to_base_);
 		return true;
 	}
 	catch (tf::TransformException& ex)
@@ -263,6 +263,6 @@ bool ReferenceLocalization::setupDetectionBaseFrame()
 
 void ReferenceLocalization::publishDetectionBaseFrame()
 {
-	tf::StampedTransform tf_msg(odom_combined_to_base_, ros::Time::now(), odom_combined_frame_, detection_base_frame_);
+	tf::StampedTransform tf_msg(odom_to_base_, ros::Time::now(), odom_frame_, detection_base_frame_);
 	transform_broadcaster_.sendTransform(tf_msg);
 }
