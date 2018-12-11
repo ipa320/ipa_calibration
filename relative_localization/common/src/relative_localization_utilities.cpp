@@ -162,8 +162,39 @@ namespace RelativeLocalizationUtilities
 		try
 		{
 			tf::StampedTransform Ts;
-			transform_listener.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(1.0));
-			transform_listener.lookupTransform(target_frame, source_frame, ros::Time(0), Ts);
+			transform_listener.waitForTransform(target_frame, source_frame, ros::Time(0.f), ros::Duration(1.0));
+			transform_listener.lookupTransform(target_frame, source_frame, ros::Time(0.f), Ts);
+			const tf::Matrix3x3& rot = Ts.getBasis();
+			const tf::Vector3& trans = Ts.getOrigin();
+			cv::Mat rotcv(3,3,CV_64FC1);
+			cv::Mat transcv(3,1,CV_64FC1);
+			for (int v=0; v<3; ++v)
+				for (int u=0; u<3; ++u)
+					rotcv.at<double>(v,u) = rot[v].m_floats[u];
+			for (int v=0; v<3; ++v)
+				transcv.at<double>(v) = trans.m_floats[v];
+
+			if ( !T.empty() )  // release memory when T is not empty
+				T.release();
+
+			T = makeTransform(rotcv, transcv);
+		}
+		catch (tf::TransformException& ex)
+		{
+			ROS_WARN("%s",ex.what());
+			return false;
+		}
+
+		return true;
+	}
+
+	bool getTransformAdv(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, const std::string& fixed_frame, cv::Mat& T, const ros::Time &target_time, const ros::Time &source_time)
+	{
+		try
+		{
+			tf::StampedTransform Ts;
+			transform_listener.waitForTransform(target_frame, target_time, source_frame, source_time, fixed_frame, ros::Duration(1.0));
+			transform_listener.lookupTransform(target_frame, target_time, source_frame, source_time, fixed_frame, Ts);
 			const tf::Matrix3x3& rot = Ts.getBasis();
 			const tf::Vector3& trans = Ts.getOrigin();
 			cv::Mat rotcv(3,3,CV_64FC1);

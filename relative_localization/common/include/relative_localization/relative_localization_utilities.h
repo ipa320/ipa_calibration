@@ -79,6 +79,8 @@ cv::Mat makeTransform(const cv::Mat& R, const cv::Mat& t);
 // computes the transform from target_frame to source_frame (i.e. transform arrow is pointing from target_frame to source_frame)
 bool getTransform(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, cv::Mat& T);
 
+bool getTransformAdv(const tf::TransformListener& transform_listener, const std::string& target_frame, const std::string& source_frame, const std::string& fixed_frame, cv::Mat& T, const ros::Time &target_time = ros::Time(0.f), const ros::Time &source_time = ros::Time(0.f));
+
 }
 
 
