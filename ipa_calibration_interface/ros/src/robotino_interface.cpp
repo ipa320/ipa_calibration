@@ -131,13 +131,13 @@ void RobotinoInterface::assignNewRobotVelocity(geometry_msgs::Twist new_velocity
 	base_controller_.publish(new_velocity);
 }
 
-void RobotinoInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_angles)
+void RobotinoInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_camera_config)
 {
 	// Adjust here: Assign new camera angles
 	std_msgs::Float64 angle;
-	angle.data = new_angles.data[0];
+	angle.data = new_camera_config.data[0];
 	pan_controller_.publish(angle);
-	angle.data = new_angles.data[1];
+	angle.data = new_camera_config.data[1];
 	tilt_controller_.publish(angle);
 }
 
@@ -150,10 +150,10 @@ std::vector<double>* RobotinoInterface::getCurrentCameraState(const std::string 
 
 
 // ARM CALIBRATION INTERFACE
-void RobotinoInterface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_joint_config)
+void RobotinoInterface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_arm_config)
 {
 	// Adjust here: Assign new joints to your robot arm
-	arm_joint_controller_.publish(new_joint_config);
+	arm_joint_controller_.publish(new_arm_config);
 }
 
 std::vector<double>* RobotinoInterface::getCurrentArmState(const std::string &arm_name)

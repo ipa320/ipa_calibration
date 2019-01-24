@@ -1,10 +1,3 @@
-# side length of the chessboard squares
-# double
-chessboard_cell_size: 0.03
-
-# number of checkerboard calibration points (in x- and y-direction), i.e. those points where 4 squares meet
-chessboard_pattern_size: [10,6]
-
 cameras_list: ["ids_ueye", "2", "0"]
 arms_list: ["arm1", "6", "3"]
 

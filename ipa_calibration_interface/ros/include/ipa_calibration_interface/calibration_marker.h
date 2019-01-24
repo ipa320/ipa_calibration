@@ -71,7 +71,7 @@ public:
 	CalibrationMarker(ros::NodeHandle* nh);
 	virtual ~CalibrationMarker();
 
-	virtual void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d) = 0;
+	virtual void getPatternPoints3D(const std::string &marker_frame, std::vector<cv::Point3f> &pattern_points_3d) = 0;
 	virtual std::string getString() = 0;
 	virtual double getWaitTime() = 0;
 };

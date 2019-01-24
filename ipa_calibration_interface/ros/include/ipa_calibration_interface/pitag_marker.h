@@ -63,9 +63,8 @@ public:
 	PitagMarker(ros::NodeHandle* nh);
 	~PitagMarker();
 
-	void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d);
+	void getPatternPoints3D(const std::string &marker_frame, std::vector<cv::Point3f> &pattern_points_3d);
 	double getWaitTime();
-
 	std::string getString();
 
 

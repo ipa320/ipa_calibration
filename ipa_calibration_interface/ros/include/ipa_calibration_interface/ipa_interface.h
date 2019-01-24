@@ -93,19 +93,19 @@ public:
 	int getConfigurationCount();
 
 	void preSnapshot(int current_index);
-	void getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d);
-	void getUncertainties(std::vector<std::string> &uncertainties_list);
+	void getPatternPoints3D(const std::string &marker_frame, std::vector<cv::Point3f> &pattern_points_3d);
+	void getCalibrationSettings(std::vector<std::string> &uncertainties_list, int &optimization_iterations, double &transform_discard_timeout, std::string &calibration_storage_path);
 	std::string getFileName(const std::string &appendix, const bool file_extension);
 
 	virtual std::string getRobotName();
 
 	// camera calibration interface
-	virtual void assignNewRobotVelocity(geometry_msgs::Twist newVelocity) = 0;
-	virtual void assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray newAngles) = 0;
+	virtual void assignNewRobotVelocity(geometry_msgs::Twist new_velocity) = 0;
+	virtual void assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_camera_config) = 0;
 	virtual std::vector<double>* getCurrentCameraState(const std::string &camera_name) = 0;
 
 	// arm calibration interface
-	virtual void assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray newJointConfig) = 0;
+	virtual void assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_arm_config) = 0;
 	virtual std::vector<double>* getCurrentArmState(const std::string &arm_name) = 0;
 };
 

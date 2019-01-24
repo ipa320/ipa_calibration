@@ -94,82 +94,57 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 
 	if (marker_pub_.getNumSubscribers() > 0)
 	{
-		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "front_wall_polygon", front_wall_polygon_, 0, marker_pub_);
-		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, "box_polygon", box_search_polygon_, 0, marker_pub_, 1.0, 0.5, 0.0);
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, polygon_frame_, "front_wall_polygon", front_wall_polygon_, 0, marker_pub_);
+		VisualizationUtilities::publishDetectionPolygon(laser_scan_msg->header, polygon_frame_, "box_polygon", box_search_polygon_, 0, marker_pub_, 1.0, 0.5, 0.0);
 	}
 
 	// ---------- 1. data preparation ----------
-	// retrieve transform from laser scanner to base
-	cv::Mat T;
-	bool received_transform = RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, laser_scan_msg->header.frame_id, T);
-	if (received_transform==false)
- 	{
-		ROS_WARN("BoxLocalization::callback - Could not determine transform T between laser scanner and base.");
+	std::vector<cv::Point2d> scan_front_poly;  // points are relative to base_frame, but filtered using the polygon_frame
+	std::vector<cv::Point2d> scan_box_poly;  // same as above
+	bool success = applyPolygonFilters(laser_scan_msg, front_wall_polygon_, box_search_polygon_, scan_front_poly, scan_box_poly);  // filter laser scanner points
+
+	if ( !success )
 		return;
-	}
-
-	// convert scan to x-y coordinates
-	std::vector<cv::Point2d> scan_front;
-	std::vector<cv::Point2d> scan_all;
-	for (unsigned int i = 0; i < laser_scan_msg->ranges.size(); ++i)
-	{
-		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; // [rad]
-		double dist = laser_scan_msg->ranges[i]; // [m]
-
-		// transform laser scanner points to base frame
-		cv::Mat point_laser(cv::Vec4d(dist*cos(angle), dist*sin(angle), 0, 1.0));
-		cv::Mat point_base_mat = T*point_laser;
-		cv::Point2f point_2d_base(point_base_mat.at<double>(0), point_base_mat.at<double>(1));
-
-		// Check if point is inside polygon and push to scan if that's the case
-		if (cv::pointPolygonTest(front_wall_polygon_, point_2d_base, false) >= 0.f) // front wall points
-			scan_front.push_back(point_2d_base);
-
-		scan_all.push_back(point_2d_base);
-	}
 
 	// ---------- 2. front wall estimation ----------
 	// search for front wall until a suitable estimate is found, i.e. when scalar product of line normal and robot's x-axis do not differ by more than 45deg angle
 	const double inlier_distance = 0.01;
 	cv::Vec4d line_front;
-	bool found_front_line = estimateFrontWall(scan_front, line_front, 0.1, 0.99999, inlier_distance, 10);
+	bool found_front_line = estimateFrontWall(scan_front_poly, line_front, 0.1, 0.99999, inlier_distance, 10);
 	if (found_front_line == false)
 	{
 		ROS_WARN("BoxLocalization::callback - Front wall could not be estimated.");
 		return;
 	}
-	// display line
-	const double px = line_front.val[0];	// coordinates of a point on the wall
-	const double py = line_front.val[1];
-	const double n0x = line_front.val[2];	// normal direction on the wall (in floor plane x-y)
-	const double n0y = line_front.val[3];
 
+	const double px_f = line_front.val[0];	// coordinates of a point on the wall
+	const double py_f = line_front.val[1];
+	const double n0x_f = line_front.val[2];	// normal direction on the wall (in floor plane x-y)
+	const double n0y_f = line_front.val[3];
+
+	// display line
 	if (marker_pub_.getNumSubscribers() > 0)
-		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, "wall_front", px, py, n0x, n0y, marker_pub_);
+		VisualizationUtilities::publishWallVisualization(laser_scan_msg->header, base_frame_, "wall_front", px_f, py_f, n0x_f, n0y_f, marker_pub_);
 
 	// ---------- 3. box localization ----------
 	// find blocks in front of the wall
 	std::vector< std::vector<cv::Point2d> > segments;
 	std::vector<cv::Point2d> segment;
 	bool in_reflector_segment = false;
-	for (unsigned int i = 0; i < scan_all.size(); ++i)
+	for (unsigned int i = 0; i < scan_box_poly.size(); ++i)
 	{
-		//double distance_to_robot = scan[i].x*scan[i].x + scan[i].y*scan[i].y;
-		if (cv::pointPolygonTest(box_search_polygon_, scan_all[i], false) >= 0 )	// only search for block inside search polygon
+		double d = RelativeLocalizationUtilities::distanceToLine(px_f, py_f, n0x_f, n0y_f, scan_box_poly[i].x, scan_box_poly[i].y);  // distance to wall
+		if (d<0.1 && in_reflector_segment==true)
 		{
-			double d = fabs(n0x*(scan_all[i].x-px) + n0y*(scan_all[i].y-py));		// distance to wall
-			if (d<0.1 && in_reflector_segment==true)
-			{
-				// finish segment
-				segments.push_back(segment);
-				segment.clear();
-				in_reflector_segment = false;
-			}
-			if (d >= 0.1)
-			{
-				segment.push_back(scan_all[i]);
-				in_reflector_segment = true;
-			}
+			// finish segment
+			segments.push_back(segment);
+			segment.clear();
+			in_reflector_segment = false;
+		}
+		if (d >= 0.1)
+		{
+			segment.push_back(scan_box_poly[i]);
+			in_reflector_segment = true;
 		}
 	}
 	segments.push_back(segment);
@@ -192,7 +167,7 @@ void BoxLocalization::callback(const sensor_msgs::LaserScan::ConstPtr& laser_sca
 
 	// display points of box segment
 	if (marker_pub_.getNumSubscribers() > 0)
-		VisualizationUtilities::publishPointsVisualization(laser_scan_msg->header, "box_points", segments[largest_segment], marker_pub_);
+		VisualizationUtilities::publishPointsVisualization(laser_scan_msg->header, base_frame_, "box_points", segments[largest_segment], marker_pub_);
 
 #ifdef DEBUG_OUTPUT
 	std::cout << "Corner point: " << corner_point << std::endl;

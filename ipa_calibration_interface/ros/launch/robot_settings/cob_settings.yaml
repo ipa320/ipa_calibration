@@ -9,7 +9,7 @@ camera_joint_state_topic: ""
 ## topic names for commanding the robot base
 # topic name for the base controller
 # string
-base_controller_topic_name: "/base/twist_controller/command
+base_controller_topic_name: "/base/twist_controller/command"
 
 # Topic to control the joints of right arm.
 # string

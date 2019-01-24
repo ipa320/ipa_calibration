@@ -67,7 +67,7 @@ class RobotCalibration
 {
 public:
 
-    RobotCalibration(ros::NodeHandle nh, CalibrationInterface* interface, const bool load_data_from_disk);
+    RobotCalibration(ros::NodeHandle* nh, CalibrationInterface* interface, const bool load_data_from_disk);
     ~RobotCalibration();
 
     bool startCalibration();  // starts the calibration process
@@ -111,7 +111,6 @@ protected:
     bool load_data_from_disk_;
     double transform_discard_timeout_;  // timeout after which a TF transform won't be used for calibration anymore
     tf::TransformListener transform_listener_;
-    ros::NodeHandle node_handle_;
     std::string calibration_storage_path_;  // path to data
     std::string calib_data_folder_;
     std::string calib_data_file_name_;

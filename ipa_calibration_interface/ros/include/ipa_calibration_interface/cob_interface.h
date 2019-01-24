@@ -63,15 +63,17 @@ protected:
 	std::string arm_right_command_;
 	std::string arm_right_state_topic_;
 	std::string base_velocity_command_;
-	std::string camera_joint_controller_command_;
-	std::string camera_joint_state_topic_;
+	//std::string camera_joint_controller_command_;
+	//std::string camera_joint_state_topic_;
 	ros::Subscriber arm_left_state_;
 	ros::Subscriber arm_right_state_;
-	ros::Subscriber camera_state_;
+	//ros::Subscriber camera_state_;
 	ros::Publisher arm_left_controller_;
 	ros::Publisher arm_right_controller_;
 	ros::Publisher base_velocity_controller_;
-	ros::Publisher camera_joint_controller_;
+	//ros::Publisher camera_joint_controller_;
+
+	std::vector<double> sensorring_static_state_;  // hack, as sensorring is static and does not move
 
 public:
 	CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
@@ -80,8 +82,8 @@ public:
 	std::string getRobotName();
 
 	// camera calibration interface
-	void assignNewRobotVelocity(geometry_msgs::Twist newVelocity);
-	void assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray newAngles);
+	void assignNewRobotVelocity(geometry_msgs::Twist new_velocity);
+	void assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_camera_config);
 	std::vector<double>* getCurrentCameraState(const std::string &camera_name);
 
 	// callbacks
@@ -90,7 +92,7 @@ public:
 	void armRightStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
 	// arm calibration interface
-	void assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray newJointConfig);
+	void assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_arm_config);
 	std::vector<double>* getCurrentArmState(const std::string &arm_name);
 };
 

@@ -104,6 +104,14 @@ protected:
 	// only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis
 	void shiftReferenceFrameToGround(tf::StampedTransform& reference_frame);
 
+	void setupPolygonFrame(const ros::Time& time_stamp);
+
+	bool assignPolygonFrame();
+
+	void publishPolygonFrame(const ros::Time& time_stamp);
+
+	bool applyPolygonFilters(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg, const std::vector<cv::Point2f> &polygon_1, const std::vector<cv::Point2f> &polygon_2, std::vector<cv::Point2d> &scan_1, std::vector<cv::Point2d> &scan_2);
+
 
 	bool initialized_;
 
@@ -121,10 +129,21 @@ protected:
 
 	// parameters
 	double update_rate_;
-	std::string base_frame_;
 	std::string laser_scanner_topic_in_;
 	std::string reference_frame_;
 	std::vector<cv::Point2f> front_wall_polygon_;
+
+	// frame which is used to filter out wall points, it can be assigned with an existing frame or a yet unknown frame
+	// Existing frame: Polygons for detection wall points will be build upon the assigned existing frame (e.g. robot's base)
+	// Unknown frame: A new frame will be generated at startup upon the first reference_frame detection (from reference_frame to base_frame)
+	// The frame will be set up once at startup and stays fiixed from that time on which prevents that robot rotations mess up the reference frame detection.
+	std::string polygon_frame_;
+	std::string polygon_frame_default_;  // saving original value of detection_base_frame_
+	std::string base_frame_;  // needed to check whether detection_base_frame_ exists
+	tf::StampedTransform ref_to_base_initial_;  // transform between reference_frame and base_frame_ at startup
+	bool publish_polygon_frame_;
+	bool reference_frame_ready_;  // whether the detection_frame can be build
+	ros::Time publish_time_;  // ros time of currently published transforms
 };
 
 

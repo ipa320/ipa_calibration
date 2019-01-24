@@ -140,21 +140,28 @@ void IPAInterface::preSnapshot(int current_index)
 	ros::Duration(calibration_marker_->getWaitTime()).sleep();  // wait for markers being detected properly
 }
 
-// we are not making use of marker_frame, as we do either use pitags or checkerboards throughout the whole calibration, so we do not mix markers
-void IPAInterface::getPatternPoints3D(const std::string marker_frame, std::vector<cv::Point3f> &pattern_points_3d)
+void IPAInterface::getPatternPoints3D(const std::string &marker_frame, std::vector<cv::Point3f> &pattern_points_3d)
 {
 	if ( calibration_marker_ != 0 )
-		calibration_marker_->getPatternPoints3D(pattern_points_3d);
+		calibration_marker_->getPatternPoints3D(marker_frame, pattern_points_3d);
 	else
 		ROS_ERROR("IPAInterface::getPatternPoints3D - Calibration marker has not been created!");
 }
 
-void IPAInterface::getUncertainties(std::vector<std::string> &uncertainties_list)
+void IPAInterface::getCalibrationSettings(std::vector<std::string> &uncertainties_list, int &optimization_iterations, double &transform_discard_timeout, std::string &calibration_storage_path)
 {
-	if ( calibration_type_ != 0 )
-		calibration_type_->getUncertainties(uncertainties_list);
-	else
-		ROS_ERROR("IPAInterface::getUncertainties - Calibration type has not been created!");
+	node_handle_.param("optimization_iterations", optimization_iterations, 1000);
+	node_handle_.param<std::string>("calibration_storage_path", calibration_storage_path, "/calibration");
+
+	if ( !load_data_ )
+	{
+		node_handle_.param("transform_discard_timeout", transform_discard_timeout, 1.0);
+
+		if ( calibration_type_ != 0 )
+			calibration_type_->getUncertainties(uncertainties_list);
+		else
+			ROS_ERROR("IPAInterface::getCalibrationSettings - Calibration type has not been created!");
+	}
 }
 
 std::string IPAInterface::getFileName(const std::string &appendix, const bool file_extension)

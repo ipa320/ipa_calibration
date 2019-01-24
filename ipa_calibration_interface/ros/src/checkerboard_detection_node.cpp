@@ -136,6 +136,17 @@ void imageCallback(const sensor_msgs::ImageConstPtr& color_image_msg)
 	}
 }
 
+void getPatternPoints3D(std::vector<cv::Point3f> &pattern_points_3d, cv::Size pattern_size, double cell_size)
+{
+	pattern_points_3d.clear();
+	pattern_points_3d.resize(pattern_size.height*pattern_size.width);
+	for (int v=0; v<pattern_size.height; ++v)
+	{
+		for (int u=0; u<pattern_size.width; ++u)
+			pattern_points_3d[v*pattern_size.width + u] = cv::Point3f(u*cell_size, v*cell_size, 0.f);
+	}
+}
+
 // detect and publish checkerboard markers
 int main(int argc, char** argv)
 {
@@ -243,7 +254,7 @@ int main(int argc, char** argv)
 
 					// compute checkerboard transform
 					std::vector<cv::Point3f> pattern_points_3d;
-					CheckerboardMarker::getPatternPoints3D(pattern_points_3d, checkerboard_pattern_size, checkerboard_cell_size);
+					getPatternPoints3D(pattern_points_3d, checkerboard_pattern_size, checkerboard_cell_size);
 
 					// get rotation and translation vectors
 					cv::Mat rvec, tvec;

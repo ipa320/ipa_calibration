@@ -12,11 +12,18 @@ base_height: 0.0
 
 # base link of robot
 # string
-base_frame: "base_link"
+base_frame: "base_linkz"
+
+# frame which is used to filter out wall points, it can be assigned with an existing frame or a yet unknown frame
+# Existing frame: Polygons for detection wall points will be build upon the assigned existing frame (e.g. robot's base)
+# Unknown frame: A new frame will be generated at startup upon the first reference_frame detection (from reference_frame to base_frame)
+# The frame will be set up once at startup and stays fixed from that time on which prevents that robot rotations mess up the reference frame detection.
+# string
+polygon_frame: "polygon_frame"
 
 # laser scanner topic
 # string
-laser_scanner_topic_in: "/base_laser_front/scan"
+laser_scanner_topic_in: "/scan"
 
 # Polygon points that define the area which is used to find the front wall inside.
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points.

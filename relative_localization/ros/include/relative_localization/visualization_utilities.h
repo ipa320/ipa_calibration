@@ -71,11 +71,11 @@
 class VisualizationUtilities
 {
 public:
-	static void publishWallVisualization(const std_msgs::Header& header, const std::string& name_space, const double px, const double py, const double n0x, const double n0y, const ros::Publisher& marker_pub)
+	static void publishWallVisualization(const std_msgs::Header& header, const std::string& marker_base_frame, const std::string& name_space, const double px, const double py, const double n0x, const double n0y, const ros::Publisher& marker_pub)
 	{
 		visualization_msgs::Marker marker;
 		//marker.header = header;
-		marker.header.frame_id = "base_link";
+		marker.header.frame_id = marker_base_frame;
 		marker.ns = name_space;
 		marker.id = 0;
 		marker.type = visualization_msgs::Marker::LINE_LIST;
@@ -104,12 +104,12 @@ public:
 		marker_pub.publish(marker);
 	}
 
-	static void publishPointsVisualization(const std_msgs::Header& header, const std::string& name_space, const std::vector<cv::Point2d>& points, const ros::Publisher& marker_pub)
+	static void publishPointsVisualization(const std_msgs::Header& header, const std::string& marker_base_frame, const std::string& name_space, const std::vector<cv::Point2d>& points, const ros::Publisher& marker_pub)
 	{
 		// display points of box segment
 		visualization_msgs::Marker marker;
 		//marker.header = header;
-		marker.header.frame_id = "base_link";
+		marker.header.frame_id = marker_base_frame;
 		marker.ns = name_space;
 		marker.id = 1;
 		marker.type = visualization_msgs::Marker::SPHERE_LIST;
@@ -137,12 +137,12 @@ public:
 		marker_pub.publish(marker);
 	}
 
-	static void publishDetectionPolygon(const std_msgs::Header& header, const std::string& name_space, const std::vector<cv::Point2f>& points, const float height,
+	static void publishDetectionPolygon(const std_msgs::Header& header, const std::string& marker_base_frame, const std::string& name_space, const std::vector<cv::Point2f>& points, const float height,
 			const ros::Publisher& marker_pub, const double red=1.0, const double green=0.0, const double blue=0.0)
 	{
 		visualization_msgs::Marker marker;
 		//marker.header = header;
-		marker.header.frame_id = "base_link";
+		marker.header.frame_id = marker_base_frame;
 		marker.ns = name_space;
 		marker.id = 2;
 		marker.type = visualization_msgs::Marker::LINE_STRIP;

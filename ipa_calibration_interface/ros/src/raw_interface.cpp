@@ -141,33 +141,33 @@ void RAWInterface::assignNewRobotVelocity(geometry_msgs::Twist new_velocity) // 
 	base_controller_.publish(new_velocity);
 }
 
-void RAWInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_angles)
+void RAWInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_camera_angles)
 {
 	// Adjust here: Assign new camera tilt angle here
-	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
-	trajectory_msgs::JointTrajectory jointTraj;
-	control_msgs::FollowJointTrajectoryGoal camGoal;
+	trajectory_msgs::JointTrajectoryPoint joint_traj_point;
+	trajectory_msgs::JointTrajectory joint_traj;
+	control_msgs::FollowJointTrajectoryGoal cam_goal;
 
 	if ( camera_name.compare("realsense_sr300") == 0 )
-		jointTraj.joint_names = {"arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_joint", "arm_wrist_1_joint", "arm_wrist_2_joint",
+		joint_traj.joint_names = {"arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_joint", "arm_wrist_1_joint", "arm_wrist_2_joint",
 									 "arm_wrist_3_joint"};
 	else if ( camera_name.compare("ids_ueye") )
-		jointTraj.joint_names = {"torso_bottom_joint", "torso_side_joint"};
+		joint_traj.joint_names = {"torso_bottom_joint", "torso_side_joint"};
 	else
 	{
 		ROS_ERROR("RAWInterface::assignNewCameraAngles - Invalid camera name %s, cannot move anything!", camera_name.c_str());
 		return;
 	}
 
-	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), new_angles.data.begin(), new_angles.data.end());
-	jointTrajPoint.time_from_start = ros::Duration(2);
-	jointTrajPoint.velocities = {0,0}; //Initialize velocities to zero, does not work with empty list
-	jointTrajPoint.accelerations = {0,0};
-	jointTraj.points.push_back(jointTrajPoint);
-	jointTraj.header.stamp = ros::Time::now();
+	joint_traj_point.positions.insert(joint_traj_point.positions.end(), new_camera_angles.data.begin(), new_camera_angles.data.end());
+	joint_traj_point.time_from_start = ros::Duration(2);
+	joint_traj_point.velocities = {0,0}; //Initialize velocities to zero, does not work with empty list
+	joint_traj_point.accelerations = {0,0};
+	joint_traj.points.push_back(joint_traj_point);
+	joint_traj.header.stamp = ros::Time::now();
 
-	camGoal.trajectory = jointTraj;
-	camera_action_client_.sendGoal(camGoal);
+	cam_goal.trajectory = joint_traj;
+	camera_action_client_.sendGoal(cam_goal);
 }
 
 std::vector<double>* RAWInterface::getCurrentCameraState(const std::string &camera_name)
@@ -179,23 +179,23 @@ std::vector<double>* RAWInterface::getCurrentCameraState(const std::string &came
 
 
 // ARM CALIBRATION INTERFACE
-void RAWInterface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_joint_config)
+void RAWInterface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_arm_config)
 {
 	// Adjust here: Assign new joints to your robot arm
-	trajectory_msgs::JointTrajectoryPoint jointTrajPoint;
-	trajectory_msgs::JointTrajectory jointTraj;
-	control_msgs::FollowJointTrajectoryGoal armGoal;
-	jointTraj.joint_names = {"arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_joint", "arm_wrist_1_joint", "arm_wrist_2_joint",
+	trajectory_msgs::JointTrajectoryPoint joint_traj_point;
+	trajectory_msgs::JointTrajectory joint_traj;
+	control_msgs::FollowJointTrajectoryGoal arm_goal;
+	joint_traj.joint_names = {"arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_joint", "arm_wrist_1_joint", "arm_wrist_2_joint",
 							 "arm_wrist_3_joint"};
-	jointTrajPoint.positions.insert(jointTrajPoint.positions.end(), new_joint_config.data.begin(), new_joint_config.data.end());
-	jointTrajPoint.time_from_start = ros::Duration(2); // Quick and dirty, should actually be calculated by max angular speed and travel distance
-	jointTrajPoint.velocities = {0,0,0,0,0,0};
-	jointTrajPoint.accelerations = {0,0,0,0,0,0};
-	jointTraj.points.push_back(jointTrajPoint);
-	jointTraj.header.stamp = ros::Time::now();
-	armGoal.trajectory = jointTraj;
+	joint_traj_point.positions.insert(joint_traj_point.positions.end(), new_arm_config.data.begin(), new_arm_config.data.end());
+	joint_traj_point.time_from_start = ros::Duration(2); // Quick and dirty, should actually be calculated by max angular speed and travel distance
+	joint_traj_point.velocities = {0,0,0,0,0,0};
+	joint_traj_point.accelerations = {0,0,0,0,0,0};
+	joint_traj.points.push_back(joint_traj_point);
+	joint_traj.header.stamp = ros::Time::now();
+	arm_goal.trajectory = joint_traj;
 
-	arm_action_client_.sendGoal(armGoal);
+	arm_action_client_.sendGoal(arm_goal);
 }
 
 std::vector<double>* RAWInterface::getCurrentArmState(const std::string &arm_name)

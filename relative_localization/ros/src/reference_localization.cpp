@@ -61,7 +61,7 @@
 
 
 ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
-		: node_handle_(nh), transform_listener_(nh), initialized_(false)
+		: node_handle_(nh), transform_listener_(nh), initialized_(false), publish_polygon_frame_(false), reference_frame_ready_(false), publish_time_(ros::Time(0.f))
 {
 	// load parameters
 	std::cout << "\n========== Reference Localization Parameters ==========\n";
@@ -71,10 +71,23 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	std::cout << "reference_frame: " << reference_frame_ << std::endl;
 	node_handle_.param<std::string>("laser_scanner_topic_in", laser_scanner_topic_in_, "");
 	std::cout << "laser_scanner_topic_in: " << laser_scanner_topic_in_ << std::endl;
-	node_handle_.param<std::string>("base_frame", base_frame_, "");
-	std::cout << "base_frame: " << base_frame_ << std::endl;
 	node_handle_.param("base_height", base_height_, 0.0);
 	std::cout << "base_height: " << base_height_ << std::endl;
+
+	node_handle_.param<std::string>("base_frame", base_frame_, "");
+	std::cout << "base_frame: " << base_frame_ << std::endl;
+	node_handle_.param<std::string>("polygon_frame", polygon_frame_, "");
+	std::cout << "polygon_frame: " << polygon_frame_ << std::endl;
+
+	// check if detection_base_frame_ exists. If that is not the case, spawn it after a successful reference detection
+	bool success = transform_listener_.waitForTransform(base_frame_, polygon_frame_, ros::Time(0), ros::Duration(2.0));
+	if ( !success )
+	{
+		std::cout << polygon_frame_ << " frame does not exist, it will be created..." << std::endl;
+		polygon_frame_default_ = polygon_frame_;
+		polygon_frame_ = base_frame_;  // use base_frame until reference_frame has been found once
+		publish_polygon_frame_ = true;
+	}
 
 	// read out user-defined polygon that defines the area of laser scanner points being taken into account for front wall detection
 	std::vector<double> temp;
@@ -140,6 +153,7 @@ bool ReferenceLocalization::estimateFrontWall(std::vector<cv::Point2d>& scan_fro
 
 		// check if line is good enough, i.e. if the angle between the front wall line normal and the robot base' x-axis (i.e. the axis pointing towards the front wall) is below 45deg
 		const double scalar_product = line_front.val[2];	// = 1*line_front.val[2]+0*line_front.val[3]
+
 		if (fabs(scalar_product) > 0.707)
 		{
 			found_front_line = true;
@@ -162,10 +176,9 @@ bool ReferenceLocalization::estimateFrontWall(std::vector<cv::Point2d>& scan_fro
 	return found_front_line;
 }
 
-void ReferenceLocalization::computeAndPublishChildFrame(const cv::Vec4d& line, const cv::Point2d& corner_point, const std_msgs::Header::_stamp_type& time_stamp)
+void ReferenceLocalization::computeAndPublishChildFrame(const cv::Vec4d& line, const cv::Point2d& corner_point, const ros::Time& time_stamp)
 {
 	// block coordinate system is attached at the left corner of the block directly on the wall surface
-	bool publish_tf = true;
 	const double px = line.val[0];	// coordinates of a point on the wall
 	const double py = line.val[1];
 	const double n0x = line.val[2];	// normal direction on the wall (in floor plane x-y)
@@ -212,11 +225,7 @@ void ReferenceLocalization::computeAndPublishChildFrame(const cv::Vec4d& line, c
 	tf::StampedTransform tf_msg(transform_table_reference, time_stamp, base_frame_, reference_frame_);
 	shiftReferenceFrameToGround(tf_msg);
 
-	// publish coordinate system on tf
-	if (publish_tf == true)
-	{
-		transform_broadcaster_.sendTransform(tf_msg);
-	}
+	transform_broadcaster_.sendTransform(tf_msg);
 }
 
 // only works for laser scanners mounted parallel to the ground, assuming that laser scanner frame and base_link have the same z-axis
@@ -224,4 +233,88 @@ void ReferenceLocalization::shiftReferenceFrameToGround(tf::StampedTransform& re
 {
 	tf::Vector3 trans = reference_frame.getOrigin();
 	reference_frame.setOrigin(tf::Vector3(trans.x(), trans.y(), trans.z()-base_height_));
+}
+
+void ReferenceLocalization::setupPolygonFrame(const ros::Time& time_stamp)
+{
+	if ( !reference_frame_ready_ )  // check if reference_frame has been set up
+	{
+		bool success = assignPolygonFrame();
+		if ( success )
+		{
+			reference_frame_ready_ = true;
+			polygon_frame_ = polygon_frame_default_;
+			publishPolygonFrame(time_stamp);
+		}
+	}
+	else
+	{
+		publishPolygonFrame(time_stamp);
+	}
+}
+
+bool ReferenceLocalization::assignPolygonFrame()
+{
+	try
+	{
+		transform_listener_.waitForTransform(reference_frame_, base_frame_, ros::Time(0), ros::Duration(1.0));
+		transform_listener_.lookupTransform(reference_frame_, base_frame_, ros::Time(0), ref_to_base_initial_);
+		return true;
+	}
+	catch (tf::TransformException& ex)
+	{
+		ROS_WARN("%s",ex.what());
+		return false;
+	}
+}
+
+void ReferenceLocalization::publishPolygonFrame(const ros::Time& time_stamp)
+{
+	tf::StampedTransform tf_msg(ref_to_base_initial_, time_stamp, reference_frame_, polygon_frame_);
+	transform_broadcaster_.sendTransform(tf_msg);
+	publish_time_ = time_stamp;
+}
+
+bool ReferenceLocalization::applyPolygonFilters(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg, const std::vector<cv::Point2f> &polygon_1, const std::vector<cv::Point2f> &polygon_2, std::vector<cv::Point2d> &scan_1, std::vector<cv::Point2d> &scan_2)
+{
+	cv::Mat T_base_to_laser;
+	bool received_transform = RelativeLocalizationUtilities::getTransform(transform_listener_, base_frame_, std::string(laser_scan_msg->header.frame_id), T_base_to_laser);
+	if (received_transform==false)
+	{
+		ROS_WARN("CornerLocalization::applyPolygonFilters - Could not determine transform between laser scanner and %s.", base_frame_.c_str());
+		return false;
+	}
+	cv::Mat T_polygon_to_laser;
+	received_transform = RelativeLocalizationUtilities::getTransformAdv(transform_listener_, polygon_frame_,  std::string(laser_scan_msg->header.frame_id), base_frame_, T_polygon_to_laser, publish_time_, ros::Time(0.f));
+	if (received_transform==false)
+	{
+		ROS_WARN("CornerLocalization::applyPolygonFilters - Could not determine transform between laser scanner and %s.", polygon_frame_.c_str());
+		return false;
+	}
+
+	// retrieve points from side and front wall and put each of those in separate lists
+	// scan_X vectors are relative to the base_frame, but the detection part (valid laserscanner points) is relative to the detection_base_frame
+	for ( size_t i=0; i<laser_scan_msg->ranges.size(); i++ )
+	{
+		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; // [rad]
+		double dist = laser_scan_msg->ranges[i]; // [m]
+
+		// transform laser scanner points to polygon_frame_
+		cv::Mat point_laser(cv::Vec4d(dist*cos(angle), dist*sin(angle), 0, 1.0));
+		cv::Mat point_polygon = T_polygon_to_laser*point_laser;  // laserscanner points in detection_base_frame coordinates
+		cv::Point2f point_2d_polygon(point_polygon.at<double>(0), point_polygon.at<double>(1));
+		cv::Mat point_base = T_base_to_laser*point_laser;  // laserscanner point in base_frame coords
+		cv::Point2f point_2d_base(point_base.at<double>(0), point_base.at<double>(1));
+
+		// check if point is inside front wall polygon and push to scan_front if that's the case
+		// the reference frame will always be built relative to the base_frame, only the detection part is outsourced to the detection_base_frame
+		if (cv::pointPolygonTest(polygon_1, point_2d_polygon, false) >= 0.f) // check if point in polygon_frame coords is within front wall polygon
+			scan_1.push_back(point_2d_base);
+
+		// store all points from the side polygon in here, use distance measure to front wall later to exclude front wall points
+		if (cv::pointPolygonTest(polygon_2, point_2d_polygon, false) >= 0.f) // check if point in polygon_frame coords is within side wall polygon
+			scan_2.push_back(point_2d_base);
+	}
+
+	return true;
 }
