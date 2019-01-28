@@ -12,7 +12,7 @@ cameras_list: ["sensorring_dummy", "1", "0"]
 # vector<double>
 x_range: [-2.0, 0.2, -1.4]       # in [m]
 y_range: [1.0, 0.2, 1.4]         # in [m], fixed y-coordinate
-phi_range: [-0.4, 0.2, 0]           # in [rad], fixed phi-angle
+phi_range: [1.84, 0.1, 2.34]           # in [rad], fixed phi-angle
 
 # manually input of configurations for corresponding camera in camera_list
 # the configs list will be used over the ranges list
@@ -35,15 +35,15 @@ max_ref_frame_distance: 3.0
 # the uncertainties will be calibrated in the same order they appear in the uncertainties_list
 # last parent-branch frame and last child-branch frame have to be available from TF from the very beginning, so that the routine can build the kinematic chains
 # only transforms prior to last parent-branch frame and last child-branch frame can be used as uncertainties
-uncertainties_list: ["sensorring_link", "sensorring_cam3d_link", "landmark_reference_nav", "sensorring_cam3d_color_optical_frame", "tag_25", "marker_25",
-                     "sensorring_link", "sensorring_cam3d_link", "landmark_reference_nav", "sensorring_cam3d_color_optical_frame", "tag_36", "marker_36",
-                     "sensorring_link", "sensorring_cam3d_link", "landmark_reference_nav", "sensorring_cam3d_color_optical_frame", "tag_38", "marker_38",
-                     "sensorring_link", "sensorring_cam3d_link", "landmark_reference_nav", "sensorring_cam3d_color_optical_frame", "tag_48", "marker_48",
-                     "sensorring_link", "sensorring_cam3d_link", "landmark_reference_nav", "sensorring_cam3d_color_optical_frame", "tag_55", "marker_55",
-                     "sensorring_link", "sensorring_cam3d_link", "landmark_reference_nav", "sensorring_cam3d_color_optical_frame", "tag_64", "marker_64",
-                     "sensorring_link", "sensorring_cam3d_link", "landmark_reference_nav", "sensorring_cam3d_color_optical_frame", "tag_69", "marker_69",
-                     "sensorring_link", "sensorring_cam3d_link", "landmark_reference_nav", "sensorring_cam3d_color_optical_frame", "tag_73", "marker_73",
-                     "sensorring_link", "sensorring_cam3d_link", "landmark_reference_nav", "sensorring_cam3d_color_optical_frame", "tag_79", "marker_79"]
+uncertainties_list: ["sensorring_link", "sensorring_cam3d_camera", "landmark_reference_nav", "sensorring_cam3d_mounting", "tag_25", "marker_25",
+                     "sensorring_link", "sensorring_cam3d_camera", "landmark_reference_nav", "sensorring_cam3d_mounting", "tag_36", "marker_36",
+                     "sensorring_link", "sensorring_cam3d_camera", "landmark_reference_nav", "sensorring_cam3d_mounting", "tag_38", "marker_38",
+                     "sensorring_link", "sensorring_cam3d_camera", "landmark_reference_nav", "sensorring_cam3d_mounting", "tag_48", "marker_48",
+                     "sensorring_link", "sensorring_cam3d_camera", "landmark_reference_nav", "sensorring_cam3d_mounting", "tag_55", "marker_55",
+                     "sensorring_link", "sensorring_cam3d_camera", "landmark_reference_nav", "sensorring_cam3d_mounting", "tag_64", "marker_64",
+                     "sensorring_link", "sensorring_cam3d_camera", "landmark_reference_nav", "sensorring_cam3d_mounting", "tag_69", "marker_69",
+                     "sensorring_link", "sensorring_cam3d_camera", "landmark_reference_nav", "sensorring_cam3d_mounting", "tag_73", "marker_73",
+                     "sensorring_link", "sensorring_cam3d_camera", "landmark_reference_nav", "sensorring_cam3d_mounting", "tag_79", "marker_79"]
 
 
 # number of optimization iterations

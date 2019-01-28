@@ -23,12 +23,17 @@ polygon_frame: "polygon_frame"
 
 # laser scanner topic
 # string
-laser_scanner_topic_in: "/base_laser_front/scan"
+laser_scanner_topic_in: "/scan_unified"
 
 # Polygon points that define the area which is used to find the front wall inside.
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points. Do not forget to repeat the first point at the end.
 # vector<Point2f>
-front_wall_polygon: [0.5, 1.5,
+front_wall_polygon: #[-1.55, -0.32,
+                     #-2.8, 1.85,
+                     #-1.07, 2.85,
+                     #0.18, 0.68,
+                     #-1.55, -0.32]
+                    [0.5, 1.5,
                      3, 1.5,
                      3, -0.5,
                      0.5, -0.5,
@@ -37,8 +42,14 @@ front_wall_polygon: [0.5, 1.5,
 # Polygon points that define the area which is used to find the side wall inside.
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 3 points. Do not forget to repeat the first point at the end.
 # vector<Point2f>
-side_wall_polygon: [0.5, -2.0,
+side_wall_polygon: #[-1.48, 1.43,
+                    #0.23, 3.6,
+                    #-1.93, 2.35,
+                    #-0.68, 0.18,
+                    #-1.48, 1.43]
+                   [0.5, -2.0,
                     3.0, -2.0,
                     3.0, 0.5,
                     0.5, 0.5,
                     0.5, -2.0]
+
