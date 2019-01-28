@@ -21,6 +21,9 @@ base_frame: "base_linkz"
 # string
 polygon_frame: "polygon_frame"
 
+# rotation compensation for when the base_frame is not pointing towards the front wall: [yaw, pitch, roll]
+base_rotation_compensation_ypr: [0,0,0]
+
 # laser scanner topic
 # string
 laser_scanner_topic_in: "/scan"

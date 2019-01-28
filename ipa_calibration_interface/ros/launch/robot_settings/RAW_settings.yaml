@@ -19,10 +19,6 @@ arm_joint_controller_command: "/arm/joint_trajectory_controller/command"
 # string
 arm_state_topic: "/arm/joint_states"
 
-# Image topic
-# string
-camera_image_topic: "/ueye_camera/rgb/image_rect"  # change to realsense topic rect
-
 # calibration interface ID. Decides which robot's interface to use: 0 - Robotino, 1 - RAW, 2 - COB
 # int
 calibration_ID: 1
