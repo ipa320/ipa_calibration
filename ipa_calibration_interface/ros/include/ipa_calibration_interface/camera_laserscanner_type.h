@@ -82,14 +82,17 @@ protected:
     bool divergenceDetectedRotation(double error_phi, bool start_value);  // rotation controller diverges!
     bool divergenceDetectedLocation(double error_x, double error_y, bool start_value);  // location controller diverges!
     void turnOffBaseMotion();  // set angular and linear speed to 0
+	bool transformControllerErrorPos(double &error_x, double &error_y);  // transform position error to controller_frame
+	bool transformControllerErrorRot(double &error_phi);  // transform rotation error to controller_frame
 
     double ref_frame_history_[REF_FRAME_HISTORY_SIZE]; // History of base_frame to reference_frame squared lengths, used to get average squared length. Holds last <REF_FRAME_HISTORY_SIZE> measurements.
     double max_ref_frame_distance_;
 
     std::vector<pose_definition::RobotConfiguration> base_configurations_;  // wished base configurations used for calibration
 
-    std::string base_frame_;        // Name of base frame, needed for security measure
-    std::string reference_frame_;  // name of reference frame, needed for security measure
+	std::string base_frame_;		// robot base moves until this frame is correctly aligned relative to the reference_frame
+	std::string reference_frame_;	// robot base will be moved relative to this frame (base_configurations must be typed relative to this frame)
+	std::string controller_frame_;	// controller error will be transformed in this frame before being applied to the motors
 
 
 private:

@@ -310,143 +310,124 @@ bool CameraLaserscannerType::moveCameras(int config_index)
 
 unsigned short CameraLaserscannerType::moveBase(const pose_definition::RobotConfiguration &base_configuration)
 {
+	// P-controller gains
 	const double k_base = 0.25;
 	const double k_phi = 0.25;
 
-	double error_phi = 0;
-	double error_x = 0;
-	double error_y = 0;
-
 	cv::Mat T;
 	unsigned short error_code = MOV_NO_ERR;
+	bool start_value = true; // for divergence detection, initialization
 
-	if (!isReferenceFrameValid(T, error_code))
+	// control robot angle
+	do
 	{
-		turnOffBaseMotion();
-		return error_code;
-	}
+		if (!isReferenceFrameValid(T, error_code))
+		{
+			turnOffBaseMotion();
+			return error_code;
+		}
 
-	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
-	double robot_yaw = ypr.val[0];
-	geometry_msgs::Twist tw;
-	error_phi = base_configuration.pose_phi_ - robot_yaw;
-	while (error_phi < -CV_PI*0.5)
-		error_phi += CV_PI;
-	while (error_phi > CV_PI*0.5)
-		error_phi -= CV_PI;
-	error_x = base_configuration.pose_x_ - T.at<double>(0,3);
-	error_y = base_configuration.pose_y_ - T.at<double>(1,3);
+		cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
+		double robot_yaw = ypr.val[0];
+		geometry_msgs::Twist tw;
+		double error_phi = base_configuration.pose_phi_ - robot_yaw;
+		transformControllerErrorRot(error_phi);
 
-	// do not move if close to goal
-	bool start_value = true; // for divergence detection
-	if ( fabs(error_phi) > 0.02 || fabs(error_x) > 0.01 || fabs(error_y) > 0.01 )
+		while (error_phi < -CV_PI*0.5)
+			error_phi += CV_PI;
+		while (error_phi > CV_PI*0.5)
+			error_phi -= CV_PI;
+
+		if (fabs(error_phi) < 0.02 || !ros::ok())
+			break;
+
+		if ( divergenceDetectedRotation(error_phi, start_value) )
+		{
+			turnOffBaseMotion();
+			return MOV_ERR_FATAL;
+		}
+		start_value = false;
+
+		tw.angular.z = std::max(-0.05, std::min(0.05, k_phi*error_phi));  // limit to [-0.05, 0.05] rad/s
+		calibration_interface_->assignNewRobotVelocity(tw);
+		ros::Rate(20).sleep();
+
+	} while ( true );
+
+	turnOffBaseMotion();  // turn off motors
+	start_value = true;
+
+	// control robot position
+	do
 	{
-		// control robot angle
-		while(true)
+		if (!isReferenceFrameValid(T, error_code))
 		{
-			if (!isReferenceFrameValid(T, error_code))
-			{
-				turnOffBaseMotion();
-				return error_code;
-			}
-
-			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
-			double robot_yaw = ypr.val[0];
-			geometry_msgs::Twist tw;
-			error_phi = base_configuration.pose_phi_ - robot_yaw;
-
-			while (error_phi < -CV_PI*0.5)
-				error_phi += CV_PI;
-			while (error_phi > CV_PI*0.5)
-				error_phi -= CV_PI;
-
-			if (fabs(error_phi) < 0.02 || !ros::ok())
-				break;
-
-			if ( divergenceDetectedRotation(error_phi, start_value) )
-			{
-				turnOffBaseMotion();
-				return MOV_ERR_FATAL;
-			}
-			start_value = false;
-
-			tw.angular.z = std::max(-0.05, std::min(0.05, k_phi*error_phi));
-			calibration_interface_->assignNewRobotVelocity(tw);
-			ros::Rate(20).sleep();
+			turnOffBaseMotion();
+			return error_code;
 		}
 
-		turnOffBaseMotion();
+		geometry_msgs::Twist tw;
+		double error_x = base_configuration.pose_x_ - T.at<double>(0,3);
+		double error_y = base_configuration.pose_y_ - T.at<double>(1,3);
+		transformControllerErrorPos(error_x, error_y);
 
-		// control position
-		start_value = true;
-		while(true)
+		if ((fabs(error_x) < 0.01 && fabs(error_y) < 0.01) || !ros::ok())
+			break;
+
+		if ( divergenceDetectedLocation(error_x, error_y, start_value) )
 		{
-			if (!isReferenceFrameValid(T, error_code))
-			{
-				turnOffBaseMotion();
-				return error_code;
-			}
+			turnOffBaseMotion();
+			return MOV_ERR_FATAL;
+		}
+		start_value = false;
 
-			geometry_msgs::Twist tw;
-			error_x = base_configuration.pose_x_ - T.at<double>(0,3);
-			error_y = base_configuration.pose_y_ - T.at<double>(1,3);
-			if ((fabs(error_x) < 0.01 && fabs(error_y) < 0.01) || !ros::ok())
-				break;
+		tw.linear.x = std::max(-0.05, std::min(0.05, k_base*error_x));  // limit to [-0.05, 0.05] m/s
+		tw.linear.y = std::max(-0.05, std::min(0.05, k_base*error_y));
+		calibration_interface_->assignNewRobotVelocity(tw);
+		ros::Rate(20).sleep();
 
-			if ( divergenceDetectedLocation(error_x, error_y, start_value) )
-			{
-				turnOffBaseMotion();
-				return MOV_ERR_FATAL;
-			}
-			start_value = false;
+	} while ( true );
 
-			tw.linear.x = std::max(-0.05, std::min(0.05, k_base*error_x));
-			tw.linear.y = std::max(-0.05, std::min(0.05, k_base*error_y));
-			calibration_interface_->assignNewRobotVelocity(tw);
-			ros::Rate(20).sleep();
+	turnOffBaseMotion();
+	start_value = true;
+
+	// control robot angle again
+	do
+	{
+		if (!isReferenceFrameValid(T, error_code))
+		{
+			turnOffBaseMotion();
+			return error_code;
 		}
 
-		turnOffBaseMotion();
+		cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
+		double robot_yaw = ypr.val[0];
+		geometry_msgs::Twist tw;
+		double error_phi = base_configuration.pose_phi_ - robot_yaw;
+		transformControllerErrorRot(error_phi);
 
-		// control robot angle
-		start_value = true;
-		while (true)
+		while (error_phi < -CV_PI*0.5)
+			error_phi += CV_PI;
+		while (error_phi > CV_PI*0.5)
+			error_phi -= CV_PI;
+
+		if (fabs(error_phi) < 0.02 || !ros::ok())
+			break;
+
+		if ( divergenceDetectedRotation(error_phi, start_value) )
 		{
-			if (!isReferenceFrameValid(T, error_code))
-			{
-				turnOffBaseMotion();
-				return error_code;
-			}
-
-			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
-			double robot_yaw = ypr.val[0];
-			geometry_msgs::Twist tw;
-			error_phi = base_configuration.pose_phi_ - robot_yaw;
-
-			while (error_phi < -CV_PI*0.5)
-				error_phi += CV_PI;
-			while (error_phi > CV_PI*0.5)
-				error_phi -= CV_PI;
-
-			if (fabs(error_phi) < 0.02 || !ros::ok())
-				break;
-
-			if ( divergenceDetectedRotation(error_phi, start_value) )
-			{
-				turnOffBaseMotion();
-				return MOV_ERR_FATAL;
-			}
-			start_value = false;
-
-			tw.angular.z = std::max(-0.05, std::min(0.05, k_phi*error_phi));
-			calibration_interface_->assignNewRobotVelocity(tw);
-			ros::Rate(20).sleep();
+			turnOffBaseMotion();
+			return MOV_ERR_FATAL;
 		}
+		start_value = false;
 
-		// turn off robot motion
-		turnOffBaseMotion();
-	}
+		tw.angular.z = std::max(-0.05, std::min(0.05, k_phi*error_phi));
+		calibration_interface_->assignNewRobotVelocity(tw);
+		ros::Rate(20).sleep();
 
+	} while ( true );
+
+	turnOffBaseMotion();
 	return error_code;
 }
 
@@ -492,6 +473,45 @@ bool CameraLaserscannerType::isReferenceFrameValid(cv::Mat &T, unsigned short& e
 		ref_history_index_ = (++ref_history_index_ < REF_FRAME_HISTORY_SIZE) ? ref_history_index_ : 0;
 	}
 
+	return true;
+}
+
+// transform position error from base_frame to controller_frame
+bool CameraLaserscannerType::transformControllerErrorPos(double &error_x, double &error_y)
+{
+	if ( base_frame_.compare(controller_frame_) == 0 )  // same frames
+		return true;
+
+	cv::Mat T;
+	if ( !transform_utilities::getTransform(transform_listener_, controller_frame_, base_frame_, T, true) )
+	{
+		error_x = 0;
+		error_y = 0;
+		return false;
+	}
+
+	cv::Mat error = cv::Mat(cv::Vec4d(error_x, error_y, 0.f, 1.f));
+	cv::Mat new_error = T*error;
+	error_x = new_error.at<double>(0);
+	error_y = new_error.at<double>(1);
+	return true;
+}
+
+// transform rotation error from base_frame to controller_frame
+bool CameraLaserscannerType::transformControllerErrorRot(double &error_phi)
+{
+	if ( base_frame_.compare(controller_frame_) == 0 )  // same frames
+		return true;
+
+	cv::Mat T;
+	if ( !transform_utilities::getTransform(transform_listener_, controller_frame_, base_frame_, T, true) )
+	{
+		error_phi = 0;
+		return false;
+	}
+
+	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
+	error_phi = ypr.val[0]+error_phi;
 	return true;
 }
 

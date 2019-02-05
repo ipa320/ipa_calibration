@@ -141,8 +141,6 @@ protected:
 	std::string polygon_frame_default_;  // saving original value of detection_base_frame_
 	std::string base_frame_;  // needed to check whether detection_base_frame_ exists
 	tf::StampedTransform ref_to_base_initial_;  // transform between reference_frame and base_frame_ at startup
-	tf::Quaternion base_rot_compensation_;  // quaternion: compensates for misrotated base frames when x-axis does not point towards front wall
-	cv::Mat T_base_rot_compensation_;  // homogenous transform: compensates for misrotated base frames when x-axis does not point towards front wall
 	bool publish_polygon_frame_;
 	bool reference_frame_ready_;  // whether the detection_frame can be build
 	ros::Time publish_time_;  // ros time of currently published transforms
