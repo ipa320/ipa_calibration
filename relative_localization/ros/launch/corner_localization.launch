@@ -2,7 +2,7 @@
 
 <launch>
 
-	<arg name="robot" default="robotino"/>		<!-- robotino, cob or RAW -->
+	<arg name="robot" default="robotino"/>		<!-- robotino, cob4 or raw3 -->
 
 	<node ns="corner_localization" name="relative_localization" pkg="relative_localization" type="relative_localization_node" output="screen">
 		<rosparam command="load" file="$(find relative_localization)/ros/launch/settings/corner_localization_params_$(arg robot).yaml"/>

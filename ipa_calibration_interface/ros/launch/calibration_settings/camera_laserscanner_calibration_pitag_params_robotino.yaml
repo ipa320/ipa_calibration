@@ -25,7 +25,7 @@ kinect_front_ranges: [-1.2, 1.0, 0.2,
 # further cameras possible
 #<camera2_name>_configs: []
 
-# list of robot's base configurations used in calibration for observing the pitags measured relative to the landmark_reference_nav coordinate system that is similarly aligned as the robot's base_link
+# list of robot's base configurations used in calibration for observing the pitags measured relative to the reference_frame coordinate system that is similarly aligned as the robot's base_link
 # each base configuration will go through every camera's configuration
 # vector<double>
 base_configs: []
@@ -67,7 +67,7 @@ base_configs: []
 #                       -0.85, -0.17, 0, -0.35, -0.1]
 
 
-# the robot's base moves until base_frame is correctly aligned relative to the reference_frame
+# the robot's base moves until base_frame is correctly aligned relative to the reference_frame as given in the base configurations
 base_frame: "base_link"
 
 # the name of the detected reference frame. Should match the entry found in the relative_localization yaml files.

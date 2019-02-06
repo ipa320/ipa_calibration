@@ -80,8 +80,8 @@ include_directories(
 add_executable(camera_laserscanner_calibration	ros/src/camera_laserscanner_calibration_node.cpp
 												ros/src/ipa_interface.cpp
 												ros/src/robotino_interface.cpp
-												ros/src/raw_interface.cpp
-												ros/src/cob_interface.cpp
+												ros/src/raw3_interface.cpp
+												ros/src/cob4_interface.cpp
 												ros/src/calibration_type.cpp
 												ros/src/camera_laserscanner_type.cpp
 												ros/src/calibration_marker.cpp
@@ -98,8 +98,8 @@ add_dependencies(camera_laserscanner_calibration	${catkin_EXPORTED_TARGETS})
 add_executable(camera_arm_calibration	ros/src/camera_arm_calibration_node.cpp
 										ros/src/ipa_interface.cpp
 										ros/src/robotino_interface.cpp
-										ros/src/raw_interface.cpp
-										ros/src/cob_interface.cpp
+										ros/src/raw3_interface.cpp
+										ros/src/cob4_interface.cpp
 										ros/src/calibration_type.cpp
 										ros/src/camera_arm_type.cpp
 										ros/src/calibration_marker.cpp

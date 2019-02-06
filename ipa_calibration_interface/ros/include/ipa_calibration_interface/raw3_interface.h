@@ -58,7 +58,7 @@
 #include <control_msgs/FollowJointTrajectoryAction.h>
 
 
-class RAWInterface : public IPAInterface
+class Raw3Interface : public IPAInterface
 {
 protected:
 	ros::Publisher arm_joint_controller_;
@@ -84,8 +84,8 @@ protected:
 
 
 public:
-	RAWInterface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
-	~RAWInterface();
+	Raw3Interface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
+	~Raw3Interface();
 
 	std::string getRobotName();
 

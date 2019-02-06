@@ -66,9 +66,9 @@ BoxLocalization::BoxLocalization(ros::NodeHandle& nh)
 	std::vector<double> temp;
 	node_handle_.getParam("box_search_polygon", temp);
 	const int num_points = temp.size()/2;
-	if (temp.size()%2 != 0 || temp.size() < 3*2)
+	if (temp.size()%2 != 0 || temp.size() < 4*2)
 	{
-		ROS_ERROR("BoxLocalization::BoxLocalization - The box_search_polygon vector should contain at least 3 points with 2 values (x,y) each.");
+		ROS_ERROR("BoxLocalization::BoxLocalization - The box_search_polygon vector should contain at least 4 points with 2 values (x,y) each.");
 		return;
 	}
 	std::cout << "Box Search Polygon Points:\n";

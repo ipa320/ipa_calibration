@@ -479,39 +479,42 @@ bool CameraLaserscannerType::isReferenceFrameValid(cv::Mat &T, unsigned short& e
 // transform position error from base_frame to controller_frame
 bool CameraLaserscannerType::transformControllerErrorPos(double &error_x, double &error_y)
 {
-	if ( base_frame_.compare(controller_frame_) == 0 )  // same frames
-		return true;
-
-	cv::Mat T;
-	if ( !transform_utilities::getTransform(transform_listener_, controller_frame_, base_frame_, T, true) )
+	cv::Mat T_ctrl_to_ref;
+	if ( !transform_utilities::getTransform(transform_listener_, controller_frame_, reference_frame_, T_ctrl_to_ref, true) )  // trafo from controller_frame to reference_frame
 	{
 		error_x = 0;
 		error_y = 0;
 		return false;
 	}
 
-	cv::Mat error = cv::Mat(cv::Vec4d(error_x, error_y, 0.f, 1.f));
-	cv::Mat new_error = T*error;
-	error_x = new_error.at<double>(0);
-	error_y = new_error.at<double>(1);
+	cv::Mat error_ref = cv::Mat(cv::Vec3d(error_x, error_y, 0.f));  // error in reference_frame coordinates
+	cv::Mat rot_ctrl_ref = (cv::Mat_<double>(3,3) <<
+					T_ctrl_to_ref.at<double>(0,0), T_ctrl_to_ref.at<double>(0,1), T_ctrl_to_ref.at<double>(0,2),
+					T_ctrl_to_ref.at<double>(1,0), T_ctrl_to_ref.at<double>(1,1), T_ctrl_to_ref.at<double>(1,2),
+					T_ctrl_to_ref.at<double>(2,0), T_ctrl_to_ref.at<double>(2,1), T_ctrl_to_ref.at<double>(2,2));  // rotation from reference_frame to controller_frame
+	cv::Mat error_ctrl = rot_ctrl_ref * error_ref;  // transform error into controller_frame, do not consider the translation from controller_frame to base_frame
+	error_x = error_ctrl.at<double>(0);
+	error_y = error_ctrl.at<double>(1);
 	return true;
 }
 
 // transform rotation error from base_frame to controller_frame
 bool CameraLaserscannerType::transformControllerErrorRot(double &error_phi)
 {
-	if ( base_frame_.compare(controller_frame_) == 0 )  // same frames
-		return true;
-
-	cv::Mat T;
-	if ( !transform_utilities::getTransform(transform_listener_, controller_frame_, base_frame_, T, true) )
+	cv::Mat T_ctrl_to_base;
+	if ( !transform_utilities::getTransform(transform_listener_, controller_frame_, base_frame_, T_ctrl_to_base, true) )  // trafo from controller_frame to base_frame
 	{
 		error_phi = 0;
 		return false;
 	}
 
-	cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(T);
-	error_phi = ypr.val[0]+error_phi;
+	cv::Mat error_base = cv::Mat(cv::Vec3d(0.f, 0.f, error_phi));  // error in base_frame coordinates
+	cv::Mat rot_ctrl_base = (cv::Mat_<double>(3,3) <<
+					T_ctrl_to_base.at<double>(0,0), T_ctrl_to_base.at<double>(0,1), T_ctrl_to_base.at<double>(0,2),
+					T_ctrl_to_base.at<double>(1,0), T_ctrl_to_base.at<double>(1,1), T_ctrl_to_base.at<double>(1,2),
+					T_ctrl_to_base.at<double>(2,0), T_ctrl_to_base.at<double>(2,1), T_ctrl_to_base.at<double>(2,2));  // rotation from controller_frame to base_frame
+	cv::Mat error_ctrl = rot_ctrl_base * error_base;  // transform error into controller_frame
+	error_phi = error_ctrl.at<double>(2);
 	return true;
 }
 

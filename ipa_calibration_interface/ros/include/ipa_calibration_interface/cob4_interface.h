@@ -55,7 +55,7 @@
 #include <sensor_msgs/JointState.h>
 #include <boost/thread/mutex.hpp>
 
-class CobInterface : public IPAInterface
+class Cob4Interface : public IPAInterface
 {
 protected:
 	std::string arm_left_command_;
@@ -76,8 +76,8 @@ protected:
 	std::vector<double> sensorring_static_state_;  // hack, as sensorring is static and does not move
 
 public:
-	CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
-	~CobInterface();
+	Cob4Interface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data);
+	~Cob4Interface();
 
 	std::string getRobotName();
 

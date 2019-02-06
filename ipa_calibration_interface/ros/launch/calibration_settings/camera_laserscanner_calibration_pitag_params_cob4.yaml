@@ -19,7 +19,12 @@ phi_range: [1.84, 0.1, 2.34]           # in [rad], fixed phi-angle
 # vector<double>
 sensorring_dummy_configs: [0.0]
 
-# the robot's base moves until base_frame is correctly aligned relative to the reference_frame
+# list of robot's base configurations used in calibration for observing the pitags measured relative to the reference_frame coordinate system that is similarly aligned as the robot's base_link
+# each base configuration will go through every camera's configuration
+# vector<double>
+base_configs: []
+
+# the robot's base moves until base_frame is correctly aligned relative to the reference_frame as given in the base configurations
 base_frame: "base_link"
 
 # the name of the detected reference frame. Should match the entry found in the relative_localization yaml files.

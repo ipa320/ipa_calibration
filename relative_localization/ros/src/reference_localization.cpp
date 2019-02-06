@@ -93,9 +93,9 @@ ReferenceLocalization::ReferenceLocalization(ros::NodeHandle& nh)
 	std::vector<double> temp;
 	node_handle_.getParam("front_wall_polygon", temp);
 	const int num_points = temp.size()/2;
-	if (temp.size()%2 != 0 || temp.size() < 3*2)
+	if (temp.size()%2 != 0 || temp.size() < 4*2)
 	{
-		ROS_ERROR("ReferenceLocalization::ReferenceLocalization - The front_wall_polygon vector should contain at least 3 points with 2 values (x,y) each.");
+		ROS_ERROR("ReferenceLocalization::ReferenceLocalization - The front_wall_polygon vector should contain at least 4 points with 2 values (x,y) each.");
 		return;
 	}
 	std::cout << "Front wall polygon points:\n";
@@ -284,13 +284,22 @@ bool ReferenceLocalization::applyPolygonFilters(const sensor_msgs::LaserScan::Co
 		ROS_WARN("CornerLocalization::applyPolygonFilters - Could not determine transform between laser scanner and %s.", base_frame_.c_str());
 		return false;
 	}
-	cv::Mat T_polygon_to_laser;
-	received_transform = RelativeLocalizationUtilities::getTransformAdv(transform_listener_, polygon_frame_, std::string(laser_scan_msg->header.frame_id), base_frame_, T_polygon_to_laser, publish_time_, ros::Time(0.f));
+
+	cv::Mat T_polygon_to_base;
+	received_transform = RelativeLocalizationUtilities::getTransform(transform_listener_, polygon_frame_, base_frame_, T_polygon_to_base);
+	if (received_transform==false)
+	{
+		ROS_WARN("CornerLocalization::applyPolygonFilters - Could not determine transform between %s and %s.", polygon_frame_.c_str(), base_frame_.c_str());
+		return false;
+	}
+	cv::Mat T_polygon_to_laser = T_polygon_to_base*T_base_to_laser;
+
+	/*received_transform = RelativeLocalizationUtilities::getTransformAdv(transform_listener_, polygon_frame_, std::string(laser_scan_msg->header.frame_id), base_frame_, T_polygon_to_laser, publish_time_, ros::Time(0.f));
 	if (received_transform==false)
 	{
 		ROS_WARN("CornerLocalization::applyPolygonFilters - Could not determine transform between laser scanner and %s.", polygon_frame_.c_str());
 		return false;
-	}
+	}*/
 
 	// retrieve points from side and front wall and put each of those in separate lists
 	// scan_X vectors are relative to the base_frame, but the detection part (valid laserscanner points) is relative to the detection_base_frame
@@ -299,7 +308,7 @@ bool ReferenceLocalization::applyPolygonFilters(const sensor_msgs::LaserScan::Co
 		double angle = laser_scan_msg->angle_min + i * laser_scan_msg->angle_increment; // [rad]
 		double dist = laser_scan_msg->ranges[i]; // [m]
 
-		// transform laser scanner points to polygon_frame_
+		// transform laser scanner points to polygon_frame and base_frame
 		cv::Mat point_laser(cv::Vec4d(dist*cos(angle), dist*sin(angle), 0, 1.0));
 		cv::Mat point_polygon = T_polygon_to_laser*point_laser;  // laserscanner points in detection_base_frame coordinates
 		cv::Point2f point_2d_polygon(point_polygon.at<double>(0), point_polygon.at<double>(1));

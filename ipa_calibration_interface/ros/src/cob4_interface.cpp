@@ -48,17 +48,17 @@
  *
  ****************************************************************/
 
-#include <ipa_calibration_interface/cob_interface.h>
+#include <ipa_calibration_interface/cob4_interface.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <control_msgs/FollowJointTrajectoryGoal.h>
 #include <actionlib/client/simple_action_client.h>
 
-CobInterface::CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data) :
+Cob4Interface::Cob4Interface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data) :
 				IPAInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data)
 {
-	std::cout << "\n========== CobInterface Parameters ==========\n";
+	std::cout << "\n========== Cob4Interface Parameters ==========\n";
 
 	/*node_handle_.param<std::string>("camera_joint_controller_command", camera_joint_controller_command_, "");
 	std::cout << "camera_joint_controller_command: " << camera_joint_controller_command_ << std::endl;
@@ -66,7 +66,7 @@ CobInterface::CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 
 	node_handle_.param<std::string>("camera_joint_state_topic", camera_joint_state_topic_, "");
 	std::cout << "camera_joint_state_topic: " << camera_joint_state_topic_ << std::endl;
-	camera_state_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &CobInterface::cameraStateCallback, this);*/
+	camera_state_ = node_handle_.subscribe<sensor_msgs::JointState>(camera_joint_state_topic_, 0, &Cob4Interface::cameraStateCallback, this);*/
 
 	sensorring_static_state_.push_back(0.f);
 
@@ -78,7 +78,7 @@ CobInterface::CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 
 		node_handle_.param<std::string>("arm_left_state_topic", arm_left_state_topic_, "");
 		std::cout << "arm_left_state_topic: " << arm_left_state_topic_ << std::endl;
-		arm_left_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_left_state_topic_, 0, &CobInterface::armLeftStateCallback, this);
+		arm_left_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_left_state_topic_, 0, &Cob4Interface::armLeftStateCallback, this);
 
 		node_handle_.param<std::string>("arm_right_command", arm_right_command_, "");
 		std::cout << "arm_right_command: " << arm_right_command_ << std::endl;
@@ -86,7 +86,7 @@ CobInterface::CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 
 		node_handle_.param<std::string>("arm_right_state_topic", arm_right_state_topic_, "");
 		std::cout << "arm_right_state_topic: " << arm_right_state_topic_ << std::endl;
-		arm_right_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_right_state_topic_, 0, &CobInterface::armRightStateCallback, this);
+		arm_right_state_ = node_handle_.subscribe<sensor_msgs::JointState>(arm_right_state_topic_, 0, &Cob4Interface::armRightStateCallback, this);
 	}
 	else
 	{
@@ -99,41 +99,41 @@ CobInterface::CobInterface(ros::NodeHandle* nh, CalibrationType* calib_type, Cal
 	// /arm_right/joint_group_position_controller/command
 	// /base/velocity_smoother/command
 
-	ROS_INFO("CobInterface::CobInterface - CobInterface initialized.");
+	ROS_INFO("Cob4Interface::Cob4Interface - Cob4Interface initialized.");
 }
 
-CobInterface::~CobInterface()
+Cob4Interface::~Cob4Interface()
 {
 }
 
 // Callbacks
-void CobInterface::cameraStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+void Cob4Interface::cameraStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
 
 }
 
-void CobInterface::armLeftStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+void Cob4Interface::armLeftStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
 
 }
 
-void CobInterface::armRightStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+void Cob4Interface::armRightStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
 
 }
 // End callbacks
 
-void CobInterface::assignNewRobotVelocity(geometry_msgs::Twist new_velocity)
+void Cob4Interface::assignNewRobotVelocity(geometry_msgs::Twist new_velocity)
 {
 	base_velocity_controller_.publish(new_velocity);
 }
 
-void CobInterface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_camera_config)
+void Cob4Interface::assignNewCameraAngles(const std::string &camera_name, std_msgs::Float64MultiArray new_camera_config)
 {
 
 }
 
-std::vector<double>* CobInterface::getCurrentCameraState(const std::string &camera_name)
+std::vector<double>* Cob4Interface::getCurrentCameraState(const std::string &camera_name)
 {
 	if ( camera_name.compare("sensorring_dummy") == 0 )
 		return &sensorring_static_state_;
@@ -141,19 +141,19 @@ std::vector<double>* CobInterface::getCurrentCameraState(const std::string &came
 	return 0;
 }
 
-void CobInterface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_arm_config)
+void Cob4Interface::assignNewArmJoints(const std::string &arm_name, std_msgs::Float64MultiArray new_arm_config)
 {
 
 }
 
-std::vector<double>* CobInterface::getCurrentArmState(const std::string &arm_name)
+std::vector<double>* Cob4Interface::getCurrentArmState(const std::string &arm_name)
 {
 	return 0;
 }
 
-std::string CobInterface::getRobotName()
+std::string Cob4Interface::getRobotName()
 {
-	return "COB-4-7";
+	return "cob-4-7";
 }
 
 

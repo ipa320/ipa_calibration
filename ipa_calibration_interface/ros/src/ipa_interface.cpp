@@ -54,8 +54,8 @@
 
 #include <ipa_calibration_interface/ipa_interface.h>
 #include <ipa_calibration_interface/robotino_interface.h>
-#include <ipa_calibration_interface/raw_interface.h>
-#include <ipa_calibration_interface/cob_interface.h>
+#include <ipa_calibration_interface/raw3_interface.h>
+#include <ipa_calibration_interface/cob4_interface.h>
 #include <exception>
 #include <iostream>
 
@@ -99,17 +99,10 @@ CalibrationInterface* IPAInterface::createInterfaceByID(int ID, ros::NodeHandle*
 {
 	switch(ID)
 	{
-		case ROB_ROBOTINO:
-				return (new RobotinoInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data));
-				break;
-		case ROB_RAW_3_1:
-				return (new RAWInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data));
-				break;
-		case ROB_COB:
-				return (new CobInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data));
-				break;
-		default:
-				return 0;
+		case ROB_ROBOTINO: return (new RobotinoInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data));
+		case ROB_RAW_3_1: return (new Raw3Interface(nh, calib_type, calib_marker, do_arm_calibration, load_data));
+		case ROB_COB_4: return (new Cob4Interface(nh, calib_type, calib_marker, do_arm_calibration, load_data));
+		default: return 0;
 	}
 }
 

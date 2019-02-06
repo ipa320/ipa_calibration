@@ -67,9 +67,9 @@ CornerLocalization::CornerLocalization(ros::NodeHandle& nh)
 	std::vector<double> temp;
 	node_handle_.getParam("side_wall_polygon", temp);
 	const int num_points = temp.size()/2;
-	if (temp.size()%2 != 0 || temp.size() < 3*2)
+	if (temp.size()%2 != 0 || temp.size() < 4*2)
 	{
-		ROS_ERROR("CornerLocalization::CornerLocalization - The side_wall_polygon vector should contain at least 3 points with 2 values (x,y) each.");
+		ROS_ERROR("CornerLocalization::CornerLocalization - The side_wall_polygon vector should contain at least 4 points with 2 values (x,y) each.");
 		return;
 	}
 	std::cout << "Side wall polygon points:\n";
