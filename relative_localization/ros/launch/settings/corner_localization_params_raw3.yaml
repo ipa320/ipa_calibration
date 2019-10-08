@@ -23,7 +23,7 @@ polygon_frame: "polygon_frame"
 
 # laser scanner topic
 # string
-laser_scanner_topic_in: "/base_laser_front/scan"
+laser_scanner_topic_in: "/scan_unified"
 
 # Polygon points that define the closed area which is used to find the front wall inside.
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 4 points for a closed region. Do not forget to repeat the first point at the end.

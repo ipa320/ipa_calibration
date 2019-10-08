@@ -10,8 +10,8 @@ cameras_list: ["realsense_sr300", "6", "0"] #["ids_ueye", "2", "0"]
 # ranges for the degrees of freedom of the robot, relative to reference_frame
 # each parameter is set as [min_value, step, max_value]
 # vector<double>
-x_range: [-2.2, 0.2, -1.6]       # in [m]
-y_range: [1.0, 0.4, 1.4]         # in [m], fixed y-coordinate
+x_range: [-2.0, 0.3, -1.399]       # in [m]
+y_range: [0.8, 0.3, 1.401]         # in [m], fixed y-coordinate
 phi_range: [0, 1.0, 0]           # in [rad], fixed phi-angle
 ids_ueye_ranges: [-2.4, 0.4, -1.6,
                    0.4, 0.2, 0.8]   # first pan then tilt in [rad]
@@ -25,8 +25,21 @@ ids_ueye_ranges: [-2.4, 0.4, -1.6,
 # further cameras possible
 #<camera2_name>_configs: []
 
-realsense_sr300_configs: [-0.816926, -0.518052, -2.47831, -1.72319, -1.68554, -0.10491,
--0.616926, -0.518052, -2.47831, -1.7232, -1.68554, -0.104886]
+realsense_sr300_configs: [-0.852, -0.362, -2.415, -3.285, -1.611, -0.021,
+                          -0.852, -0.362, -2.415, -3.585, -1.611, -0.021,
+                          -0.852, -0.362, -2.415, -3.585, -1.611, -0.021,
+                          -0.852, -0.862, -2.415, -3.885, -1.611, -0.021,
+                          -0.652, -1.262, -2.315, -3.685, -1.411, -0.221,
+                          -1.052, -0.962, -2.25, -4.085, -1.211, 0.2,
+                          -1.0, -1.15, -2.2, -3.72, -1.05, 0.3,
+                          -0.7, -1.95, -2.3, -2.8, -0.6, 0.4,
+                          -0.2, -1.6, -2.3, -3.5, -1.1, 0.5,
+                          0.2, -0.9, -2.2, -4.1, -0.75, 0.45,
+                          0.1, -0.7, -1.8, -4.3, -0.9, 0.45,
+                          -0.1, -0.6, -1.6, -4.2, -1.0, -0.2,
+                          -0.3, -0.5, -1.9, -4.2, -1.2, -0.05,
+                          -1.1, -0.4, -1.7, -4.8, -1.5, -0.05,
+                          -1.0, -0.3, -2.4, -3.59, -1.8, 0.05]
 
 # list of robot's base configurations used in calibration for observing the pitags measured relative to the reference_frame coordinate system that is similarly aligned as the robot's base_link
 # each base configuration will go through every camera's configuration
@@ -53,25 +66,25 @@ max_ref_frame_distance: 4.0
 # the uncertainties will be calibrated in the same order they appear in the uncertainties_list
 # last parent-branch frame and last child-branch frame have to be available from TF from the very beginning, so that the routine can build the kinematic chains
 # only transforms prior to last parent-branch frame and last child-branch frame can be used as uncertainties
-uncertainties_list: ["base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_25", "marker_25",
-                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_36", "marker_36",
-                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_38", "marker_38",
-                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_48", "marker_48",
-                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_55", "marker_55",
-                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_64", "marker_64",
-                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_69", "marker_69",
-                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_73", "marker_73",
-                     "base_link", "arm_base_link", "landmark_reference_nav", "realsense_frame", "tag_79", "marker_79",
+uncertainties_list: ["base_link", "arm_base_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_25", "marker_25",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_36", "marker_36",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_38", "marker_38",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_48", "marker_48",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_55", "marker_55",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_64", "marker_64",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_69", "marker_69",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_73", "marker_73",
+                     "base_link", "arm_base_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_79", "marker_79",
 
-                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_25", "marker_25",
-                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_36", "marker_36",
-                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_38", "marker_38",
-                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_48", "marker_48",
-                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_55", "marker_55",
-                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_64", "marker_64",
-                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_69", "marker_69",
-                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_73", "marker_73",
-                     "gripper_frame", "realsense_link", "landmark_reference_nav", "realsense_frame", "tag_79", "marker_79"]
+                     "arm_camera_link", "camera_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_25", "marker_25",
+                     "arm_camera_link", "camera_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_36", "marker_36",
+                     "arm_camera_link", "camera_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_38", "marker_38",
+                     "arm_camera_link", "camera_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_48", "marker_48",
+                     "arm_camera_link", "camera_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_55", "marker_55",
+                     "arm_camera_link", "camera_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_64", "marker_64",
+                     "arm_camera_link", "camera_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_69", "marker_69",
+                     "arm_camera_link", "camera_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_73", "marker_73",
+                     "arm_camera_link", "camera_link", "landmark_reference_nav", "camera_color_optical_frame", "tag_79", "marker_79"]
 
 #["base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_25", "marker_25",
 #                     "base_link","torso_0_link", "landmark_reference_nav", "ids_ueye_frame", "tag_36", "marker_36",

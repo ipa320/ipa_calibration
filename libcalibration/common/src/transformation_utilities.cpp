@@ -173,7 +173,7 @@ namespace transform_utilities
 		catch (tf::TransformException& ex)
 		{
 			if ( report_error )
-				ROS_WARN("transform_utilities::getTransform - %s",ex.what());
+				ROS_WARN("transform_utilities::getTransform - %s\n\t%s %s",ex.what(), target_frame.c_str(), source_frame.c_str());
 
 			return false;
 		}

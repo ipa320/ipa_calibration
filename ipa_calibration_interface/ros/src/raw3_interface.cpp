@@ -56,14 +56,14 @@
 Raw3Interface::Raw3Interface(ros::NodeHandle* nh, CalibrationType* calib_type, CalibrationMarker* calib_marker, bool do_arm_calibration, bool load_data) :
 				IPAInterface(nh, calib_type, calib_marker, do_arm_calibration, load_data), arm_state_current_(0), camera_state_current_(0),
 				arm_action_client_("/arm/joint_trajectory_controller/follow_joint_trajectory", true),
-				camera_action_client_("/torso/joint_trajectory_controller/follow_joint_trajectory", true)
+				camera_action_client_("/arm/joint_trajectory_controller/follow_joint_trajectory", true)		// todo: hack: use camera_joint_controller_command_ for topic
 {
 	std::cout << "\n========== Raw3Interface Parameters ==========\n";
 
 	// Adjust here: Add all needed code in here to let robot move itself, its camera and arm.
 	node_handle_.param<std::string>("camera_joint_controller_command", camera_joint_controller_command_, "");
 	std::cout << "camera_joint_controller_command: " << camera_joint_controller_command_ << std::endl;
-	camera_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(camera_joint_controller_command_, 1, false);
+	//camera_joint_controller_ = node_handle_.advertise<std_msgs::Float64MultiArray>(camera_joint_controller_command_, 1, false);
 
 	camera_state_current_ = new sensor_msgs::JointState;
 	if ( camera_state_current_ != 0 )
@@ -148,6 +148,7 @@ void Raw3Interface::assignNewCameraAngles(const std::string &camera_name, std_ms
 	trajectory_msgs::JointTrajectory joint_traj;
 	control_msgs::FollowJointTrajectoryGoal cam_goal;
 
+	// todo: hack
 	if ( camera_name.compare("realsense_sr300") == 0 )
 		joint_traj.joint_names = {"arm_shoulder_pan_joint", "arm_shoulder_lift_joint", "arm_elbow_joint", "arm_wrist_1_joint", "arm_wrist_2_joint",
 									 "arm_wrist_3_joint"};
@@ -159,10 +160,12 @@ void Raw3Interface::assignNewCameraAngles(const std::string &camera_name, std_ms
 		return;
 	}
 
+	std::cout << "JOINT SIZE: " << new_camera_angles.data.size() << std::endl;
+
 	joint_traj_point.positions.insert(joint_traj_point.positions.end(), new_camera_angles.data.begin(), new_camera_angles.data.end());
 	joint_traj_point.time_from_start = ros::Duration(2);
-	joint_traj_point.velocities = {0,0}; //Initialize velocities to zero, does not work with empty list
-	joint_traj_point.accelerations = {0,0};
+	joint_traj_point.velocities = std::vector<double>(joint_traj.joint_names.size(),0.); //Initialize velocities to zero, does not work with empty list
+	joint_traj_point.accelerations = std::vector<double>(joint_traj.joint_names.size(),0.);
 	joint_traj.points.push_back(joint_traj_point);
 	joint_traj.header.stamp = ros::Time::now();
 

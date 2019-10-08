@@ -79,6 +79,8 @@ void CameraLaserscannerType::initialize(ros::NodeHandle* nh, IPAInterface* calib
 	std::cout << "base_frame: " << base_frame_ << std::endl;
 	node_handle_.param<std::string>("reference_frame", reference_frame_, "");
 	std::cout << "reference_frame: " << reference_frame_ << std::endl;
+	node_handle_.param<std::string>("controller_frame", controller_frame_, "");
+	std::cout << "controller_frame: " << controller_frame_ << std::endl;
 
 	node_handle_.param("max_ref_frame_distance", max_ref_frame_distance_, 1.0);
 	std::cout << "max_ref_frame_distance: " << max_ref_frame_distance_ << std::endl;
