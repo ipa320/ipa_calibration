@@ -10,13 +10,13 @@
 	<!-- realsense offest -->
 	<!-- <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_realsense_link" output="screen" args="0 0 0.05 0 0 0  gripper_frame realsense_link 100"/>
 
-<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_realsense_frame" output="screen" args="0 0 0.05 0 0 0  realsense_link realsense_frame 100"/> -->
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_realsense_frame" output="screen" args="0 0 0.05 0 0 0  realsense_link realsense_frame 100"/> -->
 
 	<!-- raw3-1 counter-rotation to fix rotated base -->
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_base_rotated" output="screen" args="0 0 0 3.141592654 0 0 base_link base_rotated 100"/>
-	
+	<!--node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_base_rotated" output="screen" args="0 0 0 3.141592654 0 0 base_link base_rotated 100"/-->
+
 	<!-- arm camera mounting position: arm_camera_link -> realsense camera_link -->
-	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_arm_camera_link2camera_link" output="screen" args="0.193936 0.0124308 0.0900546 -0.248581 -1.46 -2.88424 arm_camera_link camera_link 100"/> <!-- hand calibrated -->
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_arm_camera_link2camera_link" output="screen" args="0.213302 0.0305718 0.0952715 -0.956245 -1.51328 -2.17487 arm_camera_link camera_link 100"/> <!-- calibrated -->
 
 	<!-- settings at IPA lab -->
 	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher_landmark_tag_73" output="screen" args="0 1.533 0.617 -1.57079632679 0 1.57079632679  landmark_reference_nav tag_73 100"/>

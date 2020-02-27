@@ -1,6 +1,6 @@
 # Defines how fast new measurements are averaged into the transformation estimate (new_value = (1-update_rate)*old_value + update_rate*measurement). [0,1]
 # double
-update_rate: 0.25
+update_rate: 0.15      # 0.25
 
 # The name of the computed reference frame.
 # string
@@ -11,15 +11,26 @@ reference_frame: "/landmark_reference_nav"
 base_height: 0.0
 
 # Chosen base link of robot that is used to build the reference frame upon.
+# The front wall is defined to be aligned perpendicular to the x-axis of base_frame (and parallel to the y-axis of base_frame),
+# the side wall is parallel to the x-axis of base_frame.
+# If a robot's base_link is not aligned accordingly, just create a suitable base_link_rotated coordinate frame relative to base_link to make
+# relative calibration work.
 # string
-base_frame: "base_link"
+# values for calibrating at the robot's right side:
+base_frame: "base_link_rotated"
+# values for calibrating at the robot's front:
+#base_frame: "base_link"
 
-# frame which is used to filter out wall points, it can be assigned with an existing frame or a yet unknown frame
+# Frame which is used to filter out wall points, it can be assigned with an existing frame or a yet unknown frame
 # Existing frame: Polygons for detection wall points will be build upon the assigned existing frame (e.g. robot's base)
-# Unknown frame: A new frame will be generated at startup upon the first reference_frame detection (from reference_frame to base_frame)
+# Unknown frame (e.g. type "polygon"): A new frame will be generated at startup upon the first reference_frame detection (from reference_frame to base_frame)
 # The frame will be set up once at startup and stays fixed from that time on which prevents that robot rotations mess up the reference frame detection.
+# See also the remarks at base_frame for rotated base_frames. If a rotated base frame needs to be applied, use the same frame here as for base_frame.
 # string
-polygon_frame: "polygon_frame"
+# values for calibrating at the robot's right side:
+polygon_frame: "base_link_rotated"
+# values for calibrating at the robot's front:
+#polygon_frame: "base_link"
 
 # laser scanner topic
 # string
@@ -39,8 +50,8 @@ front_wall_polygon: [0.3, 1,
 # Includes x and y coordinates [in m] of each point that define the polygon in the robot's base frame. Input at least 4 points for a closed region. Do not forget to repeat the first point at the end.
 # Relative to polygon_frame
 # vector<Point2f>
-side_wall_polygon: [0, -3.0,
-                    3.0, -3.0,
+side_wall_polygon: [0, -1.8,
+                    3.0, -1.8,
                     3.0, -0.3,
                     0, -0.3,
-                    0, -3.0]
+                    0, -1.8]
