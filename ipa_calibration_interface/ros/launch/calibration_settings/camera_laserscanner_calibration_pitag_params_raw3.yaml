@@ -16,8 +16,8 @@ cameras_list: ["realsense_sr300", "6", "0"] #["ids_ueye", "2", "0"]
 # each parameter is set as [min_value, step, max_value]
 # vector<double>
 # values for calibrating at the robot's right side:
-x_range: [-2.0, 0.25, -1.49]       # in [m]
-y_range: [0.7, 0.3, 1.31]         # in [m], fixed y-coordinate
+x_range: [-2.0, 0.1667, -1.48]       # in [m]
+y_range: [0.7, 0.2, 1.31]         # in [m], fixed y-coordinate
 phi_range: [1.571, 1.0, 1.571]           # in [rad], fixed phi-angle
 # values for calibrating at the robot's front:
 #x_range: [-2.0, 0.3, -1.399]       # in [m]

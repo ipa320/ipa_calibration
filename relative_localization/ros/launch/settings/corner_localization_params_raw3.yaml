@@ -1,6 +1,6 @@
 # Defines how fast new measurements are averaged into the transformation estimate (new_value = (1-update_rate)*old_value + update_rate*measurement). [0,1]
 # double
-update_rate: 0.15      # 0.25
+update_rate: 0.25
 
 # The name of the computed reference frame.
 # string

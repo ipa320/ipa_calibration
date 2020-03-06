@@ -788,13 +788,22 @@ void RobotCalibration::displayAndSaveCalibrationResult()
 		{
 			cv::Vec3d ypr = transform_utilities::YPRFromRotationMatrix(calibration_setups_[i].uncertainties_list_[j].current_trafo_);
 
-			output << "<!-- " << calibration_setups_[i].uncertainties_list_[j].child_ << " mount positions | camera_base_calibration | relative to " << calibration_setups_[i].uncertainties_list_[j].parent_ << "-->" << std::endl
-				   << "  <property name=\"" << calibration_setups_[i].uncertainties_list_[j].child_ << "_x\" value=\"" << calibration_setups_[i].uncertainties_list_[j].current_trafo_.at<double>(0,3) << "\"/>" << std::endl
-				   << "  <property name=\"" << calibration_setups_[i].uncertainties_list_[j].child_ << "_y\" value=\"" << calibration_setups_[i].uncertainties_list_[j].current_trafo_.at<double>(1,3) << "\"/>" << std::endl
-				   << "  <property name=\"" << calibration_setups_[i].uncertainties_list_[j].child_ << "_z\" value=\"" << calibration_setups_[i].uncertainties_list_[j].current_trafo_.at<double>(2,3) << "\"/>" << std::endl
-				   << "  <property name=\"" << calibration_setups_[i].uncertainties_list_[j].child_ << "_roll\" value=\"" << ypr.val[2] << "\"/>" << std::endl
-				   << "  <property name=\"" << calibration_setups_[i].uncertainties_list_[j].child_ << "_pitch\" value=\"" << ypr.val[1] << "\"/>" << std::endl
-				   << "  <property name=\"" << calibration_setups_[i].uncertainties_list_[j].child_ << "_yaw\" value=\"" << ypr.val[0] << "\"/>" << std::endl
+			const std::string& parent_frame = calibration_setups_[i].uncertainties_list_[j].parent_;
+			const std::string& child_frame = calibration_setups_[i].uncertainties_list_[j].child_;
+
+			output << "<!-- " << child_frame << " mount positions | camera_base_calibration | relative to " << parent_frame << "-->" << std::endl
+				   << "  <xacro:property name=\"" << child_frame << "_x\" value=\"" << calibration_setups_[i].uncertainties_list_[j].current_trafo_.at<double>(0,3) << "\"/>" << std::endl
+				   << "  <xacro:property name=\"" << child_frame << "_y\" value=\"" << calibration_setups_[i].uncertainties_list_[j].current_trafo_.at<double>(1,3) << "\"/>" << std::endl
+				   << "  <xacro:property name=\"" << child_frame << "_z\" value=\"" << calibration_setups_[i].uncertainties_list_[j].current_trafo_.at<double>(2,3) << "\"/>" << std::endl
+				   << "  <xacro:property name=\"" << child_frame << "_roll\" value=\"" << ypr.val[2] << "\"/>" << std::endl
+				   << "  <xacro:property name=\"" << child_frame << "_pitch\" value=\"" << ypr.val[1] << "\"/>" << std::endl
+				   << "  <xacro:property name=\"" << child_frame << "_yaw\" value=\"" << ypr.val[0] << "\"/>" << std::endl
+				   << std::endl << std::endl
+				   << "<node pkg=\"tf\" type=\"static_transform_publisher\" name=\"static_transform_publisher_" << parent_frame << "2" << child_frame << "\" output=\"screen\" args=\""
+				   << calibration_setups_[i].uncertainties_list_[j].current_trafo_.at<double>(0,3) << " "
+				   << calibration_setups_[i].uncertainties_list_[j].current_trafo_.at<double>(1,3) << " "
+				   << calibration_setups_[i].uncertainties_list_[j].current_trafo_.at<double>(2,3) << " "
+				   << ypr.val[0] << " " << ypr.val[1] << " " << ypr.val[2] << " " << parent_frame << " " << child_frame << " 100\"/>"
 				   << std::endl << std::endl;
 		}
 	}
